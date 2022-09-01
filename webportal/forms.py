@@ -7,5 +7,6 @@ class RegisterForm(FlaskForm):
     firstname = StringField('First Name') 
     lastname = StringField("Last Name")
     address = StringField("Address")
+    password = StringField("Password")
     email = StringField("Email")
     

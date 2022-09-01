@@ -15,7 +15,7 @@ def register():
 
 @views.route('/register_status', methods=('GET', 'POST'))
 def register_status():
-    
+    form = RegisterForm()
 
     return render_template('register_status', title="Register Status")
 

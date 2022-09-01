@@ -1,15 +1,16 @@
 from flask_login import UserMixin
 from datetime import datetime 
+from webportal import db
 
 class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True)
+    id = db.Column(db.INT, primary_key=True)
+    username = db.Column(db.String(50))
     firstname = db.Column(db.String(50))
     lastname = db.Column(db.String(50))
     address = db.Column(db.String(50))
-    email = db.Column(db.String(150), unique=True)
+    email = db.Column(db.String(150))
     password_hash = db.Column(db.String(150))
-    account_number = db.column(db.int(12), index=True, unique=True)
+    account_number = db.column(db.INT())
     date_joined = db.Column(db.DateTime(), default=datetime.utcnow)
 
 def set_password(self, password):
