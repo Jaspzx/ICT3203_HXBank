@@ -6,6 +6,9 @@ app = Flask(__name__)
 db = SQLAlchemy()
 DB_NAME = "database.db"
 
+from webportal.models.user import User
+
+
 def create_webportal():
     app.config['SECRET_KEY'] = '3f0d3ca61975ec2ca4b764d10da99b82'
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_NAME}"
