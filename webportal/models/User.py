@@ -10,7 +10,7 @@ class User(db.Model, UserMixin):
     address = db.Column(db.String(50))
     email = db.Column(db.String(150))
     password_hash = db.Column(db.String(150))
-    account_number = db.column(db.INT())
+    account_number = db.Column(db.INT())
     date_joined = db.Column(db.DateTime(), default=datetime.utcnow)
 
 def set_password(self, password):
