@@ -62,6 +62,18 @@
     {% endif %}
 
     <p>
+        {{ form.password.label }}
+        {{ form.password(size=20) }}
+    </p>
+    {% if form.password.errors %}
+        <ul class="errors">
+            {% for error in form.password.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <p>
         <input type="submit" value="Add">
     </p>
 </form>
