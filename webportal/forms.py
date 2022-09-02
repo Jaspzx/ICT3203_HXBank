@@ -11,6 +11,7 @@ class RegisterForm(FlaskForm):
     password = PasswordField("Password", validators=[InputRequired(), Length(min=8), EqualTo('confirm_password', message='Passwords must match')])
     confirm_password = PasswordField("Repeat Password")
     email = StringField("Email", validators=[InputRequired(), Length(min=3, max=20), Email()])
+    deposit = StringField("Deposit amount", validators=[InputRequired(), Length(min=3, max=30)])
     accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
 
 class LoginForm(FlaskForm):
