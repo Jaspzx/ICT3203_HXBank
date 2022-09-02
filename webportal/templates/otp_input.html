@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form method="POST" action="">
+    {{ form.csrf_token }}
+    <p>
+        {{ form.token.label }}
+        {{ form.token(size=20) }}
+    </p>
+    <p>
+        {{ form.submit }}
+    </p>
+    <a href="{{ url_for('views.otp_setup') }}">Setup 2FA Again</a>
+    {% if login_error %}
+    <ul class="errors">
+        <li>{{ login_error }}</li>
+    </ul>
+    {% endif %}
+</form>
+</body>
+</html>

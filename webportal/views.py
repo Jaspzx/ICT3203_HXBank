@@ -1,10 +1,11 @@
 from datetime import timedelta
-from flask import Blueprint, redirect, url_for
-from flask import Flask, render_template
+import pyqrcode
+from flask import Flask, Blueprint, redirect, url_for, render_template, request, session, abort
 from flask_login import login_required, login_user, logout_user, current_user
-from .forms import RegisterForm, LoginForm
+from .forms import RegisterForm, LoginForm, Token2FAForm
 from webportal.models.User import *
 from webportal import flask_bcrypt, login_manager
+from io import BytesIO
 
 views = Blueprint('views', __name__)
 
@@ -16,39 +17,75 @@ def load_user(user_id):
 
 @views.route('/')
 def home():
-	return render_template('home.html', title="Home Page")
+    return render_template('home.html', title="Home Page")
 
 
 @views.route('/register', methods=('GET', 'POST'))
-def register(): 
-	form = RegisterForm()
-	if form.validate_on_submit():
-		username = form.username.data
-		firstname = form.firstname.data
-		lastname = form.lastname.data
-		address = form.address.data
-		email = form.email.data
-		password = flask_bcrypt.generate_password_hash(form.password.data)
-		createUser(username, firstname, lastname, address, email, password)       
-		return redirect(url_for("views.registration_successful"))
-	return render_template('register.html', title="Register", form=form)
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('views.dashboard'))
+    form = RegisterForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is not None:
+            return render_template('register.html', title="Register", form=form, register_error="Username exists")
+        username = form.username.data
+        firstname = form.firstname.data
+        lastname = form.lastname.data
+        address = form.address.data
+        email = form.email.data
+        password = flask_bcrypt.generate_password_hash(form.password.data)
+        createUser(username, firstname, lastname, address, email, password)
+        session['username'] = username
+        return redirect(url_for("views.otp_setup"))
+    return render_template('register.html', title="Register", form=form)
 
 
-@views.route("/registration_successful")
-def registration_successful():
-	return render_template('registration_successful.html', title="Registration Successful") 
+@views.route('/otp_setup')
+def otp_setup():
+    if 'username' not in session:
+        return render_template('home.html', title="Home Page")
+    if current_user.is_authenticated:
+        return redirect(url_for('views.dashboard'))
+    user = User.query.filter_by(username=session['username']).first()
+    if user is None:
+        return render_template('home.html', title="Home Page")
+    return render_template('otp_setup.html'), 200, {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'}
+
+
+@views.route('/qrcode')
+def qrcode():
+    if 'username' not in session:
+        abort(404)
+    user = User.query.filter_by(username=session['username']).first()
+    if user is None:
+        abort(404)
+    del session['username']
+    url = pyqrcode.create(user.get_totp_uri())
+    stream = BytesIO()
+    url.svg(stream, scale=3)
+    return stream.getvalue(), 200, {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'}
 
 
 @views.route('/login', methods=('GET', 'POST'))
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('views.dashboard'))
     form = LoginForm()
     error = "Login Failed"
-    if form.validate_on_submit():
+    if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
             if flask_bcrypt.check_password_hash(user.password_hash, form.password.data):
-                login_user(user, duration=timedelta(minutes=5))
-                return redirect(url_for('views.dashboard'))
+                session['username'] = user.username
+                return redirect(url_for('views.otp_input'))
             else:
                 return render_template('login.html', title="Login", form=form, login_error=error)
         else:
@@ -63,10 +100,27 @@ def logout():
     return redirect(url_for('views.login'))
 
 
+@views.route('/otp_input', methods=('GET', 'POST'))
+def otp_input():
+    form = Token2FAForm(request.form)
+    if 'username' not in session:
+        return redirect(url_for('views.login'))
+    if current_user.is_authenticated:
+        return redirect(url_for('views.dashboard'))
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(username=session['username']).first()
+        del session['username']
+        if user and user.verify_totp(form.token.data):
+            login_user(user, duration=timedelta(minutes=5))
+            return redirect(url_for('views.dashboard'))
+    return render_template('otp_input.html', form=form)
+
+
 @views.route('/dashboard', methods=('GET', 'POST'))
 @login_required
 def dashboard():
-    return render_template('dashboard.html', title="Dashboard", name=f"{current_user.firstname} {current_user.lastname}!")
+    return render_template('dashboard.html', title="Dashboard",
+                           name=f"{current_user.firstname} {current_user.lastname}!")
 
 
 @views.route("/robots.txt")
