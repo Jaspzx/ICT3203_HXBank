@@ -3,7 +3,7 @@ from flask import Blueprint, redirect, url_for
 from flask import Flask, render_template
 from flask_login import login_required, login_user, logout_user, current_user
 from .forms import RegisterForm, LoginForm
-from webportal.models.User import User
+from webportal.models.User import *
 from webportal import flask_bcrypt, login_manager
 
 views = Blueprint('views', __name__)
@@ -16,20 +16,27 @@ def load_user(user_id):
 
 @views.route('/')
 def home():
-    return render_template('home.html', title="Home Page")
+	return render_template('home.html', title="Home Page")
 
 
 @views.route('/register', methods=('GET', 'POST'))
-def register():
-    form = RegisterForm()
-    return render_template('register.html', title="Register", form=form)
+def register(): 
+	form = RegisterForm()
+	if form.validate_on_submit():
+		username = form.username.data
+		firstname = form.firstname.data
+		lastname = form.lastname.data
+		address = form.address.data
+		email = form.email.data
+		password = flask_bcrypt.generate_password_hash(form.password.data)
+		createUser(username, firstname, lastname, address, email, password)       
+		return redirect(url_for("views.registration_successful"))
+	return render_template('register.html', title="Register", form=form)
 
 
-@views.route('/register_status', methods=('GET', 'POST'))
-def register_status():
-    form = RegisterForm()
-
-    return render_template('register_status', title="Register Status")
+@views.route("/registration_successful")
+def registration_successful():
+	return render_template('registration_successful.html', title="Registration Successful") 
 
 
 @views.route('/login', methods=('GET', 'POST'))
