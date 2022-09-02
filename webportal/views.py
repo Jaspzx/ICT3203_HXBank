@@ -3,7 +3,7 @@ from flask import Blueprint, redirect, url_for
 from flask import Flask, render_template
 from flask_login import login_required, login_user, logout_user, current_user
 from .forms import RegisterForm, LoginForm
-from webportal.models.User import User
+from webportal.models.User import *
 from webportal import flask_bcrypt, login_manager
 
 views = Blueprint('views', __name__)
@@ -28,7 +28,7 @@ def register():
 		lastname = form.lastname.data
 		address = form.address.data
 		email = form.email.data
-		password = form.password.data
+		password = flask_bcrypt.generate_password_hash(form.password.data)
 		createUser(username, firstname, lastname, address, email, password)       
 		return redirect(url_for("views.registration_successful"))
 	return render_template('register.html', title="Register", form=form)
