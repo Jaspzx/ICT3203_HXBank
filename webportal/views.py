@@ -19,6 +19,7 @@ def load_user(user_id):
 def home():
     return render_template('home.html', title="Home Page")
 
+
 @views.route('/about')
 def about():
     return render_template('about.html', title="About")
@@ -125,6 +126,13 @@ def otp_input():
 def dashboard():
     return render_template('dashboard.html', title="Dashboard",
                            name=f"{current_user.firstname} {current_user.lastname}!")
+
+
+@views.route('/dashboard', methods=('GET', 'POST'))
+@login_required
+def profile():
+    pass
+    # return render_template('profile.html', title="Profile Page")
 
 
 @views.route("/robots.txt")

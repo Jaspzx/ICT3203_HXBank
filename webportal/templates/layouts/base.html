@@ -37,19 +37,25 @@
                 {% block nav_about %}
                     <li class="nav-item">
                 {% endblock %}
-                <a class="nav-link" href="./about">About Us</a>
+                <a class="nav-link" href="{{ url_for('views.about') }}">About Us</a>
                 </li>
             </ul>
             <ul class="navbar-nav ml-auto">
+                {% if not current_user.is_authenticated %}
                 {% block nav_login %}
                     <li class="nav-item">
                 {% endblock %}
-                <a class="nav-link" href="./login">Login</a>
+                <a class="nav-link" href="{{ url_for('views.login') }}">Login</a>
                 </li>
                 {% block nav_register %}
                     <li class="nav-item">
                 {% endblock %}
-                <a class="btn btn__primary" href="./register">Open Account</a>
+                <a class="btn btn__primary" href="{{ url_for('views.register') }}">Open Account</a>
+                {% endif %}
+                {% if current_user.is_authenticated %}
+                <a class="nav-link" href="{{ url_for('views.profile') }}">Welcome, {{ current_user.firstname + " " + current_user.lastname }}</a>
+                <a class="nav-link" href="{{ url_for('views.logout') }}">Logout</a>
+                {% endif %}
                 </li>
             </ul>
         </div>
