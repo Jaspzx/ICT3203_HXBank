@@ -28,7 +28,7 @@ class User(db.Model, UserMixin):
         self.date_joined = datetime.now()
 
     def get_totp_uri(self):
-        return f'otpauth://totp/2FA-Demo:{self.username}?secret={self.otp_secret}&issuer=2FA-Demo'
+        return f'otpauth://totp/HX-Bank:{self.username}?secret={self.otp_secret}&issuer=HX-Bank'
 
     def verify_totp(self, token):
         totp = pyotp.TOTP(self.otp_secret)

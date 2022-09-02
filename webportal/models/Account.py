@@ -6,3 +6,4 @@ class Account(db.Model):
     acc_balance = db.Column(db.INT, nullable=False)
     acc_xfer_limit = db.Column(db.INT, nullable=False)
     acc_number = db.Column(db.INT, nullable=False)
+    user_username = db.Column(db.String(50), db.ForeignKey('user.username'))
