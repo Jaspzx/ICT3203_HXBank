@@ -106,19 +106,6 @@
                                 </ul>
                             {% endif %}
 
-                            <!-- Initial Deposit Field-->
-                            <p>
-                                {{ form.deposit.label }}
-                                {{ form.deposit(size=20, class="form-control", placeholder="Enter your deposit")}}
-                            </p>
-                            {% if form.deposit.errors %}
-                                <ul class="errors">
-                                    {% for error in form.deposit.errors %}
-                                        <li>{{ error }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% endif %}
-
                             <!-- Accept T&C Field-->
                             <p>
                                 {{ form.accept_tos.label }}

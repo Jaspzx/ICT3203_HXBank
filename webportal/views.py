@@ -38,9 +38,8 @@ def register():
         lastname = form.lastname.data
         address = form.address.data
         email = form.email.data
-        deposit = form.deposit.data
         password = flask_bcrypt.generate_password_hash(form.password.data)
-        createUser(username, firstname, lastname, address, email, password, deposit)
+        createUser(username, firstname, lastname, address, email, password)
         session['username'] = username
         return redirect(url_for("views.otp_setup"))
     return render_template('register.html', title="Register", form=form)
