@@ -14,7 +14,7 @@ class RegisterForm(FlaskForm):
                                                      Regexp("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
                                                             message="Password complexity not met")])
     confirm_password = PasswordField("Repeat Password")
-    email = StringField("Email", validators=[InputRequired(), Length(min=3, max=20), Email()])
+    email = StringField("Email", validators=[InputRequired(), Length(min=3, max=50), Email()])
     deposit = StringField("Deposit amount", validators=[InputRequired(), Length(min=3, max=30)])
     accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
 
@@ -22,9 +22,7 @@ class RegisterForm(FlaskForm):
 class LoginForm(FlaskForm):
     username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20)],
                            render_kw={"placeholder": "Username"})
-    password = PasswordField("Password", validators=[InputRequired(), Length(min=8),
-                                                     Regexp("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
-                                                            message="Password complexity not met")],
+    password = PasswordField("Password", validators=[InputRequired()],
                              render_kw={"placeholder": "Password"})
     submit = SubmitField("Login")
 
