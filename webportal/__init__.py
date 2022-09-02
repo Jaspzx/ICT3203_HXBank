@@ -1,15 +1,26 @@
+import secrets
 from flask import Flask
+from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
-
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 db = SQLAlchemy()
+flask_bcrypt = Bcrypt()
+login_manager = LoginManager()
 DB_NAME = "database.db"
 
+from webportal.models.User import User
+
+
 def create_webportal():
-    app.config['SECRET_KEY'] = '3f0d3ca61975ec2ca4b764d10da99b82'
+    app.config['SECRET_KEY'] = secrets.token_hex(16)
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_NAME}"
     db.init_app(app)
+    flask_bcrypt.init_app(app)
+    login_manager.init_app(app)
+    login_manager.session_protection = "strong"
+    login_manager.login_view = 'views.login'
     with app.app_context():
         db.create_all()
     from .views import views
