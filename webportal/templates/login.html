@@ -1,37 +1,42 @@
-<h1>Login Page</h1>
-<form method="POST" action="">
-    {{ form.csrf_token }}
-    <p>
-        {{ form.username.label }}
-        {{ form.username(size=20) }}
-    </p>
-    {% if form.username.errors %}
+{% extends "layouts/base.html" %}
+{% block title %} Login {% endblock %} 
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+{% block content %}
+    <h1>Login Page</h1>
+    <form method="POST" action="">
+        {{ form.csrf_token }}
+        <p>
+            {{ form.username.label }}
+            {{ form.username(size=20) }}
+        </p>
+        {% if form.username.errors %}
+            <ul class="errors">
+                {% for error in form.username.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    
+        <p>
+            {{ form.password.label }}
+            {{ form.password(size=20) }}
+        </p>
+        {% if form.password.errors %}
+            <ul class="errors">
+                {% for error in form.password.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    
+        <p>
+            {{ form.submit }}
+        </p>
+        {% if login_error %}
         <ul class="errors">
-            {% for error in form.username.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
+            <li>{{ login_error }}</li>
         </ul>
-    {% endif %}
-
-    <p>
-        {{ form.password.label }}
-        {{ form.password(size=20) }}
-    </p>
-    {% if form.password.errors %}
-        <ul class="errors">
-            {% for error in form.password.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-
-    <p>
-        {{ form.submit }}
-    </p>
-    {% if login_error %}
-    <ul class="errors">
-        <li>{{ login_error }}</li>
-    </ul>
-    {% endif %}
-
-</form>
+        {% endif %}
+    </form>
+{% endblock %}
