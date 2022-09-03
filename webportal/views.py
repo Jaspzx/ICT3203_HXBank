@@ -4,6 +4,7 @@ from flask_login import login_required, login_user, logout_user, current_user
 from .forms import RegisterForm, LoginForm, Token2FAForm
 from webportal.models.User import *
 from webportal.models.Account import *
+from webportal.models.TransactionHistory import * 
 from webportal import flask_bcrypt, login_manager
 from io import BytesIO
 
@@ -144,6 +145,18 @@ def admin_dashboard():
     if current_user.is_admin:
         return render_template('admin-dashboard.html', title="Admin Dashboard")
     return redirect(url_for('views.dashboard'))
+
+
+@views.route("/add-transferee")
+@login_required
+def add_transferee():
+    return render_template('add-transferee.html', title="Add Transferee")
+   
+
+@views.route("/transaction-history")
+@login_required
+def transaction_history():
+    return render_template('transaction-history.html', title="Transaction History")
 
 
 @views.route("/robots.txt")
