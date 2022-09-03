@@ -44,7 +44,9 @@ def register():
         nric = form.nric.data
         dob = form.dob.data
         password = flask_bcrypt.generate_password_hash(form.password.data)
-        createUser(username, firstname, lastname, address, email, mobile, nric, dob, password)
+        user = createUser(username, firstname, lastname, address, email, mobile, nric, dob, password)
+        user = User.query.filter_by(username=username).first()
+        createAccount(user.id)
         session['username'] = username
         return redirect(url_for("views.otp_setup"))
     return render_template('register.html', title="Register", form=form)
@@ -131,8 +133,6 @@ def otp_input():
             update_on_success(user)
             if current_user.is_admin is True:
                 return redirect(url_for('views.admin_dashboard'))
-            else:
-                createAccount(current_user.id)
             return redirect(url_for('views.dashboard'))
         else:
             return render_template('otp_input.html', form=form, login_error=error)
