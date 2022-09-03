@@ -1,151 +1,159 @@
-<h1>Register Page</h1>
-<form method="POST" action="/register">
-    {{ form.csrf_token }}
-    <!-- Username Field-->
-    <p>
-        {{ form.username.label }}
-        {{ form.username(size=20) }}
-    </p>
-    {% if form.username.errors %}
-        <ul class="errors">
-            {% for error in form.username.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+{% extends "layouts/base.html" %} {% block title %}Register{% endblock %} {%
+block stylesheets %}{% endblock stylesheets %} {% block content %}
+<main id="register" class="h-100">
+  <section class="container d-flex flex-column justify-content-start h-100">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 col-xl-6">
+        <div class="form-container text-center align-self-center">
+          <form method="POST" action="/register">
+            <div class="form-title">
+              <h1 class="title">Register</h1>
+              <p>Enter your account details below:</p>
+            </div>
+            {{ form.csrf_token }}
+            <!-- Username Field-->
+            <p>
+              {{ form.username.label }} {{ form.username(size=20,
+              class="form-control",placeholder="Enter your Username")}}
+            </p>
+            {% if form.username.errors %}
+            <ul class="errors">
+              {% for error in form.username.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            <!-- Firstname Field-->
+            <p>
+              {{ form.firstname.label }} {{ form.firstname(size=20,
+              class="form-control", placeholder="Enter your First Name") }}
+            </p>
+            {% if form.firstname.errors %}
+            <ul class="errors">
+              {% for error in form.firstname.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
 
-    <!-- Nric Field-->
-    <p>
-        {{ form.nric.label }}
-        {{ form.nric(size=20) }}
-    </p>
-    {% if form.nric.errors %}
-        <ul class="errors">
-            {% for error in form.nric.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            <!-- Lastname Field-->
+            <p>
+              {{ form.lastname.label }} {{ form.lastname(size=20,
+              class="form-control", placeholder="Enter your Last Name") }}
+            </p>
+            {% if form.lastname.errors %}
+            <ul class="errors">
+              {% for error in form.lastname.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
 
-    <!-- Firstname Field-->
-    <p>
-        {{ form.firstname.label }}
-        {{ form.firstname(size=20) }}
-    </p>
-    {% if form.firstname.errors %}
-        <ul class="errors">
-            {% for error in form.firstname.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    
-    <!-- Lastname Field-->
-    <p>
-        {{ form.lastname.label }}
-        {{ form.lastname(size=20) }}
-    </p>
-    {% if form.lastname.errors %}
-        <ul class="errors">
-            {% for error in form.lastname.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    
-    <!-- Address Field-->
-    <p>
-        {{ form.address.label }}
-        {{ form.address(size=20) }}
-    </p>
-    {% if form.address.errors %}
-        <ul class="errors">
-            {% for error in form.address.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            <!-- Address Field-->
+            <p>
+              {{ form.address.label }} {{ form.address(size=20,
+              class="form-control", placeholder="Enter your Address") }}
+            </p>
+            {% if form.address.errors %}
+            <ul class="errors">
+              {% for error in form.address.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
 
-    <!-- Email Field-->
-    <p>
-        {{ form.email.label }}
-        {{ form.email(size=20) }}
-    </p>
-    {% if form.email.errors %}
-        <ul class="errors">
-            {% for error in form.email.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            <!-- Email Field-->
+            <p>
+              {{ form.email.label }} {{ form.email(size=50,
+              class="form-control", placeholder="Enter your Email")}}
+            </p>
+            {% if form.email.errors %}
+            <ul class="errors">
+              {% for error in form.email.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
 
-    <!-- Mobile Field-->
-    <p>
-        {{ form.mobile.label }}
-        {{ form.mobile(size=20) }}
-    </p>
-    {% if form.mobile.errors %}
-        <ul class="errors">
-            {% for error in form.mobile.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            <!-- Nric Field-->
+            <p>{{ form.nric.label }} {{ form.nric(size=20,
+            class="form-control", placeholder="Enter your NRIC") }}</p>
+            {% if form.nric.errors %}
+            <ul class="errors">
+              {% for error in form.nric.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
 
-    <!-- DOB Field-->
-    <p>
-        {{ form.dob.label }}
-        {{ form.dob(size=20) }}
-    </p>
-    {% if form.dob.errors %}
-        <ul class="errors">
-            {% for error in form.dob.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    
-    <!-- Password Field-->
-    <p>
-        {{ form.password.label }}
-        {{ form.password(size=20) }}
-    </p>
-    {% if form.password.errors %}
-        <ul class="errors">
-            {% for error in form.password.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            <!-- Mobile Field-->
+            <p>{{ form.mobile.label }} {{ form.mobile(size=20,
+                class="form-control", placeholder="Enter your Mobile Number") }}</p>
+            {% if form.mobile.errors %}
+            <ul class="errors">
+              {% for error in form.mobile.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
 
-    <!-- Confirm Password Field-->
-    <p>
-        {{ form.confirm_password.label }}
-        {{ form.confirm_password(size=20) }}
-    </p>
-    {% if form.confirm_password.errors %}
-        <ul class="errors">
-            {% for error in form.confirm_password.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            <!-- DOB Field-->
+            <p>{{ form.dob.label }} {{ form.dob(size=20,
+                class="form-control", placeholder="Enter your DOB")}}</p>
+            {% if form.dob.errors %}
+            <ul class="errors">
+              {% for error in form.dob.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
 
-    <!-- Accept T&C Field-->    
-    <p>
-        {{ form.accept_tos.label }}
-        {{ form.accept_tos(size=20) }}
-    </p>
-    {% if form.accept_tos.errors %}
-        <ul class="errors">
-            {% for error in form.accept_tos.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            <!-- Password Field-->
+            <p>{{ form.password.label }} {{ form.password(size=20,
+                class="form-control", placeholder="Enter your password") }}</p>
+            {% if form.password.errors %}
+            <ul class="errors">
+              {% for error in form.password.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
 
-    <!-- Submit Button-->  
-    <p>
-       <input type="submit" value="Add">
-    </p>
-</form>
+            <!-- Confirm Password Field-->
+            <p>
+              {{ form.confirm_password.label }} {{
+              form.confirm_password(size=20, class="form-control",
+              placeholder="Enter your confirm password")}}
+            </p>
+            {% if form.confirm_password.errors %}
+            <ul class="errors">
+              {% for error in form.confirm_password.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+
+            <!-- Accept T&C Field-->
+            <p>
+              {{ form.accept_tos.label }} {{ form.accept_tos(size=20,
+              class="form-check-input")}}
+            </p>
+            {% if form.accept_tos.errors %}
+            <ul class="errors">
+              {% for error in form.accept_tos.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+
+            <!-- Submit Button-->
+            <p>
+              <input type="submit" value="Register" />
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}
