@@ -1,7 +1,7 @@
 import pyqrcode
 from flask import Flask, Blueprint, redirect, url_for, render_template, request, session, abort
 from flask_login import login_required, login_user, logout_user, current_user
-from .forms import RegisterForm, LoginForm, Token2FAForm
+from .forms import *
 from webportal.models.User import *
 from webportal.models.Account import *
 from webportal.models.Transaction import * 
@@ -139,12 +139,67 @@ def otp_input():
     return render_template('otp_input.html', form=form)
 
 
+@views.route('/reset_identify', methods=('GET', 'POST'))
+def reset_identify():
+    form = ResetFormIdentify(request.form)
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(nric=form.nric.data).first()
+        session['nric'] = user.nric
+        session['dob'] = user.dob
+        if 'username' in session:
+            # for OTP only
+            user_username = User.query.filter_by(username=session['username']).first()
+            if user_username.nric == session['nric'] and user_username.dob == session['dob']:
+                del session['nric']
+                del session['dob']
+                return redirect(url_for("views.otp_setup"))
+            else:
+                del session['nric']
+                del session['username']
+                del session['dob']
+                return redirect(url_for("views.login"))
+        else:
+            # for other processes
+            pass
+    return render_template('reset_identify.html', form=form)
+
+
+@views.route('/reset_authenticate', methods=('GET', 'POST'))
+def reset_authenticate():
+    form = ResetFormAuthenticate(request.form)
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(nric=session['nric']).first()
+        pass
+
+
+@views.route('/reset_pwd', methods=('GET', 'POST'))
+def reset_pwd():
+    form = ResetPasswordForm(request.form)
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(nric=session['nric']).first()
+        pass
+
+
+@views.route('/reset_username', methods=('GET', 'POST'))
+def reset_username():
+    form = ResetUsernameForm(request.form)
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(nric=session['nric']).first()
+        pass
+
+
 @views.route('/dashboard', methods=('GET', 'POST'))
 @login_required
 def dashboard():
     data = db.session.query(Account).filter(User.id == current_user.id ).first()
     return render_template('dashboard.html', title="Dashboard",
                            name=f"{current_user.firstname} {current_user.lastname}!", data=data)
+
+
+@views.route("/profile")
+@login_required
+def profile():
+    return render_template('profile.html', title="Profile Page")
 
 
 @views.route("/admin-dashboard")

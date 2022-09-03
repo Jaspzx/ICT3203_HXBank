@@ -147,9 +147,7 @@ block stylesheets %}{% endblock stylesheets %} {% block content %}
             {% endif %}
 
             <!-- Submit Button-->
-            <p>
-              <input type="submit" value="Register" />
-            </p>
+            {{ form.submit(class="form-btn") }}
           </form>
         </div>
       </div>
