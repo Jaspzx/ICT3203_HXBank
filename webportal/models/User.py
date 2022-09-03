@@ -1,5 +1,5 @@
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
 from webportal import db
 import pyotp
 
@@ -14,6 +14,10 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(150))
     otp_secret = db.Column(db.String(16))
     date_joined = db.Column(db.DateTime())
+    failed_login_attempts = db.Column(db.INT)
+    last_login = db.Column(db.DateTime())
+    unlock_ts = db.Column(db.DateTime())
+    email_verified = db.Column(db.Boolean, default=False)
 
     def __init__(self, username, firstname, lastname, address, email, password_hash, otp_secret):
         self.username = username
@@ -26,6 +30,9 @@ class User(db.Model, UserMixin):
         if self.otp_secret is None:
             self.otp_secret = pyotp.random_base32()
         self.date_joined = datetime.now()
+        self.failed_login_attempts = 0
+        self.last_login = datetime.now()
+        self.unlock_ts = datetime.now()
 
     def get_totp_uri(self):
         return f'otpauth://totp/HX-Bank:{self.username}?secret={self.otp_secret}&issuer=HX-Bank'
@@ -48,3 +55,37 @@ def createUser(username, firstname, lastname, address, email, password, otp_secr
 
 def delUser():
     pass
+
+
+def reset_secret(arg_user):
+    arg_user.otp_secret = pyotp.random_base32()
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()
+
+
+def update_on_success(arg_user):
+    arg_user.last_login = datetime.now()
+    arg_user.failed_login_attempts = 0
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()
+
+
+def update_on_failure(arg_user):
+    arg_user.failed_login_attempts += 1
+    if arg_user.failed_login_attempts > 6:
+        arg_user.unlock_ts = datetime.now() + timedelta(minutes=30)
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()
+
