@@ -16,8 +16,7 @@ class RegisterForm(FlaskForm):
     confirm_password = PasswordField("Repeat Password")
     email = StringField("Email", validators=[InputRequired(), Length(min=3, max=20), Email()])
     nric = StringField("NRIC", validators=[InputRequired(), Length(min=9, max=9)])
-    dob = DateField("Date of Birth", validators=[InputRequired(), Length(min=10, max=10)],
-                    format='%d-%m-%Y')
+    dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
     mobile = StringField("Mobile", validators=[InputRequired(), Length(min=3, max=20)])
     accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
 
