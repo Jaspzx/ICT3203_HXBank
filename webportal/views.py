@@ -145,15 +145,18 @@ def reset_identify():
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(nric=form.nric.data).first()
         session['nric'] = user.nric
+        session['dob'] = user.dob
         if 'username' in session:
             # for OTP only
             user_username = User.query.filter_by(username=session['username']).first()
-            if user_username.nric == session['nric']:
+            if user_username.nric == session['nric'] and user_username.dob == session['dob']:
                 del session['nric']
+                del session['dob']
                 return redirect(url_for("views.otp_setup"))
             else:
                 del session['nric']
                 del session['username']
+                del session['dob']
                 return redirect(url_for("views.login"))
         else:
             # for other processes
