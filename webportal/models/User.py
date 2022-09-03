@@ -40,8 +40,8 @@ class User(db.Model, UserMixin):
         return totp.verify(token)
 
 
-def createUser(username, firstname, lastname, address, email, password, otp_secret=None):
-    new_user = User(username, firstname, lastname, address, email, password, otp_secret)
+def createUser(username, firstname, lastname, address, email, mobile, nric, password, otp_secret=None):
+    new_user = User(username, firstname, lastname, address, email, mobile, nric, password, otp_secret)
     try:
         db.session.add(new_user)
         db.session.commit()
