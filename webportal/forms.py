@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm, RecaptchaField
-from wtforms import StringField, TextAreaField, IntegerField, BooleanField, PasswordField, SubmitField
+from wtforms import StringField, DateField, IntegerField, BooleanField, PasswordField, SubmitField
 from wtforms.validators import InputRequired, Length, Email, EqualTo, Regexp
 from wtforms.widgets import PasswordInput
 
@@ -15,6 +15,9 @@ class RegisterForm(FlaskForm):
                                                             message="Password complexity not met")])
     confirm_password = PasswordField("Repeat Password")
     email = StringField("Email", validators=[InputRequired(), Length(min=3, max=50), Email()])
+    nric = StringField("NRIC", validators=[InputRequired(), Length(min=9, max=9)])
+    dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
+    mobile = StringField("Mobile", validators=[InputRequired(), Length(min=3, max=20)])
     accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
 
 
