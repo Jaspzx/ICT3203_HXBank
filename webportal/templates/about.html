@@ -1,0 +1,53 @@
+{% extends "layouts/base.html" %}
+{% block title %} about {% endblock %}
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block nav_about %}
+<li class="nav-item">
+{% endblock %}
+
+{% block content %}
+<header id="about" class="bg-light">
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-6">
+				<h1 class="title">About Us</h1>
+				<p class="about__text">A Bank for you and only you. We will make sure you get the service you
+					deserve.</p>
+			</div>
+		</div>
+	</div>
+</header>
+<main>
+	<section class="mission">
+		<div class="container">
+			<div class="row">
+				<div class="mission__title">
+					<h2>
+						HXBank History
+					</h2>
+					<div class="mission__paragraph">
+						<p>
+							HXBank is one of the established bank in Asia. Founded in the 2000,
+							it offers full range of products and services to individuals.
+							We offer the lowest interest rate in the market.
+						</p>
+					</div>
+				</div>
+
+			</div>
+
+			<div class="row">
+
+				<div class="col-lg-8 col-md-7">
+					<div class="img-container">
+						<img src="./static/assets/images/bank_image.png"
+						     alt="History of the bank">
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+{% endblock %}

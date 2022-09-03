@@ -19,6 +19,11 @@ def home():
     return render_template('home.html', title="Home Page")
 
 
+@views.route('/about')
+def about():
+    return render_template('about.html', title="About")
+
+
 @views.route('/register', methods=('GET', 'POST'))
 def register():
     if current_user.is_authenticated:
@@ -109,6 +114,7 @@ def logout():
 @views.route('/otp_input', methods=('GET', 'POST'))
 def otp_input():
     form = Token2FAForm(request.form)
+    error = "Invalid Token"
     if 'username' not in session:
         return redirect(url_for('views.login'))
     if current_user.is_authenticated:
@@ -124,6 +130,8 @@ def otp_input():
             if current_user.is_admin is True:
                 return redirect(url_for('views.admin_dashboard'))
             return redirect(url_for('views.dashboard'))
+        else:
+            return render_template('otp_input.html', form=form, login_error=error)
     return render_template('otp_input.html', form=form)
 
 

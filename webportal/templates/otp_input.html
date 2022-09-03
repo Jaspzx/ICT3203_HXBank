@@ -1,25 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<form method="POST" action="">
-    {{ form.csrf_token }}
-    <p>
-        {{ form.token.label }}
-        {{ form.token(size=20) }}
-    </p>
-    <p>
-        {{ form.submit }}
-    </p>
-    <a href="{{ url_for('views.otp_setup') }}">Setup 2FA Again</a>
-    {% if login_error %}
-    <ul class="errors">
-        <li>{{ login_error }}</li>
-    </ul>
-    {% endif %}
-</form>
-</body>
-</html>
+{% extends "layouts/base.html" %}
+{% block title %} Verify OTP {% endblock %}
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<main id="login" class="h-100">
+    <section class="container d-flex flex-column justify-content-start h-100">
+        <div class="row justify-content-center">
+            <div class="col-lg-7 col-xl-6">
+                <div class="form-container text-center align-self-center">
+                    <form method="POST" action="/otp_input">
+                        {{ form.csrf_token }}
+                        <div class="form-title">
+                            <h1 class="title">Enter OTP Code</h1>
+                            </p>To very your identity</p>
+                            {% if login_error %}
+                                <div class="alert alert-danger" role="alert">{{ login_error }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            {{ form.token.label(class="form-label") }}
+                            {{ form.token(class="form-control", size=20) }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.submit(class="form-btn") }}
+                            {#         TO BE REMOVE                   #}
+                            <small class="form-text text-muted sign-up-text">Setup 2FA again? <a
+                                        href="/otp_setup" title="Register Page">Click Here</a></small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock content %}
