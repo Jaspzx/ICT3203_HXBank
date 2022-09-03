@@ -108,16 +108,19 @@ def logout():
 @views.route('/otp_input', methods=('GET', 'POST'))
 def otp_input():
     form = Token2FAForm(request.form)
+    error = "Invalid Token"
     if 'username' not in session:
         return redirect(url_for('views.login'))
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=session['username']).first()
-        del session['username']
         if user and user.verify_totp(form.token.data):
+            del session['username']
             login_user(user, duration=timedelta(minutes=5))
             return redirect(url_for('views.dashboard'))
+        else:
+            return render_template('otp_input.html', form=form, login_error=error)
     return render_template('otp_input.html', form=form)
 
 
