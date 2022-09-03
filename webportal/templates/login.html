@@ -1,37 +1,49 @@
-<h1>Login Page</h1>
-<form method="POST" action="">
-    {{ form.csrf_token }}
-    <p>
-        {{ form.username.label }}
-        {{ form.username(size=20) }}
-    </p>
-    {% if form.username.errors %}
-        <ul class="errors">
-            {% for error in form.username.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+{% extends "layouts/base.html" %}
+{% block title %} Login {% endblock %}
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
 
-    <p>
-        {{ form.password.label }}
-        {{ form.password(size=20) }}
-    </p>
-    {% if form.password.errors %}
-        <ul class="errors">
-            {% for error in form.password.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
 
-    <p>
-        {{ form.submit }}
-    </p>
-    {% if login_error %}
-    <ul class="errors">
-        <li>{{ login_error }}</li>
-    </ul>
-    {% endif %}
-
-</form>
+{% block content %}
+    <main id="login" class="h-100">
+        <section class="container d-flex flex-column justify-content-start h-100">
+            <div class="row justify-content-center">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="form-container text-center align-self-center">
+                        <form method="POST" action="/login">
+                            {{ form.csrf_token }}
+                            <div class="form-title">
+                                <h1 class="title">Sign In</h1>
+                                {% if login_error %}
+                                    <div class="alert alert-danger" role="alert">{{ login_error }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                {{ form.username.label }}
+                                {{ form.username(class="form-control", placeholder="Enter your Username") }}
+                            </div>
+                            {% if form.username.errors %}
+                                <ul class="errors">
+                                    {% for error in form.username.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            <div class="form-group">
+                                {{ form.password.label }}
+                                {{ form.password(class="form-control", placeholder="Enter your Password") }}
+                            </div>
+                            <div class="form-group">
+                                {{ form.submit(class="form-btn") }}
+{#                                <button class="form-btn" type="submit">Sign In</button>#}
+                                <small class="form-text text-muted sign-up-text">Don't have an account? <a
+                                        href="/register" title="Register Page">Create a New
+                                    Account.</a></small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}
