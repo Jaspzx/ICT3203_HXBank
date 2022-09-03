@@ -13,23 +13,25 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150))
     mobile = db.Column(db.String(10))
     nric = db.Column(db.String(9))
+    dob = db.Column(db.Date())
     password_hash = db.Column(db.String(150))
     otp_secret = db.Column(db.String(16))
     date_joined = db.Column(db.DateTime())
     failed_login_attempts = db.Column(db.INT)
-    last_login = db.Column(db.DateTime())
-    unlock_ts = db.Column(db.DateTime())
+    last_login = db.Column(db.DateTime(timezone=True))
+    unlock_ts = db.Column(db.DateTime(timezone=True))
     email_verified = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
 
-    def __init__(self, username, firstname, lastname, address, email, mobile, nric, password_hash, otp_secret):
+    def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret):
         self.username = username
         self.firstname = firstname
         self.lastname = lastname
         self.address = address
         self.email = email
         self.mobile = mobile 
-        self.nric = nric 
+        self.nric = nric
+        self.dob = dob
         self.password_hash = password_hash
         self.otp_secret = otp_secret
         if self.otp_secret is None:
@@ -47,8 +49,8 @@ class User(db.Model, UserMixin):
         return totp.verify(token)
 
 
-def createUser(username, firstname, lastname, address, email, mobile, nric, password, otp_secret=None):
-    new_user = User(username, firstname, lastname, address, email, mobile, nric, password, otp_secret)
+def createUser(username, firstname, lastname, address, email, mobile, nric, dob, password, otp_secret=None):
+    new_user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, otp_secret)
     try:
         db.session.add(new_user)
         db.session.commit()
