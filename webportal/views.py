@@ -3,6 +3,8 @@ from flask import Flask, Blueprint, redirect, url_for, render_template, request,
 from flask_login import login_required, login_user, logout_user, current_user
 from .forms import RegisterForm, LoginForm, Token2FAForm
 from webportal.models.User import *
+from webportal.models.Account import *
+from webportal.models.Transaction import * 
 from webportal import flask_bcrypt, login_manager
 from io import BytesIO
 
@@ -129,6 +131,8 @@ def otp_input():
             update_on_success(user)
             if current_user.is_admin is True:
                 return redirect(url_for('views.admin_dashboard'))
+            else:
+                createAccount(current_user.id)
             return redirect(url_for('views.dashboard'))
         else:
             return render_template('otp_input.html', form=form, login_error=error)
@@ -138,8 +142,9 @@ def otp_input():
 @views.route('/dashboard', methods=('GET', 'POST'))
 @login_required
 def dashboard():
+    data = db.session.query(Account).filter(User.id == current_user.id ).first()
     return render_template('dashboard.html', title="Dashboard",
-                           name=f"{current_user.firstname} {current_user.lastname}!")
+                           name=f"{current_user.firstname} {current_user.lastname}!", data=data)
 
 
 @views.route("/admin-dashboard")
@@ -148,6 +153,18 @@ def admin_dashboard():
     if current_user.is_admin:
         return render_template('admin-dashboard.html', title="Admin Dashboard")
     return redirect(url_for('views.dashboard'))
+
+
+@views.route("/add-transferee")
+@login_required
+def add_transferee():
+    return render_template('add-transferee.html', title="Add Transferee")
+   
+
+@views.route("/transaction-history")
+@login_required
+def transaction_history():
+    return render_template('transaction-history.html', title="Transaction History")
 
 
 @views.route("/robots.txt")
