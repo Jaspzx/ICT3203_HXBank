@@ -34,8 +34,10 @@ def register():
         lastname = form.lastname.data
         address = form.address.data
         email = form.email.data
+        mobile = form.mobile.data
+        nric = form.nric.data
         password = flask_bcrypt.generate_password_hash(form.password.data)
-        createUser(username, firstname, lastname, address, email, password)
+        createUser(username, firstname, lastname, address, email, mobile, nric, password)
         session['username'] = username
         return redirect(url_for("views.otp_setup"))
     return render_template('register.html', title="Register", form=form)
@@ -106,12 +108,16 @@ def otp_input():
     if 'username' not in session:
         return redirect(url_for('views.login'))
     if current_user.is_authenticated:
+        if current_user.is_admin:
+            return redirect(url_for('views.admin-dashboard'))
         return redirect(url_for('views.dashboard'))
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=session['username']).first()
         del session['username']
         if user and user.verify_totp(form.token.data):
             login_user(user, duration=timedelta(minutes=5))
+            if current_user.is_admin is True:
+                return redirect(url_for('views.admin_dashboard'))
             return redirect(url_for('views.dashboard'))
     return render_template('otp_input.html', form=form)
 
@@ -121,6 +127,13 @@ def otp_input():
 def dashboard():
     return render_template('dashboard.html', title="Dashboard",
                            name=f"{current_user.firstname} {current_user.lastname}!")
+
+@views.route("/admin-dashboard")
+@login_required
+def admin_dashboard():
+    if current_user.is_admin:
+        return render_template('admin-dashboard.html', title="Admin Dashboard")
+    return redirect(url_for('views.dashboard'))
 
 
 @views.route("/robots.txt")
