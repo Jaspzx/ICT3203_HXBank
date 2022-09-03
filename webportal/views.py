@@ -133,6 +133,7 @@ def dashboard():
     return render_template('dashboard.html', title="Dashboard",
                            name=f"{current_user.firstname} {current_user.lastname}!")
 
+
 @views.route("/admin-dashboard")
 @login_required
 def admin_dashboard():
