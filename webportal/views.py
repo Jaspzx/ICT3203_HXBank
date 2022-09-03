@@ -108,6 +108,8 @@ def otp_input():
     if 'username' not in session:
         return redirect(url_for('views.login'))
     if current_user.is_authenticated:
+        if current_user.is_admin:
+            return redirect(url_for('views.admin-dashboard'))
         return redirect(url_for('views.dashboard'))
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=session['username']).first()
@@ -126,10 +128,12 @@ def dashboard():
     return render_template('dashboard.html', title="Dashboard",
                            name=f"{current_user.firstname} {current_user.lastname}!")
 
-
-@views.route("/admin_dashboard")
+@views.route("/admin-dashboard")
+@login_required
 def admin_dashboard():
-    return render_template('admin_dashboard', title="Admin Dashboard")
+    if current_user.is_admin:
+        return render_template('admin-dashboard.html', title="Admin Dashboard")
+    return redirect(url_for('views.dashboard'))
 
 
 @views.route("/robots.txt")
