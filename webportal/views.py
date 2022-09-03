@@ -1,7 +1,7 @@
 import pyqrcode
 from flask import Flask, Blueprint, redirect, url_for, render_template, request, session, abort
 from flask_login import login_required, login_user, logout_user, current_user
-from .forms import RegisterForm, LoginForm, Token2FAForm
+from .forms import *
 from webportal.models.User import *
 from webportal import flask_bcrypt, login_manager
 from io import BytesIO
@@ -125,6 +125,39 @@ def otp_input():
                 return redirect(url_for('views.admin_dashboard'))
             return redirect(url_for('views.dashboard'))
     return render_template('otp_input.html', form=form)
+
+
+@views.route('/reset_identify', methods=('GET', 'POST'))
+def reset_identify():
+    form = ResetFormIdentify(request.form)
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(nric=form.nric.data).first()
+        session['nric'] = user.nric
+        pass
+
+
+@views.route('/reset_authenticate', methods=('GET', 'POST'))
+def reset_authenticate():
+    form = ResetFormAuthenticate(request.form)
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(nric=session['nric']).first()
+        pass
+
+
+@views.route('/reset_pwd', methods=('GET', 'POST'))
+def reset_pwd():
+    form = ResetPasswordForm(request.form)
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(nric=session['nric']).first()
+        pass
+
+
+@views.route('/reset_username', methods=('GET', 'POST'))
+def reset_username():
+    form = ResetUsernameForm(request.form)
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(nric=session['nric']).first()
+        pass
 
 
 @views.route('/dashboard', methods=('GET', 'POST'))
