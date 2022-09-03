@@ -3,6 +3,7 @@ from flask import Flask, Blueprint, redirect, url_for, render_template, request,
 from flask_login import login_required, login_user, logout_user, current_user
 from .forms import RegisterForm, LoginForm, Token2FAForm
 from webportal.models.User import *
+from webportal.models.Account import *
 from webportal import flask_bcrypt, login_manager
 from io import BytesIO
 
@@ -123,6 +124,8 @@ def otp_input():
             update_on_success(user)
             if current_user.is_admin is True:
                 return redirect(url_for('views.admin_dashboard'))
+            else:
+                createAccount(current_user.id)
             return redirect(url_for('views.dashboard'))
     return render_template('otp_input.html', form=form)
 
@@ -130,8 +133,9 @@ def otp_input():
 @views.route('/dashboard', methods=('GET', 'POST'))
 @login_required
 def dashboard():
+    data = db.session.query(Account).filter(User.id == current_user.id ).first()
     return render_template('dashboard.html', title="Dashboard",
-                           name=f"{current_user.firstname} {current_user.lastname}!")
+                           name=f"{current_user.firstname} {current_user.lastname}!", data=data)
 
 
 @views.route("/admin-dashboard")
