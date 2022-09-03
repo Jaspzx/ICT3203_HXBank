@@ -84,6 +84,9 @@ def login():
         if user:
             if flask_bcrypt.check_password_hash(user.password_hash, form.password.data):
                 session['username'] = user.username
+                if current_user.is_admin is True:
+                    return redirect(url_for('views.admin_dashboard'))
+
                 return redirect(url_for('views.otp_input'))
             else:
                 return render_template('login.html', title="Login", form=form, login_error=error)
@@ -120,6 +123,10 @@ def otp_input():
 def dashboard():
     return render_template('dashboard.html', title="Dashboard",
                            name=f"{current_user.firstname} {current_user.lastname}!")
+
+@views.route("/admin_dashboard")
+def admin_dashboard():
+    return render_template('admin_dashboard', title="Admin Dashboard")
 
 
 @views.route("/robots.txt")

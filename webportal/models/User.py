@@ -11,16 +11,21 @@ class User(db.Model, UserMixin):
     lastname = db.Column(db.String(50))
     address = db.Column(db.String(50))
     email = db.Column(db.String(150))
+    mobile = db.Column(db.String(10))
+    nric = db.Column(db.String(9))
     password_hash = db.Column(db.String(150))
     otp_secret = db.Column(db.String(16))
     date_joined = db.Column(db.DateTime())
+    is_admin = db.Column(db.Boolean, default=False)
 
-    def __init__(self, username, firstname, lastname, address, email, password_hash, otp_secret):
+    def __init__(self, username, firstname, lastname, address, email, mobile, nric, password_hash, otp_secret):
         self.username = username
         self.firstname = firstname
         self.lastname = lastname
         self.address = address
         self.email = email
+        self.mobile = mobile 
+        self.nric = nric 
         self.password_hash = password_hash
         self.otp_secret = otp_secret
         if self.otp_secret is None:
