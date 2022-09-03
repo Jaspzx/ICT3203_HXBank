@@ -90,3 +90,15 @@ def update_on_failure(arg_user):
     except:
         db.session.rollback()
 
+
+def reset_details(arg_user, arg_field, arg_value):
+    if arg_field == "username":
+        arg_user.username = arg_value
+    elif arg_field == "password":
+        arg_user.password_hash = arg_value
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()

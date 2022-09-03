@@ -141,51 +141,105 @@ def otp_input():
 
 @views.route('/reset_identify', methods=('GET', 'POST'))
 def reset_identify():
+    selected = request.args.get('type')
+    if selected == "pwd":
+        session['type'] = "pwd"
+    elif selected == "username":
+        session['type'] = "username"
+    else:
+        if selected is None:
+            if 'type' not in session:
+                return redirect(url_for('views.login'))
     form = ResetFormIdentify(request.form)
     if request.method == 'POST' and form.validate_on_submit():
+        error = "Identification Failed"
         user = User.query.filter_by(nric=form.nric.data).first()
-        session['nric'] = user.nric
-        session['dob'] = user.dob
-        if 'username' in session:
-            # for OTP only
-            user_username = User.query.filter_by(username=session['username']).first()
-            if user_username.nric == session['nric'] and user_username.dob == session['dob']:
-                del session['nric']
-                del session['dob']
-                return redirect(url_for("views.otp_setup"))
+        if user:
+            session['nric'] = user.nric
+            session['dob'] = user.dob
+            if 'username' in session:
+                user_username = User.query.filter_by(username=session['username']).first()
+                if user_username.nric == session['nric'] and user_username.dob == session['dob']:
+                    del session['nric']
+                    del session['dob']
+                    return redirect(url_for("views.otp_setup"))
+                else:
+                    del session['nric']
+                    del session['username']
+                    del session['dob']
+                    return redirect(url_for("views.login"))
             else:
-                del session['nric']
-                del session['username']
-                del session['dob']
-                return redirect(url_for("views.login"))
+                if form.dob.data == session['dob']:
+                    del session['dob']
+                    return redirect(url_for("views.reset_authenticate"))
+                else:
+                    return render_template('reset_identify.html', form=form, identity_error=error)
         else:
-            # for other processes
-            pass
+            return render_template('reset_identify.html', form=form, identity_error=error)
     return render_template('reset_identify.html', form=form)
 
 
 @views.route('/reset_authenticate', methods=('GET', 'POST'))
 def reset_authenticate():
+    if 'nric' not in session:
+        return redirect(url_for('views.reset_identify'))
+    if 'type' not in session:
+        return redirect(url_for("views.login"))
     form = ResetFormAuthenticate(request.form)
+    error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(nric=session['nric']).first()
-        pass
+        if user and user.verify_totp(form.token.data):
+            if session['type'] == "pwd":
+                del session['type']
+                return redirect(url_for("views.reset_pwd"))
+            elif session['type'] == "username":
+                del session['type']
+                return redirect(url_for("views.reset_username"))
+            else:
+                return redirect(url_for('views.login'))
+        else:
+            return render_template('reset_authenticate.html', form=form, authenticate_error=error)
+    return render_template('reset_authenticate.html', form=form)
 
 
 @views.route('/reset_pwd', methods=('GET', 'POST'))
 def reset_pwd():
+    if 'nric' not in session:
+        return redirect(url_for('views.reset_identify'))
     form = ResetPasswordForm(request.form)
+    error = "Reset Failed"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(nric=session['nric']).first()
-        pass
+        if user:
+            del session['nric']
+            password = flask_bcrypt.generate_password_hash(form.password.data)
+            reset_details(user, "password", password)
+            return redirect(url_for("views.login"))
+        else:
+            return render_template('reset_pwd.html', form=form, reset_error=error)
+    return render_template('reset_pwd.html', form=form)
 
 
 @views.route('/reset_username', methods=('GET', 'POST'))
 def reset_username():
+    if 'nric' not in session:
+        return redirect(url_for('views.reset_identity'))
     form = ResetUsernameForm(request.form)
+    error = "Reset Failed"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(nric=session['nric']).first()
-        pass
+        if user:
+            username = User.query.filter_by(username=form.username.data).first()
+            if username:
+                return render_template('reset_username.html', form=form, reset_error="Username exists")
+            else:
+                del session['nric']
+                reset_details(user, "username", form.username.data)
+            return redirect(url_for("views.login"))
+        else:
+            return render_template('reset_username.html', form=form, reset_error=error)
+    return render_template('reset_username.html', form=form)
 
 
 @views.route('/dashboard', methods=('GET', 'POST'))
