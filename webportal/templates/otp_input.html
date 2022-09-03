@@ -26,7 +26,7 @@
                             {{ form.submit(class="form-btn") }}
                             {#         TO BE REMOVE                   #}
                             <small class="form-text text-muted sign-up-text">Setup 2FA again? <a
-                                        href="/otp_setup" title="Register Page">Click Here</a></small>
+                                        href="{{ url_for('views.reset_identify') }}" title="OTP Setup">Click Here</a></small>
                         </div>
                     </form>
                 </div>

@@ -145,7 +145,20 @@ def reset_identify():
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(nric=form.nric.data).first()
         session['nric'] = user.nric
-        pass
+        if 'username' in session:
+            # for OTP only
+            user_username = User.query.filter_by(username=session['username']).first()
+            if user_username.nric == session['nric']:
+                del session['nric']
+                return redirect(url_for("views.otp_setup"))
+            else:
+                del session['nric']
+                del session['username']
+                return redirect(url_for("views.login"))
+        else:
+            # for other processes
+            pass
+    return render_template('reset_identify.html', form=form)
 
 
 @views.route('/reset_authenticate', methods=('GET', 'POST'))
@@ -178,6 +191,12 @@ def dashboard():
     data = db.session.query(Account).filter(User.id == current_user.id ).first()
     return render_template('dashboard.html', title="Dashboard",
                            name=f"{current_user.firstname} {current_user.lastname}!", data=data)
+
+
+@views.route("/profile")
+@login_required
+def profile():
+    return render_template('profile.html', title="Profile Page")
 
 
 @views.route("/admin-dashboard")

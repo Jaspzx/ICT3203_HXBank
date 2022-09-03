@@ -19,6 +19,7 @@ class RegisterForm(FlaskForm):
     dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
     mobile = StringField("Mobile", validators=[InputRequired(), Length(min=3, max=20)])
     accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
+    submit = SubmitField("Sign Up")
 
 
 class LoginForm(FlaskForm):
@@ -26,7 +27,7 @@ class LoginForm(FlaskForm):
                            render_kw={"placeholder": "Username"})
     password = PasswordField("Password", validators=[InputRequired()],
                              render_kw={"placeholder": "Password"})
-    submit = SubmitField("Login")
+    submit = SubmitField("Sign In")
 
 
 class Token2FAForm(FlaskForm):
