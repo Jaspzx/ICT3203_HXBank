@@ -87,6 +87,8 @@ def qrcode():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
+    if 'type' in session:
+        del session['type']
     form = LoginForm()
     error = "Login Failed"
     if request.method == 'POST' and form.validate_on_submit():
@@ -110,6 +112,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    session.clear()
     return redirect(url_for('views.login'))
 
 
@@ -146,6 +149,8 @@ def reset_identify():
         session['type'] = "pwd"
     elif selected == "username":
         session['type'] = "username"
+    elif selected == "otp":
+        session['type'] = "otp"
     else:
         if selected is None:
             if 'type' not in session:
@@ -157,7 +162,7 @@ def reset_identify():
         if user:
             session['nric'] = user.nric
             session['dob'] = user.dob
-            if 'username' in session:
+            if "username" in session and session['type'] == "otp":
                 user_username = User.query.filter_by(username=session['username']).first()
                 if user_username.nric == session['nric'] and user_username.dob == session['dob']:
                     del session['nric']
