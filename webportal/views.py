@@ -4,7 +4,7 @@ from flask_login import login_required, login_user, logout_user, current_user
 from .forms import RegisterForm, LoginForm, Token2FAForm
 from webportal.models.User import *
 from webportal.models.Account import *
-from webportal.models.TransactionHistory import * 
+from webportal.models.Transaction import * 
 from webportal import flask_bcrypt, login_manager
 from io import BytesIO
 

@@ -1,5 +1,6 @@
 from webportal import db
 from random import SystemRandom
+from webportal.models.Transaction import *
 
 
 class Account(db.Model):
@@ -9,8 +10,9 @@ class Account(db.Model):
     acc_number = db.Column(db.String(10), nullable=False)
     userid = db.Column(db.String(50), db.ForeignKey('user.id'))
 
-    def __init__(self, acc_number, userid):
-        self.acc_balance = 0 
+    def __init__(self, acc_number, userid, acc_balance):
+        print(acc_balance)
+        self.acc_balance = acc_balance
         self.acc_xfer_limit = 1000
         self.acc_number = acc_number
         self.userid = userid
@@ -18,7 +20,8 @@ class Account(db.Model):
 def createAccount(userid):
     random_gen = SystemRandom() 
     acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
-    new_account = Account(acc_number, userid)
+    welcome_amt = random_gen.randrange(1000, 10000)
+    new_account = Account(acc_number, userid, welcome_amt)
     try:
         db.session.add(new_account)
         db.session.commit()
@@ -26,3 +29,6 @@ def createAccount(userid):
         db.session.rollback()
     finally:
         db.session.close()
+
+def updateBalance():
+    pass 

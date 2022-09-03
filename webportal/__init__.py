@@ -12,7 +12,7 @@ DB_NAME = "database.db"
 
 from webportal.models.User import *
 from webportal.models.Account import *
-from webportal.models.TransactionHistory import *
+from webportal.models.Transaction import *
 
 def create_webportal():
     app.config['SECRET_KEY'] = secrets.token_hex(16)
