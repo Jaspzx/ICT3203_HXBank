@@ -1,4 +1,3 @@
-from datetime import datetime
 import pyqrcode
 from flask import Flask, Blueprint, redirect, url_for, render_template, request, session, abort
 from flask_login import login_required, login_user, logout_user, current_user
@@ -36,8 +35,9 @@ def register():
         email = form.email.data
         mobile = form.mobile.data
         nric = form.nric.data
+        dob = form.dob.data
         password = flask_bcrypt.generate_password_hash(form.password.data)
-        createUser(username, firstname, lastname, address, email, mobile, nric, password)
+        createUser(username, firstname, lastname, address, email, mobile, nric, dob, password)
         session['username'] = username
         return redirect(url_for("views.otp_setup"))
     return render_template('register.html', title="Register", form=form)

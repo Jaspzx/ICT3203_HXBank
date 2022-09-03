@@ -91,6 +91,19 @@
             {% endfor %}
         </ul>
     {% endif %}
+
+    <!-- DOB Field-->
+    <p>
+        {{ form.dob.label }}
+        {{ form.dob(size=20) }}
+    </p>
+    {% if form.dob.errors %}
+        <ul class="errors">
+            {% for error in form.dob.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
     
     <!-- Password Field-->
     <p>
