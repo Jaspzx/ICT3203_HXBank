@@ -9,13 +9,18 @@
         <div class="row justify-content-center">
             <div class="col-lg-7 col-xl-6">
                 <div class="form-container text-center align-self-center">
-                    <form method="POST" action="/otp_input">
+                    <form method="POST" action="/otp-input">
                         {{ form.csrf_token }}
                         <div class="form-title">
                             <h1 class="title">Enter OTP Code</h1>
                             </p>To verify your identity</p>
                             {% if login_error %}
                                 <div class="alert alert-danger" role="alert">{{ login_error }}</div>
+                            {% endif %}
+                            {% if form.token.errors %}
+                            {% for error in form.token.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
                             {% endif %}
                         </div>
                         <div class="form-group">
