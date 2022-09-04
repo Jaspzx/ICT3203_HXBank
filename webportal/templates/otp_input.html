@@ -13,7 +13,7 @@
                         {{ form.csrf_token }}
                         <div class="form-title">
                             <h1 class="title">Enter OTP Code</h1>
-                            </p>To very your identity</p>
+                            </p>To verify your identity</p>
                             {% if login_error %}
                                 <div class="alert alert-danger" role="alert">{{ login_error }}</div>
                             {% endif %}
@@ -24,9 +24,8 @@
                         </div>
                         <div class="form-group">
                             {{ form.submit(class="form-btn") }}
-                            {#         TO BE REMOVE                   #}
                             <small class="form-text text-muted sign-up-text">Setup 2FA again? <a
-                                        href="{{ url_for('views.reset_identify') }}" title="OTP Setup">Click Here</a></small>
+                                        href="{{ url_for('views.reset_identify', type='otp') }}" title="OTP Setup">Click Here</a></small>
                         </div>
                     </form>
                 </div>

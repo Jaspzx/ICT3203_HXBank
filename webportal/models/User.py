@@ -6,22 +6,22 @@ import pyotp
 
 class User(db.Model, UserMixin):
     id = db.Column(db.INT, primary_key=True)
-    username = db.Column(db.String(50))
-    firstname = db.Column(db.String(50))
-    lastname = db.Column(db.String(50))
-    address = db.Column(db.String(50))
-    email = db.Column(db.String(150))
-    mobile = db.Column(db.String(10))
-    nric = db.Column(db.String(9))
-    dob = db.Column(db.Date())
-    password_hash = db.Column(db.String(150))
-    otp_secret = db.Column(db.String(16))
-    date_joined = db.Column(db.DateTime())
-    failed_login_attempts = db.Column(db.INT)
-    last_login = db.Column(db.DateTime(timezone=True))
-    unlock_ts = db.Column(db.DateTime(timezone=True))
-    email_verified = db.Column(db.Boolean, default=False)
-    is_admin = db.Column(db.Boolean, default=False)
+    username = db.Column(db.String(50), nullable=False)
+    firstname = db.Column(db.String(50), nullable=False)
+    lastname = db.Column(db.String(50), nullable=False)
+    address = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(150), unique=True)
+    mobile = db.Column(db.String(10), nullable=False)
+    nric = db.Column(db.String(9), unique=True)
+    dob = db.Column(db.Date(), nullable=False)
+    password_hash = db.Column(db.String(150), nullable=False)
+    otp_secret = db.Column(db.String(16), nullable=False)
+    date_joined = db.Column(db.DateTime(), nullable=False)
+    failed_login_attempts = db.Column(db.INT, nullable=False)
+    last_login = db.Column(db.DateTime(timezone=True), nullable=False)
+    unlock_ts = db.Column(db.DateTime(timezone=True), nullable=False)
+    email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
 
     def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret):
         self.username = username
@@ -90,3 +90,15 @@ def update_on_failure(arg_user):
     except:
         db.session.rollback()
 
+
+def reset_details(arg_user, arg_field, arg_value):
+    if arg_field == "username":
+        arg_user.username = arg_value
+    elif arg_field == "password":
+        arg_user.password_hash = arg_value
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()

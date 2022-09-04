@@ -15,7 +15,7 @@ class RegisterForm(FlaskForm):
                                                             message="Password complexity not met")])
     confirm_password = PasswordField("Repeat Password")
     email = StringField("Email", validators=[InputRequired(), Length(min=3, max=50), Email()])
-    nric = StringField("NRIC", validators=[InputRequired(), Length(min=9, max=9)])
+    nric = StringField("Identification No.", validators=[InputRequired(), Length(min=9, max=9)])
     dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
     mobile = StringField("Mobile", validators=[InputRequired(), Length(min=3, max=20)])
     accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
@@ -37,7 +37,7 @@ class Token2FAForm(FlaskForm):
 
 
 class ResetFormIdentify(FlaskForm):
-    nric = StringField("NRIC", validators=[InputRequired(), Length(min=9, max=9)])
+    nric = StringField("Identification No.", validators=[InputRequired(), Length(min=9, max=9)])
     dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
     submit = SubmitField("Next")
 
