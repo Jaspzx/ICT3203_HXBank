@@ -1,5 +1,5 @@
 {% extends "layouts/base.html" %}
-{% block title %} Authenticate Yourself {% endblock %}
+{% block title %} Reset Username {% endblock %}
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
 
@@ -10,27 +10,26 @@
             <div class="row justify-content-center">
                 <div class="col-lg-7 col-xl-6">
                     <div class="form-container text-center align-self-center">
-                        <form method="POST" action="/reset_authenticate">
+                        <form method="POST" action="/reset-username">
                             {{ form.csrf_token }}
                             <div class="form-title">
-                                <h1 class="title">Authenticate Yourself</h1>
-                                {% if authenticate_error %}
-                                    <div class="alert alert-danger" role="alert">{{ authenticate_error }}</div>
+                                <h1 class="title">Reset Username</h1>
+                                {% if reset_error %}
+                                    <div class="alert alert-danger" role="alert">{{ reset_error }}</div>
                                 {% endif %}
-                                {% if form.token.errors %}
-                                {% for error in form.token.errors %}
+                                {% if form.username.errors %}
+                                {% for error in form.username.errors %}
                                     <div class="alert alert-danger" role="alert">{{ error }}</div>
                                 {% endfor %}
                                 {% endif %}
                             </div>
                             <div class="form-group">
-                                {{ form.token.label }}
-                                {{ form.token(class="form-control", placeholder="Enter your OTP") }}
+                                {{ form.username.label }}
+                                {{ form.username(class="form-control", placeholder="Enter your new username") }}
                             </div>
                             <div class="form-group">
                                 {{ form.submit(class="form-btn") }}
                             </div>
-                            <small class="form-text text-muted sign-up-text">If you lost your OTP, contact Customer Support</small>
                         </form>
                     </div>
                 </div>

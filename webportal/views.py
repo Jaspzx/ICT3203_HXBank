@@ -16,17 +16,17 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-@views.route('/')
+@views.route('/', methods=['GET'])
 def home():
     return render_template('home.html', title="Home Page")
 
 
-@views.route('/about')
+@views.route('/about', methods=['GET'])
 def about():
     return render_template('about.html', title="About")
 
 
-@views.route('/register', methods=('GET', 'POST'))
+@views.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
@@ -52,7 +52,7 @@ def register():
     return render_template('register.html', title="Register", form=form)
 
 
-@views.route('/otp_setup')
+@views.route('/otp-setup')
 def otp_setup():
     if 'username' not in session:
         return render_template('home.html', title="Home Page")
@@ -61,7 +61,7 @@ def otp_setup():
     user = User.query.filter_by(username=session['username']).first()
     if user is None:
         return render_template('home.html', title="Home Page")
-    return render_template('otp_setup.html'), 200, {
+    return render_template('otp-setup.html'), 200, {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'}
@@ -85,7 +85,7 @@ def qrcode():
         'Expires': '0'}
 
 
-@views.route('/login', methods=('GET', 'POST'))
+@views.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
@@ -110,7 +110,7 @@ def login():
     return render_template('login.html', title="Login", form=form)
 
 
-@views.route('/logout', methods=('GET', 'POST'))
+@views.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
@@ -118,7 +118,7 @@ def logout():
     return redirect(url_for('views.login'))
 
 
-@views.route('/otp_input', methods=('GET', 'POST'))
+@views.route('/otp-input', methods=('GET', 'POST'))
 def otp_input():
     form = Token2FAForm(request.form)
     error = "Invalid Token"
@@ -126,7 +126,7 @@ def otp_input():
         return redirect(url_for('views.login'))
     if current_user.is_authenticated:
         if current_user.is_admin:
-            return redirect(url_for('views.admin-dashboard'))
+            return redirect(url_for('views.admin_dashboard'))
         return redirect(url_for('views.dashboard'))
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=session['username']).first()
@@ -138,11 +138,11 @@ def otp_input():
                 return redirect(url_for('views.admin_dashboard'))
             return redirect(url_for('views.dashboard'))
         else:
-            return render_template('otp_input.html', form=form, login_error=error)
-    return render_template('otp_input.html', form=form)
+            return render_template('otp-input.html', form=form, login_error=error)
+    return render_template('otp-input.html', form=form)
 
 
-@views.route('/reset_identify', methods=('GET', 'POST'))
+@views.route('/reset-identify', methods=['GET', 'POST'])
 def reset_identify():
     selected = request.args.get('type')
     if selected == "pwd":
@@ -178,13 +178,13 @@ def reset_identify():
                     del session['dob']
                     return redirect(url_for("views.reset_authenticate"))
                 else:
-                    return render_template('reset_identify.html', form=form, identity_error=error)
+                    return render_template('reset-identify.html', form=form, identity_error=error)
         else:
-            return render_template('reset_identify.html', form=form, identity_error=error)
-    return render_template('reset_identify.html', form=form)
+            return render_template('reset-identify.html', form=form, identity_error=error)
+    return render_template('reset-identify.html', form=form)
 
 
-@views.route('/reset_authenticate', methods=('GET', 'POST'))
+@views.route('/reset-authenticate', methods=['GET', 'POST'])
 def reset_authenticate():
     if 'nric' not in session:
         return redirect(url_for('views.reset_identify'))
@@ -204,11 +204,11 @@ def reset_authenticate():
             else:
                 return redirect(url_for('views.login'))
         else:
-            return render_template('reset_authenticate.html', form=form, authenticate_error=error)
-    return render_template('reset_authenticate.html', form=form)
+            return render_template('reset-authenticate.html', form=form, authenticate_error=error)
+    return render_template('reset-authenticate.html', form=form)
 
 
-@views.route('/reset_pwd', methods=('GET', 'POST'))
+@views.route('/reset-pwd', methods=['GET', 'POST'])
 def reset_pwd():
     if 'nric' not in session:
         return redirect(url_for('views.reset_identify'))
@@ -222,11 +222,11 @@ def reset_pwd():
             reset_details(user, "password", password)
             return redirect(url_for("views.login"))
         else:
-            return render_template('reset_pwd.html', form=form, reset_error=error)
-    return render_template('reset_pwd.html', form=form)
+            return render_template('reset-pwd.html', form=form, reset_error=error)
+    return render_template('reset-pwd.html', form=form)
 
 
-@views.route('/reset_username', methods=('GET', 'POST'))
+@views.route('/reset-username', methods=['GET', 'POST'])
 def reset_username():
     if 'nric' not in session:
         return redirect(url_for('views.reset_identity'))
@@ -237,31 +237,31 @@ def reset_username():
         if user:
             username = User.query.filter_by(username=form.username.data).first()
             if username:
-                return render_template('reset_username.html', form=form, reset_error="Username exists")
+                return render_template('reset-username.html', form=form, reset_error="Username exists")
             else:
                 del session['nric']
                 reset_details(user, "username", form.username.data)
             return redirect(url_for("views.login"))
         else:
-            return render_template('reset_username.html', form=form, reset_error=error)
-    return render_template('reset_username.html', form=form)
+            return render_template('reset-username.html', form=form, reset_error=error)
+    return render_template('reset-username.html', form=form)
 
 
-@views.route('/personal_banking/dashboard', methods=('GET', 'POST'))
+@views.route('/personal-banking/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    data = db.session.query(Account).filter(User.id == current_user.id ).first()
+    data = db.session.query(Account).filter(User.id == current_user.id).first()
     return render_template('dashboard.html', title="Dashboard",
                            name=f"{current_user.firstname} {current_user.lastname}!", data=data)
 
 
-@views.route("/personal_banking/profile")
+@views.route("/personal-banking/profile", methods=['GET', 'POST'])
 @login_required
 def profile():
     return render_template('profile.html', title="Profile Page")
 
 
-@views.route("/personal_banking/admin-dashboard")
+@views.route("/personal-banking/admin-dashboard")
 @login_required
 def admin_dashboard():
     if current_user.is_admin:
@@ -269,18 +269,18 @@ def admin_dashboard():
     return redirect(url_for('views.dashboard'))
 
 
-@views.route("/personal_banking/add-transferee")
+@views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
 def add_transferee():
     return render_template('add-transferee.html', title="Add Transferee")
    
 
-@views.route("/personal_banking/transaction-history")
+@views.route("/personal-banking/transaction-history")
 @login_required
 def transaction_history():
     return render_template('transaction-history.html', title="Transaction History")
 
 
-@views.route("/robots.txt")
+@views.route("/robots.txt", methods=['GET'])
 def robots():
     return render_template('robots.txt', title="Robots")
