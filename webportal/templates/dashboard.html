@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<p>welcome {{ name }}</p>
-</body>
-</html>
+{% extends "layouts/base.html" %}
+{% block title %} Dashboard {% endblock %}
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+    <main id="login" class="h-100">
+        <section class="container d-flex flex-column justify-content-start h-100">
+            <div class="row justify-content-center">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="form-container text-center align-self-center">
+                        <p>welcome {{ name }}</p>
+                        <p>Balance: {{ data.acc_balance }}</p>
+                        <p>Transfer Limit: {{ data.acc_xfer_limit }}</p>
+                        <p>Account Number: {{ data.acc_number }}</p>
+                        <button type="button">Transfer Money</button>
+                        <button type="button">Add Transferee</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}

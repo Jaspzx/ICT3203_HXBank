@@ -1,5 +1,9 @@
-{% extends "layouts/base.html" %} {% block title %}Register{% endblock %} {%
-block stylesheets %}{% endblock stylesheets %} {% block content %}
+{% extends "layouts/base.html" %}
+{% block title %}Register{% endblock %}
+{% block stylesheets %}{% endblock stylesheets %}
+
+
+{% block content %}
 <main id="register" class="h-100">
   <section class="container d-flex flex-column justify-content-start h-100">
     <div class="row justify-content-center">
@@ -147,9 +151,7 @@ block stylesheets %}{% endblock stylesheets %} {% block content %}
             {% endif %}
 
             <!-- Submit Button-->
-            <p>
-              <input type="submit" value="Register" />
-            </p>
+            {{ form.submit(class="form-btn") }}
           </form>
         </div>
       </div>
