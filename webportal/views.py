@@ -44,7 +44,7 @@ def register():
         nric = form.nric.data
         dob = form.dob.data
         password = flask_bcrypt.generate_password_hash(form.password.data)
-        user = createUser(username, firstname, lastname, address, email, mobile, nric, dob, password)
+        createUser(username, firstname, lastname, address, email, mobile, nric, dob, password)
         user = User.query.filter_by(username=username).first()
         createAccount(user.id)
         session['username'] = username
@@ -247,7 +247,7 @@ def reset_username():
     return render_template('reset_username.html', form=form)
 
 
-@views.route('/dashboard', methods=('GET', 'POST'))
+@views.route('/personal_banking/dashboard', methods=('GET', 'POST'))
 @login_required
 def dashboard():
     data = db.session.query(Account).filter(User.id == current_user.id ).first()
@@ -255,13 +255,13 @@ def dashboard():
                            name=f"{current_user.firstname} {current_user.lastname}!", data=data)
 
 
-@views.route("/profile")
+@views.route("/personal_banking/profile")
 @login_required
 def profile():
     return render_template('profile.html', title="Profile Page")
 
 
-@views.route("/admin-dashboard")
+@views.route("/personal_banking/admin-dashboard")
 @login_required
 def admin_dashboard():
     if current_user.is_admin:
@@ -269,13 +269,13 @@ def admin_dashboard():
     return redirect(url_for('views.dashboard'))
 
 
-@views.route("/add-transferee")
+@views.route("/personal_banking/add-transferee")
 @login_required
 def add_transferee():
     return render_template('add-transferee.html', title="Add Transferee")
    
 
-@views.route("/transaction-history")
+@views.route("/personal_banking/transaction-history")
 @login_required
 def transaction_history():
     return render_template('transaction-history.html', title="Transaction History")
