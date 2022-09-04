@@ -61,3 +61,8 @@ class ResetPasswordForm(FlaskForm):
 class ResetUsernameForm(FlaskForm):
     username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20)])
     submit = SubmitField("Reset")
+
+
+class AddTransfereeForm(FlaskForm):
+    transferee_acc = StringField("Transferee Account No.", validators=[InputRequired(), Length(min=10, max=10)])
+    submit = SubmitField("Add")

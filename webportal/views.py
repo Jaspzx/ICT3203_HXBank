@@ -5,6 +5,7 @@ from .forms import *
 from webportal.models.User import *
 from webportal.models.Account import *
 from webportal.models.Transaction import * 
+from webportal.models.Transferee import * 
 from webportal import flask_bcrypt, login_manager
 from io import BytesIO
 
@@ -269,16 +270,46 @@ def admin_dashboard():
     return redirect(url_for('views.dashboard'))
 
 
-@views.route("/add-transferee")
+@views.route("/transfer")
+@login_required
+def transfer():
+    return render_template('transfer.html', title="Transfer")
+
+
+@views.route("/add-transferee", methods=('GET', 'POST'))
 @login_required
 def add_transferee():
-    return render_template('add-transferee.html', title="Add Transferee")
+    form = AddTransfereeForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        transferee_acc = Account.query.filter_by(acc_number=form.transferee_acc.data).first()
+        if transferee_acc:
+            transferee_add(current_user.id, transferee_acc.id)
+            return redirect(url_for('views.success'))
+        else:
+            add_error = "Invalid account!"
+            return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error)
+
+    return render_template('add-transferee.html', title="Add Transferee", form=form)
    
 
 @views.route("/transaction-history")
 @login_required
 def transaction_history():
     return render_template('transaction-history.html', title="Transaction History")
+
+
+@views.route("/view-transferee")
+@login_required
+def view_transferee():
+    transferee_details = Transferee.query.filter_by(transferer_id=current_user.id).first()
+
+    return render_template('view-transferee.html', title="View Transferee", transferee_details=transferee_details)
+
+
+@views.route("/success")
+@login_required
+def success():
+    return render_template('success.html', title="Success")
 
 
 @views.route("/robots.txt")
