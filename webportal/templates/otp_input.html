@@ -17,6 +17,11 @@
                             {% if login_error %}
                                 <div class="alert alert-danger" role="alert">{{ login_error }}</div>
                             {% endif %}
+                            {% if form.token.errors %}
+                            {% for error in form.token.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
                         </div>
                         <div class="form-group">
                             {{ form.token.label(class="form-label") }}

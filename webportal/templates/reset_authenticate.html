@@ -17,18 +17,16 @@
                                 {% if authenticate_error %}
                                     <div class="alert alert-danger" role="alert">{{ authenticate_error }}</div>
                                 {% endif %}
+                                {% if form.token.errors %}
+                                {% for error in form.token.errors %}
+                                    <div class="alert alert-danger" role="alert">{{ error }}</div>
+                                {% endfor %}
+                                {% endif %}
                             </div>
                             <div class="form-group">
                                 {{ form.token.label }}
                                 {{ form.token(class="form-control", placeholder="Enter your OTP") }}
                             </div>
-                            {% if form.token.errors %}
-                                <ul class="errors">
-                                    {% for error in form.token.errors %}
-                                        <li>{{ error }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% endif %}
                             <div class="form-group">
                                 {{ form.submit(class="form-btn") }}
                             </div>
