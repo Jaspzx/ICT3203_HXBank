@@ -18,7 +18,7 @@
 						Understand Your Finance Clearly
 					</h1>
 					<div class="hero__button">
-						<a href="register.php" title="Register Page" class="btn">
+						<a href="{{ url_for('views.register') }}" title="Register Page" class="btn">
 								Get Started
 						</a>
 					</div>
@@ -67,7 +67,7 @@
 						<p>Apply for one today.</p>
 
 					</div>
-					<a href="/register" title="Register Page" class="btn btn__funding">
+					<a href="{{ url_for('views.register') }}" title="Register Page" class="btn btn__funding">
 							Apply
 					</a>
 				</div>
@@ -124,7 +124,7 @@
 						</p>
 
 					</div>
-					<a href="/register" title="Register Page" class="btn btn__benefits">
+					<a href="{{ url_for('views.register') }}" title="Register Page" class="btn btn__benefits">
 							Get Started
 					</a>
 				</div>
