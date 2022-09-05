@@ -4,7 +4,7 @@ from flask_login import login_required, login_user, logout_user, current_user
 from .forms import *
 from webportal.models.User import *
 from webportal.models.Account import *
-from webportal.models.Transaction import * 
+from webportal.models.Transaction import *
 from webportal import flask_bcrypt, login_manager
 from io import BytesIO
 
@@ -269,11 +269,17 @@ def admin_dashboard():
     return redirect(url_for('views.dashboard'))
 
 
+@views.route("/transfer")
+@login_required
+def transfer():
+    return render_template('transfer.html', title="Transfer")
+
+
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
 def add_transferee():
     return render_template('add-transferee.html', title="Add Transferee")
-   
+
 
 @views.route("/personal-banking/transaction-history")
 @login_required
