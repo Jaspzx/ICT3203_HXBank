@@ -1,2 +1,8 @@
 <h1>Vieew Transferee</h1>
-{{ transferee_details }}
+{% for i in data %}
+    <div>
+        {{ i.acc_num }}
+        {{ i.first_name }}
+        {{ i.last_name }}        
+    </div>
+{% endfor %}

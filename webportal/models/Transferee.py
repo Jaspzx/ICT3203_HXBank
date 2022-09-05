@@ -14,7 +14,6 @@ class Transferee(db.Model):
         self.transferee_id = transferee_id
         self.date_added = datetime.now()
 
-
 def transferee_add(transferer_id, transferee_id):
     new_transferee = Transferee(transferer_id, transferee_id)
     try:
