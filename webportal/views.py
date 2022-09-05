@@ -32,16 +32,27 @@ def register():
         return redirect(url_for('views.dashboard'))
     form = RegisterForm()
     if request.method == 'POST' and form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user is not None:
-            return render_template('register.html', title="Register", form=form, register_error="Username exists")
         username = form.username.data
+        user = User.query.filter_by(username=username).first()
+        if user is not None:
+            return render_template('register.html', title="Register", form=form,
+                                   register_error="Username already in use")
         firstname = form.firstname.data
         lastname = form.lastname.data
         address = form.address.data
         email = form.email.data
+        user = User.query.filter_by(username=email).first()
+        if user is not None:
+            return render_template('register.html', title="Register", form=form, register_error="Email already in use")
         mobile = form.mobile.data
+        user = User.query.filter_by(username=mobile).first()
+        if user is not None:
+            return render_template('register.html', title="Register", form=form, register_error="Mobile already in use")
         nric = form.nric.data
+        user = User.query.filter_by(username=nric).first()
+        if user is not None:
+            return render_template('register.html', title="Register", form=form,
+                                   register_error="Identification No. already in use")
         dob = form.dob.data
         password = flask_bcrypt.generate_password_hash(form.password.data)
         createUser(username, firstname, lastname, address, email, mobile, nric, dob, password)
