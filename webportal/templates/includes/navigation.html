@@ -31,7 +31,7 @@
                         <a class="dropdown-item" href="{{ url_for('views.transfer') }}">Transfer to another account</a>
                         <a class="dropdown-item" href="{{ url_for('views.add_transferee') }}">Add Transfer Recipient</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Set Transfer Limit</a>
+                        <a class="dropdown-item" href="{{ url_for('views.set_transfer_limit') }}">Set Transfer Limit</a>
                         <a class="dropdown-item" href="{{ url_for('views.view_transferee') }}">View Transfer Recipients</a>
                     </div>
                 </li>

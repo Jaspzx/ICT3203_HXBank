@@ -30,5 +30,16 @@ def createAccount(userid):
     finally:
         db.session.close()
 
+def setTransferLimit(userid, transfer_limit):
+    print(userid)
+    acc = Account.query.filter_by(userid=userid).first() 
+    acc.acc_xfer_limit = transfer_limit
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()
+
 def updateBalance():
     pass 

@@ -1,27 +1,20 @@
 <h1>Add Transferee</h1>
 <form method="POST" action="/add-transferee">
-    {{ form.csrf_token }}
-    <p>
-        {{ form.transferee_acc.label }}
-        {{ form.transferee_acc(size=20) }}
-    </p>
-    {% if form.transferee_acc.errors %}
-        <ul class="errors">
-            {% for error in form.transferee_acc.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+	{{ form.csrf_token }}
+	<p>
+		{{ form.transferee_acc.label }}
+		{{ form.transferee_acc(size=20) }}
+	</p>
+	{% if form.transferee_acc.errors %}
+		<ul class="errors">
+			{% for error in form.transferee_acc.errors %}
+				<li>{{ error }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
 
-    {% if add_error %}
-    <div class="alert alert-danger" role="alert">{{ add_error }}</div>
-    {% endif %}
-
-
-
-    <!-- {% if add_error %}
-    <div class="alert alert-danger" role="alert">{{ login_error }}</div>
-    {% endif %} -->
-
-    {{ form.submit(class="form-btn") }}
+	{% if add_error %}
+	<div class="alert alert-danger" role="alert">{{ add_error }}</div>
+	{% endif %}
+	{{ form.submit(class="form-btn") }}
 </form>

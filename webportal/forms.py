@@ -66,3 +66,8 @@ class ResetUsernameForm(FlaskForm):
 class AddTransfereeForm(FlaskForm):
     transferee_acc = StringField("Transferee Account No.", validators=[InputRequired(), Length(min=10, max=10)])
     submit = SubmitField("Add")
+
+
+class SetTransferLimitForm(FlaskForm):
+    transfer_limit = IntegerField("Set Transfer Limit.")
+    submit = SubmitField("Set")

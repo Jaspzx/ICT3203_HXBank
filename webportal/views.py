@@ -328,6 +328,16 @@ def view_transferee():
 	return render_template('view-transferee.html', title="View Transferee", data=data)
 
 
+@views.route("/set-transfer-limit", methods=('GET', 'POST'))
+@login_required
+def set_transfer_limit():
+	form = SetTransferLimitForm()
+	if request.method == 'POST' and form.validate_on_submit():
+		setTransferLimit(current_user.id, form.transfer_limit.data)
+		return redirect(url_for('views.success'))
+	return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form)
+
+
 @views.route("/success")
 @login_required
 def success():
