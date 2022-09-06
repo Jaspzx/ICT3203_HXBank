@@ -17,8 +17,9 @@ class Account(db.Model):
         self.acc_number = acc_number
         self.userid = userid
 
+
 def createAccount(userid):
-    random_gen = SystemRandom() 
+    random_gen = SystemRandom()
     acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
     welcome_amt = random_gen.randrange(1000, 10000)
     new_account = Account(acc_number, userid, welcome_amt)
@@ -30,8 +31,9 @@ def createAccount(userid):
     finally:
         db.session.close()
 
+
 def setTransferLimit(userid, transfer_limit):
-    acc = Account.query.filter_by(userid=userid).first() 
+    acc = Account.query.filter_by(userid=userid).first()
     acc.acc_xfer_limit = transfer_limit
     try:
         db.session.commit()
@@ -40,5 +42,6 @@ def setTransferLimit(userid, transfer_limit):
     finally:
         db.session.close()
 
+
 def updateBalance():
-    pass 
+    pass

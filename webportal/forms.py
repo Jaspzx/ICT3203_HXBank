@@ -7,77 +7,80 @@ from webportal.models.Account import *
 
 
 class RegisterForm(FlaskForm):
-	username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20)])
-	firstname = StringField("First Name", validators=[InputRequired(), Length(min=3, max=20)])
-	lastname = StringField("Last Name", validators=[InputRequired(), Length(min=3, max=20)])
-	address = StringField("Address", validators=[InputRequired(), Length(min=3, max=30)])
-	password = PasswordField("Password", validators=[InputRequired(), Length(min=8),
-													 EqualTo('confirm_password', message='Passwords must match'),
-													 Regexp("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
-															message="Password complexity not met")])
-	confirm_password = PasswordField("Repeat Password")
-	email = StringField("Email", validators=[InputRequired(), Length(min=3, max=50), Email()])
-	nric = StringField("Identification No.", validators=[InputRequired(), Length(min=9, max=9)])
-	dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
-	mobile = StringField("Mobile", validators=[InputRequired(), Length(min=3, max=20)])
-	accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
-	submit = SubmitField("Sign Up")
+    username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20)])
+    firstname = StringField("First Name", validators=[InputRequired(), Length(min=3, max=20)])
+    lastname = StringField("Last Name", validators=[InputRequired(), Length(min=3, max=20)])
+    address = StringField("Address", validators=[InputRequired(), Length(min=3, max=30)])
+    password = PasswordField("Password", validators=[InputRequired(), Length(min=8),
+                                                     EqualTo('confirm_password', message='Passwords must match'),
+                                                     Regexp(
+                                                         "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
+                                                         message="Password complexity not met")])
+    confirm_password = PasswordField("Repeat Password")
+    email = StringField("Email", validators=[InputRequired(), Length(min=3, max=50), Email()])
+    nric = StringField("Identification No.", validators=[InputRequired(), Length(min=9, max=9)])
+    dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
+    mobile = StringField("Mobile", validators=[InputRequired(), Length(min=3, max=20)])
+    accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
+    submit = SubmitField("Sign Up")
 
 
 class LoginForm(FlaskForm):
-	username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20)],
-						   render_kw={"placeholder": "Username"})
-	password = PasswordField("Password", validators=[InputRequired()],
-							 render_kw={"placeholder": "Password"})
-	submit = SubmitField("Sign In")
+    username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20)],
+                           render_kw={"placeholder": "Username"})
+    password = PasswordField("Password", validators=[InputRequired()],
+                             render_kw={"placeholder": "Password"})
+    submit = SubmitField("Sign In")
 
 
 class Token2FAForm(FlaskForm):
-	token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6)],
-						render_kw={"placeholder": "OTP Token"})
-	submit = SubmitField("Authenticate")
+    token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6)],
+                        render_kw={"placeholder": "OTP Token"})
+    submit = SubmitField("Authenticate")
 
 
 class ResetFormIdentify(FlaskForm):
-	nric = StringField("Identification No.", validators=[InputRequired(), Length(min=9, max=9)])
-	dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
-	submit = SubmitField("Next")
+    nric = StringField("Identification No.", validators=[InputRequired(), Length(min=9, max=9)])
+    dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
+    submit = SubmitField("Next")
 
 
 class ResetFormAuthenticate(FlaskForm):
-	token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6)],
-						render_kw={"placeholder": "OTP Token"})
-	submit = SubmitField("Next")
+    token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6)],
+                        render_kw={"placeholder": "OTP Token"})
+    submit = SubmitField("Next")
 
 
 class ResetPasswordForm(FlaskForm):
-	password = PasswordField("Password", validators=[InputRequired(), Length(min=8),
-													 EqualTo('confirm_password', message='Passwords must match'),
-													 Regexp(
-													 "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
-													 message="Password complexity not met")])
-	confirm_password = PasswordField("Repeat Password")
-	submit = SubmitField("Reset")
+    password = PasswordField("Password", validators=[InputRequired(), Length(min=8),
+                                                     EqualTo('confirm_password', message='Passwords must match'),
+                                                     Regexp(
+                                                         "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
+                                                         message="Password complexity not met")])
+    confirm_password = PasswordField("Repeat Password")
+    submit = SubmitField("Reset")
 
 
 class ResetUsernameForm(FlaskForm):
-	username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20)])
-	submit = SubmitField("Reset")
+    username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20)])
+    submit = SubmitField("Reset")
 
 
 class AddTransfereeForm(FlaskForm):
-	transferee_acc = StringField("Transferee Account No.", validators=[InputRequired(), Length(min=10, max=10)])
-	submit = SubmitField("Add")
+    transferee_acc = StringField("Transferee Account No.", validators=[InputRequired(), Length(min=10, max=10)])
+    submit = SubmitField("Add")
 
 
 class SetTransferLimitForm(FlaskForm):
-	transfer_limit = IntegerField("Set Transfer Limit.")
-	submit = SubmitField("Set")
+    transfer_limit = IntegerField("Set Transfer Limit.")
+    submit = SubmitField("Set")
+
 
 class TransferMoneyForm(FlaskForm):
-	transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
-	submit = SubmitField("Transfer")
+    transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
+    submit = SubmitField("Transfer")
+
 
 class RemoveTransfereeForm(FlaskForm):
-	transferee_acc = SelectField("Remove Account.", coerce=str, validators=[InputRequired()])
-	submit = SubmitField("Remove") 
+    transferee_acc = SelectField("Remove Account.", coerce=str, validators=[InputRequired()])
+    submit = SubmitField("Remove")

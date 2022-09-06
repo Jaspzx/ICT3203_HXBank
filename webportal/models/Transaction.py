@@ -14,9 +14,8 @@ class Transaction(db.Model):
         self.amt_transferred = amt_transferred
         self.transferer = transferer
         self.transferee = transferee
-        self.require_approval = require_approval  
+        self.require_approval = require_approval
+
 
 def createTransaction():
-    pass 
-
-
+    pass
