@@ -1,0 +1,16 @@
+<h1>Set Transfer Limit</h1>
+<form method="POST" action="/set-transfer-limit">
+	{{ form.csrf_token }}
+	<p>
+		{{ form.transfer_limit.label }}
+		{{ form.transfer_limit(size=20) }}
+	</p>
+	{% if form.transfer_limit.errors %}
+		<ul class="errors">
+			{% for error in form.transfer_limit.errors %}
+				<li>{{ error }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+	{{ form.submit(class="form-btn") }}
+</form>
