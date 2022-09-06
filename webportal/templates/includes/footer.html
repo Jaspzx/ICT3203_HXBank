@@ -1,9 +1,19 @@
-<footer class="footer-area">
+<footer class="footer-area bg-secondary">
     <div class="copyright__area">
         <div class="container">
-        <div class="row">
-            <div class="col-sm-6">
-                <p class="copyright_text">
+            <div class="col-sm-12">
+                <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+                    {% if not current_user.is_authenticated %}
+                    <li class="nav-item"><a href="{{ url_for('views.home') }}" class="nav-link px-2 text-white">Home</a></li>
+                    {% elif current_user.is_authenticated and not current_user.is_admin %}
+                    <li class="nav-item"><a href="{{ url_for('views.dashboard') }}" class="nav-link px-2 text-white">Home</a></li>
+                    {% elif current_user.is_authenticated and current_user.is_admin %}
+                    <li class="nav-item"><a href="{{ url_for('views.admin_dashboard') }}" class="nav-link px-2 text-white">Home</a></li>
+                    {% endif %}
+                    <li class="nav-item"><a href="#" class="nav-link px-2 text-white">FAQs</a></li>
+                    <li class="nav-item"><a href="{{ url_for('views.about') }}" class="nav-link px-2 text-white">About Us</a></li>
+                </ul>
+                <p class="copyright_text text-white text-center">
                     Copyright &copy; 2022 HXBank. All Rights Reserved
                 </p>
             </div>
