@@ -17,7 +17,7 @@
                 </div>
                 <div class="col-lg-2 col-xl-4">
                     <div class="card">
-                        <div class="card-header">Welcome Back, {{ name }}</div>
+                        <div class="card-header">Welcome Back, {{ current_user.firstname }} {{ current_user.lastname }}!</div>
                         <div class="card-body">
                             <h5 class="card-title">Account Number: {{ data.acc_number }}</h5>
                             <p class="card-text">Last Login: {{ current_user.last_login }}</p>

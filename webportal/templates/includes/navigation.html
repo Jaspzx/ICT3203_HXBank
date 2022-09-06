@@ -55,8 +55,32 @@
                 {% endblock %}
                 {% endif %}
                 {% if current_user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><span class="material-icons md-light">notifications</span></a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link" href="#" id="notificationDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {% if msg_data %}
+                        <span class="material-icons md-light">notifications_active</span>
+                        {% else %}
+                        <span class="material-icons md-light">notifications_none</span>
+                        {% endif %}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-dark" aria-labelledby="notificationDropdown">
+                        {% if msg_data %}
+                        {% for msg in msg_data  %}
+                            {% if loop.index <= 5 %}
+                                <p class="dropdown-item {{ 'text_muted' if msg.read else 'text-white' }}">
+                                    {% if not msg.read %}
+                                    <span class="material-icons md-18 md-light align-middle">priority_high</span>
+                                    {% endif %}
+                                    {{ msg.message|truncate(50, True) }}
+                                </p>
+                                <div class="dropdown-divider border border-secondary"></div>
+                            {% endif %}
+                        {% endfor %}
+                        {% else %}
+                        <p class="dropdown-item">You have no Messages!</p>
+                        {% endif %}
+                        <a class="dropdown-item text-center" href="#">View More Message(s)</a>
+                    </div>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#"><span class="material-icons md-light">settings</span></a>
@@ -66,7 +90,7 @@
                         <span class="material-icons md-light">account_circle</span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-dark" aria-labelledby="profileDropdown">
-                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-divider border border-secondary"></div>
                         <a class="dropdown-item" href="{{ url_for('views.logout') }}">Logout</a>
                     </div>
                 </li>

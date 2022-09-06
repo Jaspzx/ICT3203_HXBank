@@ -1,6 +1,7 @@
 import pyqrcode
 from flask import Flask, Blueprint, redirect, url_for, render_template, request, session, abort
 from flask_login import login_required, login_user, logout_user, current_user
+from sqlalchemy import desc
 from .forms import *
 from webportal.models.User import *
 from webportal.models.Account import *
@@ -147,6 +148,7 @@ def otp_input():
             del session['username']
             login_user(user, duration=timedelta(minutes=5))
             update_on_success(user)
+            message_add(f"You have logged in on {current_user.last_login}", current_user.id)
             if current_user.is_admin is True:
                 return redirect(url_for('views.admin_dashboard'))
             return redirect(url_for('views.dashboard'))
@@ -264,9 +266,17 @@ def reset_username():
 @login_required
 def dashboard():
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
-    msg_data = db.session.query(Message).join(User).filter(User.id == current_user.id).first()
-    return render_template('dashboard.html', title="Dashboard",
-                           name=f"{current_user.firstname} {current_user.lastname}!", data=data, msg_data=msg_data)
+    msg_query = db.session.query(Message).join(User).filter(User.id == current_user.id).order_by(desc(Message.date_sent)).all()
+    msg_data = []
+    for message in msg_query:
+        msg_dict = {"message": None, "read": None}
+        msg = db.session.query(Message).filter_by(id=message.id).first()
+        msg_dict["message"] = msg.message
+        msg_dict["read"] = msg.read
+        msg_data.append(msg_dict)
+    if current_user.is_admin:
+        return render_template('admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
+    return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
 
 
 @views.route("/personal-banking/profile", methods=['GET', 'POST'])
@@ -278,9 +288,19 @@ def profile():
 @views.route("/personal-banking/admin-dashboard", methods=['GET', 'POST'])
 @login_required
 def admin_dashboard():
-    if current_user.is_admin:
-        return render_template('admin-dashboard.html', title="Admin Dashboard")
-    return redirect(url_for('views.dashboard'))
+    data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    msg_query = db.session.query(Message).join(User).filter(User.id == current_user.id).order_by(
+        desc(Message.date_sent)).all()
+    msg_data = []
+    for message in msg_query:
+        msg_dict = {"message": None, "read": None}
+        msg = db.session.query(Message).filter_by(id=message.id).first()
+        msg_dict["message"] = msg.message
+        msg_dict["read"] = msg.read
+        msg_data.append(msg_dict)
+    if not current_user.is_admin:
+        return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
+    return render_template('admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
 
 
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
