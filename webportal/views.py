@@ -1,14 +1,13 @@
 import pyqrcode
 from flask import Flask, Blueprint, redirect, url_for, render_template, request, session, abort
 from flask_login import login_required, login_user, logout_user, current_user
-from sqlalchemy import desc
 from .forms import *
 from webportal.models.User import *
 from webportal.models.Account import *
 from webportal.models.Transaction import *
 from webportal.models.Transferee import *
-from webportal.models.Message import *
 from webportal import flask_bcrypt, login_manager
+from .utils.messaging import *
 from io import BytesIO
 
 views = Blueprint('views', __name__)
@@ -36,24 +35,24 @@ def register():
     form = RegisterForm()
     if request.method == 'POST' and form.validate_on_submit():
         username = form.username.data
-        user = User.query.filter_by(username=username).first()
-        if user is not None:
+        check = User.query.filter_by(username=username).first()
+        if check is not None:
             return render_template('register.html', title="Register", form=form,
                                    register_error="Username already in use")
         firstname = form.firstname.data
         lastname = form.lastname.data
         address = form.address.data
         email = form.email.data
-        user = User.query.filter_by(username=email).first()
-        if user is not None:
+        check = User.query.filter_by(email=email).first()
+        if check is not None:
             return render_template('register.html', title="Register", form=form, register_error="Email already in use")
         mobile = form.mobile.data
-        user = User.query.filter_by(username=mobile).first()
-        if user is not None:
+        check = User.query.filter_by(mobile=mobile).first()
+        if check is not None:
             return render_template('register.html', title="Register", form=form, register_error="Mobile already in use")
         nric = form.nric.data
-        user = User.query.filter_by(username=nric).first()
-        if user is not None:
+        check = User.query.filter_by(nric=nric).first()
+        if check is not None:
             return render_template('register.html', title="Register", form=form,
                                    register_error="Identification No. already in use")
         dob = form.dob.data
@@ -266,14 +265,7 @@ def reset_username():
 @login_required
 def dashboard():
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
-    msg_query = db.session.query(Message).join(User).filter(User.id == current_user.id).order_by(desc(Message.date_sent)).all()
-    msg_data = []
-    for message in msg_query:
-        msg_dict = {"message": None, "read": None}
-        msg = db.session.query(Message).filter_by(id=message.id).first()
-        msg_dict["message"] = msg.message
-        msg_dict["read"] = msg.read
-        msg_data.append(msg_dict)
+    msg_data = load_nav_messages()
     if current_user.is_admin:
         return render_template('admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
     return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
@@ -289,15 +281,7 @@ def profile():
 @login_required
 def admin_dashboard():
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
-    msg_query = db.session.query(Message).join(User).filter(User.id == current_user.id).order_by(
-        desc(Message.date_sent)).all()
-    msg_data = []
-    for message in msg_query:
-        msg_dict = {"message": None, "read": None}
-        msg = db.session.query(Message).filter_by(id=message.id).first()
-        msg_dict["message"] = msg.message
-        msg_dict["read"] = msg.read
-        msg_data.append(msg_dict)
+    msg_data = load_nav_messages()
     if not current_user.is_admin:
         return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
     return render_template('admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
@@ -407,6 +391,30 @@ def set_transfer_limit():
         setTransferLimit(current_user.id, form.transfer_limit.data)
         return redirect(url_for('views.success'))
     return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form)
+
+
+@views.route("/personal-banking/message_center", methods=['GET', 'POST'])
+@login_required
+def message_center():
+    msg_data = load_nav_messages()
+    form = SecureMessageForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        msg = db.session.query(Message).filter_by(id=form.msg.data).first()
+        if msg:
+            check = db.session.query(Message).join(User).filter(User.id == current_user.id).first()
+        else:
+            error = "Something went wrong"
+            return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form,
+                                   msg_error=error)
+        if check:
+            if form.mark.data:
+                message_status(msg, True)
+            elif form.unmark.data:
+                message_status(msg, False)
+            elif form.delete.data:
+                message_del(msg)
+        return redirect(url_for('views.message_center'))
+    return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)
 
 
 @views.route("/success")

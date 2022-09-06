@@ -1,8 +1,7 @@
 from flask_wtf import FlaskForm, RecaptchaField
 from flask_login import current_user
-from wtforms import StringField, DateField, IntegerField, BooleanField, PasswordField, SubmitField, SelectField
+from wtforms import StringField, DateField, IntegerField, BooleanField, PasswordField, SubmitField, SelectField, HiddenField
 from wtforms.validators import InputRequired, Length, Email, EqualTo, Regexp
-from wtforms.widgets import PasswordInput
 from webportal.models.Account import *
 
 
@@ -84,3 +83,10 @@ class TransferMoneyForm(FlaskForm):
 class RemoveTransfereeForm(FlaskForm):
     transferee_acc = SelectField("Remove Account.", coerce=str, validators=[InputRequired()])
     submit = SubmitField("Remove")
+
+
+class SecureMessageForm(FlaskForm):
+    msg = HiddenField()
+    mark = SubmitField("Read")
+    unmark = SubmitField("Unread")
+    delete = SubmitField("Delete")

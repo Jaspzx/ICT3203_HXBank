@@ -67,7 +67,7 @@
                         {% if msg_data %}
                         {% for msg in msg_data  %}
                             {% if loop.index <= 5 %}
-                                <p class="dropdown-item {{ 'text_muted' if msg.read else 'text-white' }}">
+                                <p class="dropdown-item {{ 'text-muted' if msg.read else 'text-white' }}">
                                     {% if not msg.read %}
                                     <span class="material-icons md-18 md-light align-middle">priority_high</span>
                                     {% endif %}
@@ -79,7 +79,7 @@
                         {% else %}
                         <p class="dropdown-item">You have no Messages!</p>
                         {% endif %}
-                        <a class="dropdown-item text-center" href="#">View More Message(s)</a>
+                        <a class="dropdown-item text-center" href="{{ url_for('views.message_center') }}">View All Message(s)</a>
                     </div>
                 </li>
                 <li class="nav-item">

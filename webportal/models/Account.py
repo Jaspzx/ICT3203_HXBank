@@ -1,6 +1,7 @@
 from webportal import db
 from random import SystemRandom
 from webportal.models.Transaction import *
+from ..utils.messaging import *
 
 
 class Account(db.Model):
@@ -11,7 +12,6 @@ class Account(db.Model):
     userid = db.Column(db.INT, db.ForeignKey('user.id'))
 
     def __init__(self, acc_number, userid, acc_balance):
-        print(acc_balance)
         self.acc_balance = acc_balance
         self.acc_xfer_limit = 1000
         self.acc_number = acc_number
@@ -23,6 +23,7 @@ def createAccount(userid):
     acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
     welcome_amt = random_gen.randrange(1000, 10000)
     new_account = Account(acc_number, userid, welcome_amt)
+    message_add(welcome_msg(welcome_amt), userid)
     try:
         db.session.add(new_account)
         db.session.commit()
