@@ -6,3 +6,20 @@
         {{ i.last_name }}        
     </div>
 {% endfor %}
+
+<h1>Remove Transferee</h1>
+<form method="POST" action="{{ url_for('views.view_transferee') }}">
+	{{ form.csrf_token }}
+	<p>
+		{{ form.transferee_acc.label }}
+		{{ form.transferee_acc(size=1) }}
+	</p>
+	{% if form.transferee_acc.errors %}
+		<ul class="errors">
+			{% for error in form.transferee_acc.errors %}
+				<li>{{ error }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+	{{ form.submit(class="form-btn") }}
+</form>
