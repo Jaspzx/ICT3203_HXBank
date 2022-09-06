@@ -1,18 +1,18 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container">
         {% if not current_user.is_authenticated %}
-        <a class="navbar-brand" href="{{ url_for('views.home') }}">HXBank</a>
+        <a class="navbar-brand w-50 me-auto" href="{{ url_for('views.home') }}">HXBank</a>
         {% elif current_user.is_authenticated and not current_user.is_admin %}
-        <a class="navbar-brand" href="{{ url_for('views.dashboard') }}">HXBank</a>
+        <a class="navbar-brand w-50 me-auto" href="{{ url_for('views.dashboard') }}">HXBank</a>
         {% elif current_user.is_authenticated and current_user.is_admin %}
-        <a class="navbar-brand" href="{{ url_for('views.admin_dashboard') }}">HXBank</a>
+        <a class="navbar-brand w-50 me-auto" href="{{ url_for('views.admin_dashboard') }}">HXBank</a>
         {% endif %}
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar" aria-controls="navbar"
                 aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse pl-3 pl-lg-0" id="navbar">
-            <ul class="navbar-nav mt-2 mt-lg-0">
+        <div class="collapse navbar-collapse pl-3 pl-lg-0 w-100" id="navbar">
+            <ul class="navbar-nav mt-2 mt-lg-0 w-100 justify-content-center">
                 {% if not current_user.is_authenticated %}
                 {% block nav_about %}
                 <li class="nav-item">
@@ -31,7 +31,8 @@
                         <a class="dropdown-item" href="{{ url_for('views.transfer') }}">Transfer to another account</a>
                         <a class="dropdown-item" href="{{ url_for('views.add_transferee') }}">Add Transfer Recipient</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">Set Transfer Limit</a>
+                        <a class="dropdown-item" href="{{ url_for('views.set_transfer_limit') }}">Set Transfer Limit</a>
+                        <a class="dropdown-item" href="{{ url_for('views.view_transferee') }}">View Transfer Recipients</a>
                     </div>
                 </li>
                 {% elif current_user.is_authenticated and current_user.is_admin %}
@@ -46,23 +47,36 @@
                 </li>
                 {% endif %}
             </ul>
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto w-100 justify-content-end">
                 {% if not current_user.is_authenticated %}
                 {% block nav_login %}
-                    <li class="nav-item">
-                {% endblock %}
-                <a class="nav-link" href="{{ url_for('views.login') }}">Login</a>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('views.login') }}">Login</a>
                 </li>
-                {% block nav_register %}
-                    <li class="nav-item">
                 {% endblock %}
-                <a class="btn btn__primary" href="{{ url_for('views.register') }}">Open Account</a>
+                {% block nav_register %}
+                <li class="nav-item">
+                    <a class="btn btn__primary" href="{{ url_for('views.register') }}">Open Account</a>
+                </li>
+                {% endblock %}
                 {% endif %}
                 {% if current_user.is_authenticated %}
-                <a class="nav-link" href="{{ url_for('views.profile') }}"><span class="material-icons md-36 md-light">account_circle</span></a>
-                <a class="nav-link" href="{{ url_for('views.logout') }}"><span class="material-icons md-36 md-light">logout</span></a>
-                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><span class="material-icons md-light">notifications</span></a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><span class="material-icons md-light">settings</span></a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link" href="#" id="profileDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="material-icons md-light">account_circle</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-dark" aria-labelledby="profileDropdown">
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ url_for('views.logout') }}">Logout</a>
+                    </div>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </div>

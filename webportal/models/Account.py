@@ -8,7 +8,7 @@ class Account(db.Model):
     acc_balance = db.Column(db.Float, nullable=False)
     acc_xfer_limit = db.Column(db.INT, nullable=False)
     acc_number = db.Column(db.String(10), nullable=False)
-    userid = db.Column(db.String(50), db.ForeignKey('user.id'))
+    userid = db.Column(db.INT, db.ForeignKey('user.id'))
 
     def __init__(self, acc_number, userid, acc_balance):
         print(acc_balance)
@@ -24,6 +24,17 @@ def createAccount(userid):
     new_account = Account(acc_number, userid, welcome_amt)
     try:
         db.session.add(new_account)
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()
+
+def setTransferLimit(userid, transfer_limit):
+    print(userid)
+    acc = Account.query.filter_by(userid=userid).first() 
+    acc.acc_xfer_limit = transfer_limit
+    try:
         db.session.commit()
     except:
         db.session.rollback()
