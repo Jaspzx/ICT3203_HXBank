@@ -1,14 +1,3 @@
-import pyqrcode
-from datetime import datetime, timedelta, date
-from flask import Flask, Blueprint, redirect, url_for, render_template, request, session, abort
-from flask_login import login_required, login_user, logout_user, current_user
-from .forms import *
-from webportal.models.User import *
-from webportal.models.Account import *
-from webportal.models.Transaction import *
-from webportal.models.Transferee import *
-from webportal import flask_bcrypt, login_manager
-from .utils.messaging import *
 from io import BytesIO
 import pyqrcode
 from flask import app, Blueprint, redirect, url_for, render_template, request, session, abort
@@ -28,11 +17,17 @@ def load_user(user_id):
 
 @views.route('/', methods=['GET'])
 def home():
+    if current_user.is_authenticated:
+        msg_data = load_nav_messages()
+        return render_template('home.html', title="Home Page", msg_data=msg_data)
     return render_template('home.html', title="Home Page")
 
 
 @views.route('/about', methods=['GET'])
 def about():
+    if current_user.is_authenticated:
+        msg_data = load_nav_messages()
+        return render_template('home.html', title="Home Page", msg_data=msg_data)
     return render_template('about.html', title="About")
 
 
@@ -66,6 +61,9 @@ def register():
             return render_template('register.html', title="Register", form=form,
                                    register_error="Identification No. already in use")
         dob = form.dob.data
+        if dob > date.today():
+            return render_template('register.html', title="Register", form=form,
+                                   register_error="Invalid date")
         password = flask_bcrypt.generate_password_hash(form.password.data)
         createUser(username, firstname, lastname, address, email, mobile, nric, dob, password)
         user = User.query.filter_by(username=username).first()
@@ -171,8 +169,11 @@ def otp_input():
         if user and user.verify_totp(form.token.data):
             del session['username']
             login_user(user)
-            update_on_success(user)
+            if current_user.failed_login_attempts > 0:
+                message_add(f"There were {current_user.failed_login_attempts} failed login attempt(s) between your "
+                            f"current and last session", current_user.id)
             message_add(f"You have logged in on {current_user.last_login}", current_user.id)
+            update_on_success(user)
             if current_user.is_admin is True:
                 return redirect(url_for('views.admin_dashboard'))
             return redirect(url_for('views.dashboard'))
@@ -299,7 +300,8 @@ def dashboard():
 @views.route("/personal-banking/profile", methods=['GET', 'POST'])
 @login_required
 def profile():
-    return render_template('profile.html', title="Profile Page")
+    msg_data = load_nav_messages()
+    return render_template('profile.html', title="Profile Page", msg_data=msg_data)
 
 
 @views.route("/personal-banking/admin-dashboard", methods=['GET', 'POST'])
@@ -315,92 +317,103 @@ def admin_dashboard():
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
 @login_required
 def transfer():
+    msg_data = load_nav_messages()
     # Init the TransferMoneyForm
     form = TransferMoneyForm()
 
-	# Dyanmically populate the TransferMoneyForm.
-	transferee_data = Transferee.query.filter_by(transferer_id=current_user.id).all()
-	data = []
-	for transferee in transferee_data:
-		transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
-		acc_num = transferee_acc_data.acc_number
-		transferee_user_data = User.query.filter_by(id=transferee.transferee_id).first()
-		first_name = transferee_user_data.firstname
-		last_name = transferee_user_data.lastname
-		user_data = f"{acc_num} - {first_name} {last_name}"
-		data.append(user_data)
-	form.transferee_acc.choices = data
+    # Dynamically populate the TransferMoneyForm.
+    transferee_data = Transferee.query.filter_by(transferer_id=current_user.id).all()
+    data = []
+    for transferee in transferee_data:
+        transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
+        acc_num = transferee_acc_data.acc_number
+        transferee_user_data = User.query.filter_by(id=transferee.transferee_id).first()
+        first_name = transferee_user_data.firstname
+        last_name = transferee_user_data.lastname
+        user_data = f"{acc_num} - {first_name} {last_name}"
+        data.append(user_data)
+    form.transferee_acc.choices = data
 
     # Check if the form was submitted.
     if request.method == 'POST' and form.validate_on_submit():
         # Amount to debit and credit from transferee and transferrer respectively.
         amount = form.amount.data
+        if amount < 0:
+            error = "Invalid amount"
+            return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
 
-		# Update the transferrer and transferee account balance. 
-		transferee_acc_number = form.transferee_acc.data.split(" ")[0]
-		transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
-		transferrer_userid = current_user.id
+        # Update the transferrer and transferee account balance.
+        transferee_acc_number = form.transferee_acc.data.split(" ")[0]
+        transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
+        transferrer_userid = current_user.id
 
-		# Check that the amount to be transferred does not exceed the transfer limit. 
-		transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+        # Check that the amount to be transferred does not exceed the transfer limit.
+        transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
 
-		# Check that the transfer limit is not exceeded for the day.
-		day_amount = transferrer_acc.acc_xfer_daily + amount
+        # Check that the transfer limit is not exceeded for the day.
+        day_amount = transferrer_acc.acc_xfer_daily + amount
 
-		if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
-			error = "Amount to be Transferred Exceeds Transfer Limit!"
-			return render_template('transfer.html', title="Transfer", form=form, xfer_error=error)
+        if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
+            error = "Amount to be transferred exceeds daily transfer limit"
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data)
+        if transferrer_acc.acc_balance < amount:
+            error = "Insufficient funds"
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data)
 
-		# Create a transaction history.
-		require_approval = False
-		if amount > 10000:
-			require_approval = True
-		updateBalance(transferrer_userid, transferee_userid, amount)
-		transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
-		createTransaction(amount, transferer_acc_number, transferee_acc_number, require_approval)
+        # Create a transaction history.
+        require_approval = False
+        if amount > 10000:
+            require_approval = True
+        updateBalance(transferrer_userid, transferee_userid, amount)
+        transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
+        message_add(f"You have requested a transfer of ${amount} to {form.transferee_acc.data}.", transferrer_userid)
+        createTransaction(amount, transferer_acc_number, transferee_acc_number, require_approval)
 
         # Return success page.
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
-    return render_template('transfer.html', title="Transfer", form=form)
+    return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data)
 
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
 def add_transferee():
+    msg_data = load_nav_messages()
     form = AddTransfereeForm()
     if request.method == 'POST' and form.validate_on_submit():
         # Get the transferee info based on the account number provided by the user.
         transferee_acc = Account.query.filter_by(acc_number=form.transferee_acc.data).first()
 
-		print(transferee_acc)
-		# Check that the transferee info does not exist already in the current user's transferee list.
-		if transferee_acc:
-			validate_if_exist = Transferee.query.filter_by(transferer_id=current_user.id,
-														   transferee_id=transferee_acc.userid).first()
+        print(transferee_acc)
+        # Check that the transferee info does not exist already in the current user's transferee list.
+        if transferee_acc:
+            validate_if_exist = Transferee.query.filter_by(transferer_id=current_user.id,
+                                                           transferee_id=transferee_acc.userid).first()
 
             # Return error if it exists.
             if validate_if_exist:
                 add_error = "Transferee already exists!"
-                return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error)
+                return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error, msg_data=msg_data)
 
             # Add to DB if it does not exist.
             else:
+                message_add(f"You have added account number:{transferee_acc.acc_number}, as a transfer recipient", current_user.id)
                 transferee_add(current_user.id, transferee_acc.userid)
                 return redirect(url_for('views.success'))
 
         # Return error if the transferee info does not exist based on the account number provided by the user.
         else:
             add_error = "Invalid account!"
-            return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error)
+            return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error, msg_data=msg_data)
 
-    return render_template('add-transferee.html', title="Add Transferee", form=form)
+    return render_template('add-transferee.html', title="Add Transferee", form=form, msg_data=msg_data)
 
 
 @views.route("/personal-banking/transaction-history", methods=['GET', 'POST'])
 @login_required
 def transaction_history():
+    msg_data = load_nav_messages()
     # Get the list of transactions that the user is involved in.
     user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
     transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
@@ -422,61 +435,64 @@ def transaction_history():
     data = {x['date_transferred']: x for x in data}.values()
 
     # Render template.
-    return render_template('transaction-history.html', title="Transaction History", data=data)
+    return render_template('transaction-history.html', title="Transaction History", data=data, msg_data=msg_data)
 
 
 @views.route("/personal-banking/view-transferee", methods=['GET', 'POST'])
 @login_required
 def view_transferee():
+    msg_data = load_nav_messages()
     # Init the RemoveTransferForm.
     form = RemoveTransfereeForm()
 
-	#
-	transferee_data = Transferee.query.filter_by(transferer_id=current_user.id).all()
-	data = []
-	form_data_list = []
-	for transferee in transferee_data:
-		transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
-		acc_num = transferee_acc_data.acc_number
-		transferee_user_data = User.query.filter_by(id=transferee.transferee_id).first()
-		first_name = transferee_user_data.firstname
-		last_name = transferee_user_data.lastname
-		user_data = {"acc_num": acc_num, "first_name": first_name, "last_name": last_name}
-		form_data = f"{acc_num} - {first_name} {last_name}"
-		data.append(user_data)
-		form_data_list.append(form_data)
-	form.transferee_acc.choices = form_data_list
+    #
+    transferee_data = Transferee.query.filter_by(transferer_id=current_user.id).all()
+    data = []
+    form_data_list = []
+    for transferee in transferee_data:
+        transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
+        acc_num = transferee_acc_data.acc_number
+        transferee_user_data = User.query.filter_by(id=transferee.transferee_id).first()
+        first_name = transferee_user_data.firstname
+        last_name = transferee_user_data.lastname
+        user_data = {"acc_num": acc_num, "first_name": first_name, "last_name": last_name}
+        form_data = f"{acc_num} - {first_name} {last_name}"
+        data.append(user_data)
+        form_data_list.append(form_data)
+    form.transferee_acc.choices = form_data_list
 
-	# Check if the remove transferee form was submitted.
-	if request.method == "POST" and form.validate_on_submit():
-		transferee_acc = form.transferee_acc.data.split(" ")[0]
-		transferee_id = Account.query.filter_by(acc_number=transferee_acc).first().userid
-		transferee_remove(current_user.id, transferee_id)
-		return redirect(url_for('views.success'))
-	return render_template('view-transferee.html', title="View Transferee", data=data, form=form)
+    # Check if the remove transferee form was submitted.
+    if request.method == "POST" and form.validate_on_submit():
+        transferee_acc = form.transferee_acc.data.split(" ")[0]
+        transferee_id = Account.query.filter_by(acc_number=transferee_acc).first().userid
+        transferee_remove(current_user.id, transferee_id)
+        return redirect(url_for('views.success'))
+    return render_template('view-transferee.html', title="View Transferee", data=data, form=form, msg_data=msg_data)
 
 
 @views.route("/personal-banking/set-transfer-limit", methods=['GET', 'POST'])
 @login_required
 def set_transfer_limit():
-	# Init the SetTransferLimitForm.
-	form = SetTransferLimitForm()
-	if request.method == 'POST' and form.validate_on_submit():
-		setTransferLimit(current_user.id, form.transfer_limit.data)
-		return redirect(url_for('views.success'))
-	return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form)
+    msg_data = load_nav_messages()
+    # Init the SetTransferLimitForm.
+    form = SetTransferLimitForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        setTransferLimit(current_user.id, form.transfer_limit.data)
+        return redirect(url_for('views.success'))
+    return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data)
 
 
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
 @login_required
 def topup_balance():
+    msg_data = load_nav_messages()
     form = TopUpForm()
     if request.method == 'POST' and form.validate_on_submit():
         user_acc = db.session.query(Account).join(User).filter(User.id == current_user.id).first().acc_number
         topup(current_user.id, form.amount.data)
         createTransaction(form.amount.data, user_acc, user_acc, False)
         return redirect(url_for('views.success'))
-    return render_template('topup.html', title="Top Up", form=form)
+    return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data)
 
 
 @views.route("/personal-banking/message_center", methods=['GET', 'POST'])
@@ -516,3 +532,9 @@ def success():
 @views.route("/robots.txt")
 def robots():
     return render_template('robots.txt', title="Robots")
+
+
+@views.before_request
+def make_session_permanent():
+    session.permanent = True
+
