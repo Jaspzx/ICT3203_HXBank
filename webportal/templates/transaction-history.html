@@ -1,1 +1,13 @@
 {% extends "layouts/base.html" %}
+{% block content %}
+<h1>Transaction History</h1>
+{% for i in data %}
+    <div>
+        <p>Date: {{ i.date_transferred }}</p>
+        <p>Amount Transferred: {{ i.amt_transferred }} </p>
+        <p>Transferrer Acc: {{ i.transferrer_acc }} </p>
+        <p>Transferee Acc: {{ i.transferee_acc }} </p>
+    </div>
+{% endfor %}
+<!-- transaction_details -->
+{% endblock content %}

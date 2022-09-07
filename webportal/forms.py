@@ -91,3 +91,8 @@ class SecureMessageForm(FlaskForm):
     mark = SubmitField("Read")
     unmark = SubmitField("Unread")
     delete = SubmitField("Delete")
+
+
+class TopUpForm(FlaskForm):
+	amount = FloatField("Amount to Topup.", validators=[InputRequired()])
+	submit = SubmitField("Top Up")

@@ -27,6 +27,7 @@
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{{ url_for('views.set_transfer_limit') }}">Set Transfer Limit</a>
                         <a class="dropdown-item" href="{{ url_for('views.view_transferee') }}">View Transfer Recipients</a>
+                        <a class="dropdown-item" href="{{ url_for('views.topup_balance') }}">Topup Balance</a>
                     </div>
                 </li>
                 {% elif current_user.is_authenticated and current_user.is_admin %}
