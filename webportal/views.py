@@ -299,9 +299,9 @@ def transfer():
 	transferee_data = Transferee.query.filter_by(transferer_id=current_user.id).all()
 	data = []
 	for transferee in transferee_data:
-		transferee_acc_data = Account.query.filter_by(userid=transferee.id).first()
+		transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
 		acc_num = transferee_acc_data.acc_number
-		transferee_user_data = User.query.filter_by(id=transferee.id).first()
+		transferee_user_data = User.query.filter_by(id=transferee.transferee_id).first()
 		first_name = transferee_user_data.firstname
 		last_name = transferee_user_data.lastname
 		user_data = f"{acc_num} - {first_name} {last_name}"
@@ -415,7 +415,7 @@ def view_transferee():
 	for transferee in transferee_data:
 		transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
 		acc_num = transferee_acc_data.acc_number
-		transferee_user_data = User.query.filter_by(id=transferee.id).first()
+		transferee_user_data = User.query.filter_by(id=transferee.transferee_id).first()
 		first_name = transferee_user_data.firstname
 		last_name = transferee_user_data.lastname
 		user_data = {"acc_num": acc_num, "first_name": first_name, "last_name": last_name}
