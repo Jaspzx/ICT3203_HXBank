@@ -338,7 +338,7 @@ def transfer():
     if request.method == 'POST' and form.validate_on_submit():
         # Amount to debit and credit from transferee and transferrer respectively.
         amount = form.amount.data
-        if amount < 0:
+        if amount <= 0:
             error = "Invalid amount"
             return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
 
@@ -394,18 +394,21 @@ def add_transferee():
             # Return error if it exists.
             if validate_if_exist:
                 add_error = "Transferee already exists!"
-                return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error, msg_data=msg_data)
+                return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error,
+                                       msg_data=msg_data)
 
             # Add to DB if it does not exist.
             else:
-                message_add(f"You have added account number:{transferee_acc.acc_number}, as a transfer recipient", current_user.id)
+                message_add(f"You have added account number:{transferee_acc.acc_number}, as a transfer recipient",
+                            current_user.id)
                 transferee_add(current_user.id, transferee_acc.userid)
                 return redirect(url_for('views.success'))
 
         # Return error if the transferee info does not exist based on the account number provided by the user.
         else:
             add_error = "Invalid account!"
-            return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error, msg_data=msg_data)
+            return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error,
+                                   msg_data=msg_data)
 
     return render_template('add-transferee.html', title="Add Transferee", form=form, msg_data=msg_data)
 

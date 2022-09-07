@@ -65,7 +65,7 @@ def updateBalance(transferrer_id, transferee_id, amount):
 	transferrer_acc.acc_balance -= amount
 	transferee_acc.acc_balance += amount 
 	if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
-		transferee_acc.reset_xfer_limit = date.today() + date.timedelta(days=1)
+		transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
 		transferrer_acc.acc_xfer_daily = 0
 	transferrer_acc.acc_xfer_daily += amount 
 	try:
