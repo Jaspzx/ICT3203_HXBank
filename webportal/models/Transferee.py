@@ -11,10 +11,10 @@ class Transferee(db.Model):
     transferee_id = db.Column(db.INT, db.ForeignKey('user.id'))
 
     def __init__(self, transferer_id, transferee_id):
+        self.date_added = datetime.now()
         self.transferer_id = transferer_id
         self.transferee_id = transferee_id
-        self.date_added = datetime.now()
-
+        
 
 def transferee_add(transferer_id, transferee_id):
     new_transferee = Transferee(transferer_id, transferee_id)

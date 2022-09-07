@@ -351,6 +351,7 @@ def add_transferee():
 		# Get the transferee info based on the account number provided by the user.
 		transferee_acc = Account.query.filter_by(acc_number=form.transferee_acc.data).first()
 
+		print(transferee_acc)
 		# Check that the transferee info does not exist already in the current user's transferee list.
 		if transferee_acc:
 			validate_if_exist = Transferee.query.filter_by(transferer_id=current_user.id,
@@ -412,7 +413,7 @@ def view_transferee():
 	data = []
 	form_data_list = []
 	for transferee in transferee_data:
-		transferee_acc_data = Account.query.filter_by(userid=transferee.id).first()
+		transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
 		acc_num = transferee_acc_data.acc_number
 		transferee_user_data = User.query.filter_by(id=transferee.id).first()
 		first_name = transferee_user_data.firstname
