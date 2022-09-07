@@ -416,7 +416,7 @@ def message_center():
     if request.method == 'POST' and form.validate_on_submit():
         msg = db.session.query(Message).filter_by(id=form.msg.data).first()
         if msg:
-            check = db.session.query(Message).join(User).filter(User.id == current_user.id).first()
+            check = db.session.query(Message).join(User).filter(msg.userid == current_user.id).first()
         else:
             error = "Something went wrong"
             return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form,
@@ -428,6 +428,10 @@ def message_center():
                 message_status(msg, False)
             elif form.data["delete"]:
                 message_del(msg)
+        else:
+            error = "Something went wrong"
+            return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form,
+                                   msg_error=error)
         return redirect(url_for('views.message_center'))
     return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)
 
