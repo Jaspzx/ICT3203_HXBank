@@ -407,11 +407,11 @@ def message_center():
             return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form,
                                    msg_error=error)
         if check:
-            if form.mark.data:
+            if form.data["mark"]:
                 message_status(msg, True)
-            elif form.unmark.data:
+            elif form.data["unmark"]:
                 message_status(msg, False)
-            elif form.delete.data:
+            elif form.data["delete"]:
                 message_del(msg)
         return redirect(url_for('views.message_center'))
     return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)

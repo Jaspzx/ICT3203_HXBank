@@ -31,12 +31,22 @@
                                     <div class="row">
                                         {% if not msg.read %}
                                         <div class="col form-group">
-                                            {{ form.mark(class="form-btn") }}
+                                            <button type="submit" name="mark" value="True" class="form-btn">
+                                                <span class="material-icons md-18 md-light align-middle">mark_email_read</span>
+                                            </button>
                                         </div>
                                         {% else %}
-                                        <div class="col form-group">{{ form.unmark(class="form-btn") }}</div>
+                                        <div class="col form-group">
+                                            <button type="submit" name="unmark" value="True" class="form-btn">
+                                                <span class="material-icons md-18 md-light align-middle">mark_as_unread</span>
+                                            </button>
+                                        </div>
                                         {% endif %}
-                                        <div class="col form-group">{{ form.delete(class="form-btn") }}</div>
+                                        <div class="col form-group">
+                                            <button type="submit" name="delete" value="True" class="form-btn">
+                                                <span class="material-icons md-18 md-light align-middle">delete</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
