@@ -1,6 +1,7 @@
 from webportal import db
 from random import SystemRandom
 from webportal.models.Transaction import *
+from ..utils.messaging import *
 
 
 class Account(db.Model):

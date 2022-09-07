@@ -26,8 +26,8 @@ def message_add(arg_message, arg_userid):
         db.session.rollback()
 
 
-def message_read(arg_message):
-    arg_message.read = True
+def message_status(arg_message, arg_status):
+    arg_message.read = arg_status
     try:
         db.session.add(arg_message)
         db.session.commit()
