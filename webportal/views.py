@@ -334,6 +334,10 @@ def transfer():
         data.append(user_data)
     form.transferee_acc.choices = data
 
+    # Get the transferrer's account information.
+    transferrer_userid = current_user.id
+    transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+
     # Check if the form was submitted.
     if request.method == 'POST' and form.validate_on_submit():
         # Amount to debit and credit from transferee and transferrer respectively.
@@ -342,15 +346,11 @@ def transfer():
             error = "Invalid amount"
             return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
 
-        # Update the transferrer and transferee account balance.
+        # Get the transferee's account information. 
         transferee_acc_number = form.transferee_acc.data.split(" ")[0]
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
-        transferrer_userid = current_user.id
 
         # Check that the amount to be transferred does not exceed the transfer limit.
-        transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
-
-        # Check that the transfer limit is not exceeded for the day.
         day_amount = transferrer_acc.acc_xfer_daily + amount
 
         if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
@@ -373,7 +373,7 @@ def transfer():
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
-    return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data)
+    return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, balance=transferrer_acc.acc_balance)
 
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])

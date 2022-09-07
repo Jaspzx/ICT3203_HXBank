@@ -97,6 +97,7 @@ class SetTransferLimitForm(FlaskForm):
 class TransferMoneyForm(FlaskForm):
     transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
     amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
+    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
     submit = SubmitField("Transfer")
 
 
