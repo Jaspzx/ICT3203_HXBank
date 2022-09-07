@@ -55,7 +55,7 @@ def register():
         check = User.query.filter_by(mobile=mobile).first()
         if check is not None:
             return render_template('register.html', title="Register", form=form, register_error="Mobile already in use")
-        nric = form.nric.data
+        nric = form.nric.data.upper()
         check = User.query.filter_by(nric=nric).first()
         if check is not None:
             return render_template('register.html', title="Register", form=form,
@@ -198,7 +198,7 @@ def reset_identify():
     form = ResetFormIdentify(request.form)
     if request.method == 'POST' and form.validate_on_submit():
         error = "Identification Failed"
-        user = User.query.filter_by(nric=form.nric.data).first()
+        user = User.query.filter_by(nric=form.nric.data.upper()).first()
         if user:
             session['nric'] = user.nric
             session['dob'] = user.dob

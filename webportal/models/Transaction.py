@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 class Transaction(db.Model):
     id = db.Column(db.INT, primary_key=True)
     date_transferred = db.Column(db.DateTime(timezone=True), nullable=False)
-    amt_transferred = db.Column(db.Float, nullable=False)
+    amt_transferred = db.Column(db.Numeric(precision=2, asdecimal=False, decimal_return_scale=None))
     transferrer_acc_number = db.Column(db.String(10), db.ForeignKey('account.acc_number'))
     transferee_acc_number = db.Column(db.String(10), db.ForeignKey('account.acc_number'))
     require_approval = db.Column(db.Boolean, default=False, nullable=False)

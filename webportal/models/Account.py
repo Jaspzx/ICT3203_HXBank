@@ -7,9 +7,9 @@ from ..utils.messaging import *
 
 class Account(db.Model):
 	acc_number = db.Column(db.String(10), nullable=False, primary_key=True)
-	acc_balance = db.Column(db.Float, nullable=False)
-	acc_xfer_limit = db.Column(db.INT, nullable=False)
-	acc_xfer_daily = db.Column(db.Float, nullable=False)
+	acc_balance = db.Column(db.Numeric(precision=2, asdecimal=False, decimal_return_scale=None))
+	acc_xfer_limit = db.Column(db.Numeric(precision=2, asdecimal=False, decimal_return_scale=None))
+	acc_xfer_daily = db.Column(db.Numeric(precision=2, asdecimal=False, decimal_return_scale=None))
 	reset_xfer_limit_date = db.Column(db.DateTime(timezone=True), nullable=False)
 	userid = db.Column(db.INT, db.ForeignKey('user.id'))
 
