@@ -1,4 +1,6 @@
+{% extends "layouts/base.html" %}
 <h1>Add Transferee</h1>
+{% block content %}
 <form method="POST" action="{{ url_for('views.add_transferee') }}">
 	{{ form.csrf_token }}
 	<p>
@@ -18,3 +20,4 @@
 	{% endif %}
 	{{ form.submit(class="form-btn") }}
 </form>
+{% endblock %}

@@ -20,7 +20,8 @@ from webportal.models.Message import *
 
 
 def create_webportal():
-    app.config['SECRET_KEY'] = secrets.token_hex(16)
+    # app.config['SECRET_KEY'] = secrets.token_hex(16)
+    app.config['SECRET_KEY'] = "thisisasecretkey"
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_NAME}"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
