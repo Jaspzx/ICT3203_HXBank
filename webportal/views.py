@@ -1,4 +1,5 @@
 import pyqrcode
+from datetime import datetime, timedelta, date
 from flask import Flask, Blueprint, redirect, url_for, render_template, request, session, abort
 from flask_login import login_required, login_user, logout_user, current_user
 from .forms import *
@@ -316,12 +317,22 @@ def transfer():
 		transferee_acc_number = form.transferee_acc.data.split(" ")[0]
 		transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
 		transferrer_userid = current_user.id
-		updateBalance(transferrer_userid, transferee_userid, amount)
+
+		# Check that the amount to be transferred does not exceed the transfer limit. 
+		transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+
+		# Check that the transfer limit is not exceeded for the day.
+		day_amount = transferrer_acc.acc_xfer_daily + amount
+
+		if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
+			error = "Amount to be Transferred Exceeds Transfer Limit!"
+			return render_template('transfer.html', title="Transfer", form=form, xfer_error=error)
 
 		# Create a transaction history.
 		require_approval = False
 		if amount > 10000:
 			require_approval = True
+		updateBalance(transferrer_userid, transferee_userid, amount)
 		transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
 		createTransaction(amount, transferer_acc_number, transferee_acc_number, require_approval)
 
@@ -415,15 +426,16 @@ def view_transferee():
 	# Check if the remove transferee form was submitted.
 	if request.method == "POST" and form.validate_on_submit():
 		transferee_acc = form.transferee_acc.data.split(" ")[0]
-		transferee_id = Account.query.filter_by(acc_number=transferee_acc).first().id
+		transferee_id = Account.query.filter_by(acc_number=transferee_acc).first().userid
 		transferee_remove(current_user.id, transferee_id)
-
+		return redirect(url_for('views.success'))
 	return render_template('view-transferee.html', title="View Transferee", data=data, form=form)
 
 
 @views.route("/personal-banking/set-transfer-limit", methods=['GET', 'POST'])
 @login_required
 def set_transfer_limit():
+	# Init the SetTransferLimitForm.
 	form = SetTransferLimitForm()
 	if request.method == 'POST' and form.validate_on_submit():
 		setTransferLimit(current_user.id, form.transfer_limit.data)
