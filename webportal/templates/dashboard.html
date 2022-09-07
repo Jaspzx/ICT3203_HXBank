@@ -20,7 +20,7 @@
                         <div class="card-header">Welcome Back, {{ current_user.firstname }} {{ current_user.lastname }}!</div>
                         <div class="card-body">
                             <h5 class="card-title">Account Number: {{ data.acc_number }}</h5>
-                            <p class="card-text">Last Login: {{ current_user.last_login }}</p>
+                            <p class="card-text">Last Login: {{ current_user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}</p>
                             <h5 class="card-title">Total Balance: ${{ data.acc_balance }}</h5>
                             <p class="card-text">Daily Transfer Limit: ${{ data.acc_xfer_limit }}</p>
                             <div class="text-center align-self-center">

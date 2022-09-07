@@ -71,7 +71,7 @@
                                     {% if not msg.read %}
                                     <span class="material-icons md-18 md-light align-middle">priority_high</span>
                                     {% endif %}
-                                    {{ msg.message|truncate(45, True) }}
+                                    {{ msg.message|truncate(40, True) }}
                                 </p>
                                 <div class="dropdown-divider border border-secondary"></div>
                             {% endif %}
@@ -90,6 +90,7 @@
                         <span class="material-icons md-light">account_circle</span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-dark" aria-labelledby="profileDropdown">
+                        <a class="dropdown-item" href="{{ url_for('views.message_center') }}">Message Center</a>
                         <div class="dropdown-divider border border-secondary"></div>
                         <a class="dropdown-item" href="{{ url_for('views.logout') }}">Logout</a>
                     </div>
