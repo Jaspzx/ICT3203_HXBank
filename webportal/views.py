@@ -265,15 +265,7 @@ def reset_username():
 @login_required
 def dashboard():
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
-    msg_query = db.session.query(Message).join(User).filter(User.id == current_user.id).order_by(
-        desc(Message.date_sent)).all()
-    msg_data = []
-    for message in msg_query:
-        msg_dict = {"message": None, "read": None}
-        msg = db.session.query(Message).filter_by(id=message.id).first()
-        msg_dict["message"] = msg.message
-        msg_dict["read"] = msg.read
-        msg_data.append(msg_dict)
+    msg_data = load_nav_messages()
     if current_user.is_admin:
         return render_template('admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
     return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
@@ -289,15 +281,7 @@ def profile():
 @login_required
 def admin_dashboard():
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
-    msg_query = db.session.query(Message).join(User).filter(User.id == current_user.id).order_by(
-        desc(Message.date_sent)).all()
-    msg_data = []
-    for message in msg_query:
-        msg_dict = {"message": None, "read": None}
-        msg = db.session.query(Message).filter_by(id=message.id).first()
-        msg_dict["message"] = msg.message
-        msg_dict["read"] = msg.read
-        msg_data.append(msg_dict)
+    msg_data = load_nav_messages()
     if not current_user.is_admin:
         return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
     return render_template('admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
