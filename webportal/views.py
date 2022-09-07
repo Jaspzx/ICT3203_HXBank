@@ -446,25 +446,29 @@ def topup_balance():
 @views.route("/personal-banking/message_center", methods=['GET', 'POST'])
 @login_required
 def message_center():
-	msg_data = load_nav_messages()
-	form = SecureMessageForm()
-	if request.method == 'POST' and form.validate_on_submit():
-		msg = db.session.query(Message).filter_by(id=form.msg.data).first()
-		if msg:
-			check = db.session.query(Message).join(User).filter(User.id == current_user.id).first()
-		else:
-			error = "Something went wrong"
-			return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form,
-								   msg_error=error)
-		if check:
-			if form.data["mark"]:
-				message_status(msg, True)
-			elif form.data["unmark"]:
-				message_status(msg, False)
-			elif form.data["delete"]:
-				message_del(msg)
-		return redirect(url_for('views.message_center'))
-	return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)
+    msg_data = load_nav_messages()
+    form = SecureMessageForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        msg = db.session.query(Message).filter_by(id=form.msg.data).first()
+        if msg:
+            check = db.session.query(Message).join(User).filter(msg.userid == current_user.id).first()
+        else:
+            error = "Something went wrong"
+            return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form,
+                                   msg_error=error)
+        if check:
+            if form.data["mark"]:
+                message_status(msg, True)
+            elif form.data["unmark"]:
+                message_status(msg, False)
+            elif form.data["delete"]:
+                message_del(msg)
+        else:
+            error = "Something went wrong"
+            return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form,
+                                   msg_error=error)
+        return redirect(url_for('views.message_center'))
+    return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)
 
 
 @views.route("/success")
