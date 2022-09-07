@@ -70,6 +70,8 @@ def reset_secret(arg_user):
         db.session.commit()
     except:
         db.session.rollback()
+    finally:
+        db.session.close()
 
 
 def update_on_success(arg_user):
@@ -89,6 +91,8 @@ def update_on_failure(arg_user):
         db.session.commit()
     except:
         db.session.rollback()
+    finally:
+        db.session.close()
 
 
 def reset_details(arg_user, arg_field, arg_value):
