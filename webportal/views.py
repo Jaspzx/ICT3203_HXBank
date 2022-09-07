@@ -1,6 +1,6 @@
 from io import BytesIO
 import pyqrcode
-from flask import app, Blueprint, redirect, url_for, render_template, request, session, abort
+from flask import Blueprint, redirect, url_for, render_template, request, session, abort
 from flask_login import login_required, login_user, logout_user
 from webportal import flask_bcrypt, login_manager
 from webportal.models.Transferee import *

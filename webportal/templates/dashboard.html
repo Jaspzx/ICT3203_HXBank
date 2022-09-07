@@ -22,6 +22,7 @@
                             <h5 class="card-title">Account Number: {{ data.acc_number }}</h5>
                             <p class="card-text">Last Login: {{ current_user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}</p>
                             <h5 class="card-title">Total Balance: ${{ data.acc_balance }}</h5>
+                            <p class="card-text">Daily Transfer Remaining: ${{ data.acc_xfer_limit - data.acc_xfer_daily }}</p>
                             <p class="card-text">Daily Transfer Limit: ${{ data.acc_xfer_limit }}</p>
                             <div class="text-center align-self-center">
                                 <a href="#" class="btn btn-success align-middle">
