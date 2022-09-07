@@ -1,4 +1,6 @@
+{% extends "layouts/base.html" %}
 <h1>Set Transfer Limit</h1>
+{% block content %}
 <form method="POST" action="/set-transfer-limit">
 	{{ form.csrf_token }}
 	<p>
@@ -14,3 +16,4 @@
 	{% endif %}
 	{{ form.submit(class="form-btn") }}
 </form>
+{% endblock %}

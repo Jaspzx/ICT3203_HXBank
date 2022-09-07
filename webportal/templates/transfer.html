@@ -1,16 +1,32 @@
+{% extends "layouts/base.html" %}
+{% block content %}
 <h1>Transfer</h1>
-<form method="POST" action="/set-transfer-limit"></form>
-    {{ form.csrf_token }}
-    <p>
-        {{ form.transferee_acc.label }}
-        {{ form.transferee_acc(size=1) }}
-    </p>
-    {% if form.transferee_acc.errors %}
-        <ul class="errors">
-            {% for error in form.transferee_acc.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    {{ form.submit(class="form-btn") }}
+<form method="POST" action="{{ url_for('views.transfer') }}">
+	{{ form.csrf_token }}
+	<p>
+		{{ form.transferee_acc.label }}
+		{{ form.transferee_acc(size=1) }}
+	</p>
+	{% if form.transferee_acc.errors %}
+		<ul class="errors">
+			{% for error in form.transferee_acc.errors %}
+				<li>{{ error }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+
+	<p>
+		{{ form.amount.label }}
+		{{ form.amount(size=1) }}
+	</p>
+	{% if form.amount.errors %}
+		<ul class="errors">
+			{% for error in form.amount.errors %}
+				<li>{{ error }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+	{{ form.submit(class="form-btn") }}
 </form>
+{% endblock content %}
+
