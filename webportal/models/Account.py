@@ -24,6 +24,7 @@ def createAccount(userid):
 	acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
 	welcome_amt = random_gen.randrange(1000, 10000)
 	new_account = Account(acc_number, userid, welcome_amt)
+	message_add(welcome_msg(welcome_amt), userid)
 	try:
 		db.session.add(new_account)
 		db.session.commit()
