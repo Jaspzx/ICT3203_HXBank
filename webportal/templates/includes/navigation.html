@@ -58,27 +58,15 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link" href="#" id="notificationDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         {% if msg_data %}
-                        {% for msg in msg_data  %}
-                            {% if msg['read'] %}
-                                {% if loop.index <= 5 %}
-                                    <span class="material-icons md-light">notifications_none</span>
-                                {% endif %}
-                            {% elif not msg['read'] %}
-                                <span class="material-icons md-light">notifications_active</span>
-                            {% endif %}
-                        {% endfor %}
+                        <span class="material-icons md-light">notifications_active</span>
                         {% else %}
-                            <span class="material-icons md-light">notifications_none</span>
+                        <span class="material-icons md-light">notifications_none</span>
                         {% endif %}
                     </a>
                     <div class="dropdown-menu dropdown-menu-dark" aria-labelledby="notificationDropdown">
                         {% if msg_data %}
-                        {% for msg in msg_data  %}
-                            {% if msg['read'] %}
-                                {% if loop.index <= 5 %}
-                                    <p class="dropdown-item text-center">You have no new Messages!</p>
-                                {% endif %}
-                            {% elif loop.index <= 5 %}
+                        {% for msg in msg_data %}
+                            {% if loop.index <= 5 %}
                                 <p class="dropdown-item {{ 'text-muted' if msg.read else 'text-white' }}">
                                     {% if not msg.read %}
                                     <span class="material-icons md-18 md-light align-middle">priority_high</span>
