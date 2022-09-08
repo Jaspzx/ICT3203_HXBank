@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm, RecaptchaField
 from flask_login import current_user
 from wtforms import StringField, DateField, IntegerField, BooleanField, PasswordField, SubmitField, SelectField, \
-    FloatField, HiddenField
+    DecimalField, HiddenField
 from wtforms.validators import InputRequired, Length, Email, EqualTo, Regexp
 from webportal.models.Account import *
 
@@ -96,8 +96,7 @@ class SetTransferLimitForm(FlaskForm):
 
 class TransferMoneyForm(FlaskForm):
     transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
-    amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
-    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
+    amount = DecimalField("Amount to Transfer.", validators=[InputRequired()])
     submit = SubmitField("Transfer")
 
 
@@ -114,5 +113,5 @@ class SecureMessageForm(FlaskForm):
 
 
 class TopUpForm(FlaskForm):
-    amount = FloatField("Amount to Top Up.", validators=[InputRequired()])
+    amount = DecimalField("Amount to Top Up.", validators=[InputRequired()])
     submit = SubmitField("Top Up")
