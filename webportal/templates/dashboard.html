@@ -43,7 +43,12 @@
                     <div class="row align-items-start card">
                         <div class="card-header">
                         Recent Transactions
-                        <button class="btn btn-light btn-sm float-end" id="refresh_transactions"><span class="material-icons md-light align-middle">refresh</span></button>
+                        <button class="btn btn-light btn-sm float-end" id="refresh_transactions">
+                            <span class="material-icons md-light align-middle">refresh</span>
+                        </button>
+                        <a href="{{ url_for('views.transaction_history') }}" class="btn btn-secondary btn-sm align-middle float-end"> View More
+                            <span class="material-icons md-light align-middle">navigate_next</span>
+                        </a>
                         </div>
                         <div class="card text-center align-self-center">
                             <table class="table table-hover table-striped" id="recentTransactionTable">
@@ -78,24 +83,4 @@
     <script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
     <script src="/static/assets/js/dashboard.js"></script>
-    <script>
-        $(document).ready(function() {
-            $("#refresh_balance").click(function() {
-                let acc_balance = document.getElementById("acc_balance");
-                let acc_remain = document.getElementById("acc_remain");
-                let acc_limit = document.getElementById("acc_limit");
-                $.ajax({
-                    url: '/api/acc_overview',
-                    type: 'GET',
-                })
-                .done(function(data, textStatus, xhr){
-                    if (xhr.status === 200) {
-                        acc_balance.textContent = "Total Balance: $" + data.acc_balance;
-                        acc_remain.textContent = "Daily Transfer Remaining: $" + (data.acc_xfer_limit - data.acc_xfer_daily);
-                        acc_limit.textContent = "Daily Transfer Limit: $" + data.acc_xfer_limit;
-                    }
-                })
-            })
-        })
-    </script>
 {% endblock %}

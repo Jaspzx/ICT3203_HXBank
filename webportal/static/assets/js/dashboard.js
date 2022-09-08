@@ -1,55 +1,108 @@
-// demo data
-console.log(new Date(2022, 0, 0))
-console.log(new Date(2022, 8, 1))
-moneyInStorage = [{x: new Date(2022, 0, 0), y: 100}, {x: new Date(2022, 8, 1), y: 1000}];
-moneyOutStorage = [{x: new Date(2022, 0, 0), y: 100}, {x: new Date(2022, 8, 1), y: 1000}];
+$(document).ready(function() {
+    $.ajax({
+        url: '/api/barchart_graph',
+        type: 'GET',
+    })
+    .done(function(data, textStatus, xhr){
+        if (xhr.status === 200) {
+            drawChart(data.money_in, data.money_out);
+        }
+    })
+    $("#refresh_balance").click(function() {
+        let acc_balance = document.getElementById("acc_balance");
+        let acc_remain = document.getElementById("acc_remain");
+        let acc_limit = document.getElementById("acc_limit");
+        $.ajax({
+            url: '/api/acc_overview',
+            type: 'GET',
+        })
+        .done(function(data, textStatus, xhr){
+            if (xhr.status === 200) {
+                acc_balance.textContent = "Total Balance: $" + data.acc_balance;
+                acc_remain.textContent = "Daily Transfer Remaining: $" + (data.acc_xfer_limit - data.acc_xfer_daily);
+                acc_limit.textContent = "Daily Transfer Limit: $" + data.acc_xfer_limit;
+            }
+        })
+    })
+    $("#refresh_chart").click(function() {
+        $.ajax({
+            url: '/api/barchart_graph',
+            type: 'GET',
+        })
+        .done(function(data, textStatus, xhr){
+            if (xhr.status === 200) {
+                drawChart(data.money_in, data.money_out);
+            }
+        })
+    })
+})
 
-const chartHolderHTML = document.getElementById("graph");
-const yearlyBarChartConfig = {
-    type: "bar",
-    data: {
-        datasets: [
-            {
-                label: "Money In",
-                data: moneyInStorage,
-                borderColor: ["rgba(0, 0, 0, 1)"],
-                backgroundColor: "Green",
+function drawChart(moneyInStorage, moneyOutStorage) {
+    const chartHolderHTML = document.getElementById("graph");
+    const yearlyBarChartConfig = {
+        type: "bar",
+        data: {
+            datasets: [
+                {
+                    label: "Money In",
+                    data: moneyInStorage,
+                    borderColor: ["rgba(0, 0, 0, 1)"],
+                    backgroundColor: "Green",
+                },
+                {
+                    label: "Money Out",
+                    data: moneyOutStorage,
+                    borderColor: ["rgba(0, 0, 0, 1)"],
+                    backgroundColor: "Red",
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return toMonthName(context[0].label);
+                        },
+                    },
+                },
             },
-            {
-                label: "Money Out",
-                data: moneyOutStorage,
-                borderColor: ["rgba(0, 0, 0, 1)"],
-                backgroundColor: "Red",
-            },
-        ],
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        scales: {
-            x: {
-                type: "time",
-                title: {
-                    display: false,
-                    text: "Month",
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Months",
+                    },
+                    ticks: {
+                        callback: function(value, index) {
+                            return toMonthName(value + 1);
+                        }
+                    },
+                    stacked: true,
                 },
-                time: {
-                    unit: "month",
-                    tooltipFormat: "MMM yyyy",
+                y: {
+                    title: {
+                        display: true,
+                        text: "Amount ($)",
+                    },
+                    ticks: {
+                        beginAtZero: true,
+                    },
+                    stacked: true,
                 },
-                stacked: true,
-            },
-            y: {
-                title: {
-                    display: true,
-                    text: "Amount ($)",
-                },
-                ticks: {
-                    beginAtZero: true,
-                },
-                stacked: true,
             },
         },
-    },
-};
-let yearlyBarChart = new Chart(chartHolderHTML, yearlyBarChartConfig);
+    };
+    let yearlyBarChart = new Chart(chartHolderHTML, yearlyBarChartConfig);
+}
+
+function toMonthName(monthNumber) {
+    const date = new Date();
+    date.setMonth(monthNumber - 1);
+
+    return date.toLocaleString('en-US', {
+        month: 'long',
+    });
+}

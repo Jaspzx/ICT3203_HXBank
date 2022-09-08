@@ -625,6 +625,27 @@ def acc_overview():
                         'acc_xfer_daily': data.acc_xfer_daily}), 200
 
 
+@views.route("/api/barchart_graph", methods=['GET'])
+@login_required
+def barchart_graph():
+    if current_user.is_admin:
+        return jsonify({'message': 'not allowed'}), 403
+    current_year = datetime.now().year
+    user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
+    transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
+    transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
+    money_in = {x+1: 0 for x in range(12)}
+    money_out = {x+1: 0 for x in range(12)}
+    for item in transfer_data:
+        if item.date_transferred.year == current_year:
+            money_in[item.date_transferred.month] += item.amt_transferred
+    for item in transferee_data:
+        if item.date_transferred.year == current_year:
+            if item.transferrer_acc_number != item.transferee_acc_number:
+                money_out[item.date_transferred.month] += item.amt_transferred
+    return jsonify({'money_in': money_in, 'money_out': money_out}), 200
+
+
 @views.before_request
 def make_session_permanent():
     session.permanent = True
