@@ -1,6 +1,6 @@
 from io import BytesIO
 import pyqrcode
-from flask import Blueprint, redirect, url_for, render_template, request, session, abort
+from flask import Blueprint, redirect, url_for, render_template, request, session, abort, jsonify
 from flask_login import login_required, login_user, logout_user
 from webportal import flask_bcrypt, login_manager
 from webportal.models.Transferee import *
@@ -598,6 +598,17 @@ def approval_required():
 @views.route("/robots.txt")
 def robots():
     return render_template('robots.txt', title="Robots")
+
+
+@views.route("/api/acc_overview", methods=['GET'])
+@login_required
+def acc_overview():
+    if current_user.is_admin:
+        return jsonify({'message': 'not allowed'}), 403
+    data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    if data:
+        return jsonify({'acc_balance': data.acc_balance, 'acc_xfer_limit': data.acc_xfer_limit,
+                        'acc_xfer_daily': data.acc_xfer_daily}), 200
 
 
 @views.before_request

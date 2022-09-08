@@ -9,7 +9,10 @@
             <div class="row align-items-start">
                 <div class="col-lg-10 col-xl-8">
                     <div class="card">
-                        <div class="card-header">Current Year Money In/Out</div>
+                        <div class="card-header">
+                            Current Year Money In/Out
+                            <span class="material-icons md-light align-middle float-end">refresh</span>
+                        </div>
                         <div class="card-body">
                             <canvas id="graph"></canvas>
                         </div>
@@ -17,13 +20,16 @@
                 </div>
                 <div class="col-lg-2 col-xl-4">
                     <div class="card">
-                        <div class="card-header">Welcome Back, {{ current_user.firstname }} {{ current_user.lastname }}!</div>
+                        <div class="card-header">
+                            Welcome Back, {{ current_user.firstname }} {{ current_user.lastname }}!
+                            <span class="material-icons md-light align-middle float-end">refresh</span>
+                        </div>
                         <div class="card-body">
                             <h5 class="card-title">Account Number: {{ data.acc_number }}</h5>
                             <p class="card-text">Last Login: {{ current_user.last_login.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-                            <h5 class="card-title">Total Balance: ${{ data.acc_balance }}</h5>
-                            <p class="card-text">Daily Transfer Remaining: ${{ data.acc_xfer_limit - data.acc_xfer_daily }}</p>
-                            <p class="card-text">Daily Transfer Limit: ${{ data.acc_xfer_limit }}</p>
+                            <h5 class="card-title" id="acc_balance">Total Balance: ${{ data.acc_balance }}</h5>
+                            <p class="card-text" id="acc_remain">Daily Transfer Remaining: ${{ data.acc_xfer_limit - data.acc_xfer_daily }}</p>
+                            <p class="card-text" id="acc_limit">Daily Transfer Limit: ${{ data.acc_xfer_limit }}</p>
                             <div class="text-center align-self-center">
                                 <a href="{{ url_for('views.topup_balance') }}" class="btn btn-success align-middle">
                                     <span class="material-icons md-light align-middle">add_circle_outline</span> Top Up
@@ -57,4 +63,24 @@
     <script src="https://cdn.jsdelivr.net/npm/luxon@^2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@^1"></script>
     <script src="/static/assets/js/dashboard.js"></script>
+    <script>
+        $(document).ready(function() {
+            $("#refresh_balance").click(function() {
+                let acc_balance = document.getElementById("acc_balance");
+                let acc_remain = document.getElementById("acc_remain");
+                let acc_limit = document.getElementById("acc_limit");
+                $.ajax({
+                    url: '/api/acc_overview',
+                    type: 'GET',
+                })
+                .done(function(data, textStatus, xhr){
+                    if (xhr.status === 200) {
+                        acc_balance.textContent = "Total Balance: $" + data.acc_balance;
+                        acc_remain.textContent = "Daily Transfer Remaining: $" + (data.acc_xfer_limit - data.acc_xfer_daily);
+                        acc_limit.textContent = "Daily Transfer Limit: $" + data.acc_xfer_limit;
+                    }
+                })
+            })
+        })
+    </script>
 {% endblock %}
