@@ -1,50 +1,48 @@
 {% extends "layouts/base.html" %}
 {% block content %}
-<h1>Transfer</h1>
-<form method="POST" action="{{ url_for('views.transfer') }}">
-	{{ form.csrf_token }}
-	<p>
-		{{ form.transferee_acc.label }}
-		{{ form.transferee_acc(size=1) }}
-	</p>
-	{% if form.transferee_acc.errors %}
-		<ul class="errors">
-			{% for error in form.transferee_acc.errors %}
-				<li>{{ error }}</li>
-			{% endfor %}
-		</ul>
-	{% endif %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="my-4 text-center">Transfer</h1>
+                {% if form.amount.errors %}
+                    {% for error in form.amount.errors %}
+                        <div class="alert alert-danger" role="alert">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% if form.transferee_acc.errors %}
+                    {% for error in form.transferee_acc.errors %}
+                        <div class="alert alert-danger" role="alert">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% if form.description.errors %}
+                        {% for error in form.description.errors %}
+                            <div class="alert alert-danger" role="alert">{{ error }}</div>
+                        {% endfor %}
+                {% endif %}
+                {% if xfer_error %}
+                        <div class="alert alert-danger" role="alert">{{ xfer_error }}</div>
+                {% endif %}
 
-	<p>
-		{{ form.amount.label }}
-		{{ form.amount(size=1) }}
-	</p>
-	{% if form.amount.errors %}
-		<ul class="errors">
-			{% for error in form.amount.errors %}
-				<li>{{ error }}</li>
-			{% endfor %}
-		</ul>
-	{% endif %}
+                <h2 class="my-4" style="text-size">Remaining Balance: {{ balance }}</h2>
+                <form method="POST" action="{{ url_for('views.transfer') }}">
+                    {{ form.csrf_token }}
+                        <div class="form-group">
+                            {{ form.transferee_acc.label(class="mb-2") }}
+                            {{ form.transferee_acc(size=1, class="form-control mb-4") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.amount.label(class="mb-2") }}
+                            {{ form.amount(size=1, class="form-control mb-4", placeholder="Enter amount") }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.description.label(class="mb-2") }}
+                            {{ form.description(size=1, class="form-control", placeholder="Enter description") }}
+                        </div>
+                        {{ form.submit(class="form-btn my-4") }}
 
-	<p>
-		{{ form.description.label }}
-		{{ form.description(size=1) }}
-	</p>
-	{% if form.description.errors %}
-		<ul class="errors">
-			{% for error in form.description.errors %}
-				<li>{{ error }}</li>
-			{% endfor %}
-		</ul>
-	{% endif %}
-	<p>Remaining Balance: {{ balance }}</p>
-	
-	{{ form.submit(class="form-btn") }}
-	
-	{% if xfer_error %}
-		<p>{{xfer_error}}</p>
-	{% endif %}
-</form>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
 

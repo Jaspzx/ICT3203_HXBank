@@ -1,6 +1,17 @@
 {% extends "layouts/base.html" %}
 {% block content %}
-<h1>Action Successfully Completed</h1>
-
-<a href="{{ url_for('views.dashboard') }}" title="Success">Return to homepage.</a>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="my-4 text-center">Transaction Completed Successfully</h1>
+            </div>
+            <div class="col-md-12 text-center">
+                <span class="material-icons icons">check_circle</span>
+            </div>
+            <btn class="btn btn-primary btn-lg btn-block my-4" onclick="location.href='{{ url_for('views.dashboard') }}'">
+                Go to Home
+            </btn>
+            </div>
+        </div>
+    </div>
 {% endblock %}

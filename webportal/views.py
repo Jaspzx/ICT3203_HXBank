@@ -347,7 +347,7 @@ def transfer():
         amount = form.amount.data
         if amount <= 0:
             error = "Invalid amount"
-            return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
+            return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error, balance=transferrer_acc.acc_balance)
 
         # Get the transferee's account information. 
         transferee_acc_number = form.transferee_acc.data.split(" ")[0]
@@ -358,10 +358,10 @@ def transfer():
 
         if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
             error = "Amount to be transferred exceeds daily transfer limit"
-            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data)
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data, balance=transferrer_acc.acc_balance)
         if transferrer_acc.acc_balance < amount:
             error = "Insufficient funds"
-            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data)
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data, balance=transferrer_acc.acc_balance)
 
         # Create a transaction. 
         transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number

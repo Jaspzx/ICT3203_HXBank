@@ -83,7 +83,7 @@ class ResetUsernameForm(FlaskForm):
 
 
 class AddTransfereeForm(FlaskForm):
-    transferee_acc = StringField("Transferee Account No.", validators=[InputRequired(), Length(min=10, max=10),
+    transferee_acc = StringField("Transferee Account No", validators=[InputRequired(), Length(min=10, max=10),
                                                                        Regexp("^\\d{10,10}$",
                                                                               message="Invalid account number")])
     submit = SubmitField("Add")
@@ -96,8 +96,8 @@ class SetTransferLimitForm(FlaskForm):
 
 class TransferMoneyForm(FlaskForm):
     transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
-    amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
-    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
+    amount = FloatField("Amount to Transfer", validators=[InputRequired()])
+    description = StringField("Description", validators=[InputRequired(), Length(min=1, max=50)])
     submit = SubmitField("Transfer")
 
 
@@ -114,5 +114,5 @@ class SecureMessageForm(FlaskForm):
 
 
 class TopUpForm(FlaskForm):
-    amount = FloatField("Amount to Top Up.", validators=[InputRequired()])
+    amount = FloatField("Amount to Top Up", validators=[InputRequired()])
     submit = SubmitField("Top Up")

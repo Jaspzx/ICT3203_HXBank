@@ -1,23 +1,28 @@
 {% extends "layouts/base.html" %}
-<h1>Add Transferee</h1>
-{% block content %}
-<form method="POST" action="{{ url_for('views.add_transferee') }}">
-	{{ form.csrf_token }}
-	<p>
-		{{ form.transferee_acc.label }}
-		{{ form.transferee_acc(size=20) }}
-	</p>
-	{% if form.transferee_acc.errors %}
-		<ul class="errors">
-			{% for error in form.transferee_acc.errors %}
-				<li>{{ error }}</li>
-			{% endfor %}
-		</ul>
-	{% endif %}
 
-	{% if add_error %}
-	<div class="alert alert-danger" role="alert">{{ add_error }}</div>
-	{% endif %}
-	{{ form.submit(class="form-btn") }}
-</form>
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="my-4 text-center">Add Transferee</h1>
+                {% if form.transferee_acc.errors %}
+                    {% for error in form.transferee_acc.errors %}
+                         <div class="alert alert-danger" role="alert">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% if add_error %}
+                    <div class="alert alert-danger" role="alert">{{ add_error }}</div>
+                {% endif %}
+                <form method="POST" action="{{ url_for('views.add_transferee') }}">
+                    {{ form.csrf_token }}
+                    <div class="form-group">
+                        {{ form.transferee_acc.label(class="mb-2") }}
+                        {{ form.transferee_acc(size=20, class="form-control", placeholder="Enter Account No") }}
+                    </div>
+                    {{ form.submit(class="form-btn my-4") }}
+                </form>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
