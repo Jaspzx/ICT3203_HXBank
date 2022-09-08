@@ -1,8 +1,8 @@
 // demo data
-let temp = new Date();
-temp.setDate(temp.getDate()-240);
-moneyInStorage = [{x: temp.toISOString(), y: 100}, {x: new Date().toISOString(), y: 1000}];
-moneyOutStorage = [{x: temp.toISOString(), y: 100}, {x: new Date().toISOString(), y: 1000}];
+console.log(new Date(2022, 0, 0))
+console.log(new Date(2022, 8, 1))
+moneyInStorage = [{x: new Date(2022, 0, 0), y: 100}, {x: new Date(2022, 8, 1), y: 1000}];
+moneyOutStorage = [{x: new Date(2022, 0, 0), y: 100}, {x: new Date(2022, 8, 1), y: 1000}];
 
 const chartHolderHTML = document.getElementById("graph");
 const yearlyBarChartConfig = {

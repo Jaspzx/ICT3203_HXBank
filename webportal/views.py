@@ -133,8 +133,8 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
             if flask_bcrypt.check_password_hash(user.password_hash, form.password.data):
-                if datetime.now() < user.unlock_ts:
-                    error = "Account has been locked out, try again later"
+                if user.is_disabled:
+                    error = "Account has been locked out. Please contact customer support for assistance."
                     return render_template('login.html', title="Login", form=form, login_error=error)
                 session['username'] = user.username
                 return redirect(url_for('views.otp_input'))
@@ -166,14 +166,17 @@ def otp_input():
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=session['username']).first()
-        if user and user.verify_totp(form.token.data):
+        if user and user.prev_token == form.token.data:
+            error = "Something went wrong"
+            return render_template('otp-input.html', form=form, login_error=error)
+        elif user and user.verify_totp(form.token.data):
             del session['username']
             login_user(user)
             if current_user.failed_login_attempts > 0:
                 message_add(f"There were {current_user.failed_login_attempts} failed login attempt(s) between your "
                             f"current and last session", current_user.id)
             message_add(f"You have logged in on {current_user.last_login}", current_user.id)
-            update_on_success(user)
+            update_on_success(user, form.token.data)
             if current_user.is_admin is True:
                 return redirect(url_for('views.admin_dashboard'))
             return redirect(url_for('views.dashboard'))
@@ -290,6 +293,8 @@ def reset_username():
 @views.route('/personal-banking/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     msg_data = load_nav_messages()
     if current_user.is_admin:
@@ -307,6 +312,8 @@ def profile():
 @views.route("/personal-banking/admin-dashboard", methods=['GET', 'POST'])
 @login_required
 def admin_dashboard():
+    if not current_user.is_admin:
+        return redirect(url_for('views.dashboard'))
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     msg_data = load_nav_messages()
     if not current_user.is_admin:
@@ -317,6 +324,8 @@ def admin_dashboard():
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
 @login_required
 def transfer():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     # Init the TransferMoneyForm
     form = TransferMoneyForm()
@@ -345,8 +354,8 @@ def transfer():
 
         # Amount to debit and credit from transferee and transferrer respectively.
         amount = form.amount.data
-        if amount <= 0:
-            error = "Invalid amount"
+        if amount < 1:
+            error = "Invalid amount (Minimum $1)"
             return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
 
         # Get the transferee's account information. 
@@ -381,12 +390,15 @@ def transfer():
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
-    return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, balance=transferrer_acc.acc_balance)
+    return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data,
+                           balance=transferrer_acc.acc_balance)
 
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
 def add_transferee():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     form = AddTransfereeForm()
     if request.method == 'POST' and form.validate_on_submit():
@@ -424,6 +436,8 @@ def add_transferee():
 @views.route("/personal-banking/transaction-history", methods=['GET', 'POST'])
 @login_required
 def transaction_history():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     # Get the list of transactions that the user is involved in.
     user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
@@ -452,6 +466,8 @@ def transaction_history():
 @views.route("/personal-banking/view-transferee", methods=['GET', 'POST'])
 @login_required
 def view_transferee():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     # Init the RemoveTransferForm.
     form = RemoveTransfereeForm()
@@ -484,6 +500,8 @@ def view_transferee():
 @views.route("/personal-banking/set-transfer-limit", methods=['GET', 'POST'])
 @login_required
 def set_transfer_limit():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     # Init the SetTransferLimitForm.
     form = SetTransferLimitForm()
@@ -496,13 +514,20 @@ def set_transfer_limit():
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
 @login_required
 def topup_balance():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     form = TopUpForm()
     if request.method == 'POST' and form.validate_on_submit():
         user_acc = db.session.query(Account).join(User).filter(User.id == current_user.id).first().acc_number
-        topup(current_user.id, form.amount.data)
-        description = "Topup"
-        createTransaction(form.amount.data, user_acc, user_acc, description, False)
+        amount = form.amount.data
+        if amount < 1:
+            error = "Invalid amount (Minimum $1)"
+            return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data, topup_error=error)
+        message_add(f"You have made a request to top up ${amount}", current_user.id)
+        topup(current_user.id, amount)
+        description = f"Self-service top up of ${amount}"
+        createTransaction(amount, user_acc, user_acc, description, False)
         return redirect(url_for('views.success'))
     return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data)
 
@@ -538,19 +563,21 @@ def message_center():
 @views.route("/transaction_management.html")
 @login_required
 def transaction_management():
-
-
+    if not current_user.is_admin:
+        return redirect(url_for('views.dashboard'))
     return render_template("/admin/transaction_management.html")
 
 
 @views.route("/user_management.html")
 @login_required
 def user_management():
+    if not current_user.is_admin:
+        return redirect(url_for('views.dashboard'))
     locked_acc = User.query.filter_by(is_disabled=True).all()
     data = []
     for user in locked_acc:
-        data.append({"username": user.username, "date_joined": user.date_joined, 
-        "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
+        data.append({"username": user.username, "date_joined": user.date_joined,
+                     "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
     return render_template("/admin/user_management.html", data=data)
 
 
@@ -563,6 +590,8 @@ def success():
 @views.route("/approval-required")
 @login_required
 def approval_required():
+    if not current_user.is_admin:
+        return redirect(url_for('views.dashboard'))
     return render_template('approval-required.html', title="Approval Required")
 
 
@@ -575,3 +604,15 @@ def robots():
 def make_session_permanent():
     session.permanent = True
 
+
+@views.after_request
+def add_header(r):
+    r.headers["Cache-Control"] = "no-store"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    r.headers['X-Content-Type-Options'] = 'nosniff'
+    r.headers['X-XSS-Protection'] = '1; mode=block'
+    # want to do csp header?
+    # r.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return r
