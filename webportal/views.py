@@ -295,11 +295,25 @@ def reset_username():
 def dashboard():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
-    data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
+    transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
+    transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
+    data = []
+    for item in transfer_data[:5]:
+        data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
+                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+                     "description": item.description, "require_approval": item.require_approval, "debit": False})
+    for item in transferee_data:
+        data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
+                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+                     "description": item.description, "require_approval": item.require_approval, "debit": True})
+    data.sort(key=lambda r: r["date_transferred"], reverse=True)
+    data = {x['date_transferred']: x for x in data}.values()
     msg_data = load_nav_messages()
     if current_user.is_admin:
-        return render_template('admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
-    return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
+        return render_template('admin-dashboard.html', title="Admin Dashboard", data=user_data, msg_data=msg_data)
+    return render_template('dashboard.html', title="Dashboard", data=user_data, msg_data=msg_data, recent_trans=data)
 
 
 @views.route("/personal-banking/profile", methods=['GET', 'POST'])
@@ -449,11 +463,11 @@ def transaction_history():
     for item in transfer_data:
         data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
                      "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
-                     "require_approval": item.require_approval, "debit": False})
+                     "description": item.description, "require_approval": item.require_approval, "debit": False})
     for item in transferee_data:
         data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
                      "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
-                     "require_approval": item.require_approval, "debit": True})
+                     "description": item.description, "require_approval": item.require_approval, "debit": True})
 
     # Sort by latest date first.
     data.sort(key=lambda r: r["date_transferred"], reverse=True)

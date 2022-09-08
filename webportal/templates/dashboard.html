@@ -11,7 +11,7 @@
                     <div class="card">
                         <div class="card-header">
                             Current Year Money In/Out
-                            <span class="material-icons md-light align-middle float-end">refresh</span>
+                            <button class="btn btn-light btn-sm float-end" id="refresh_chart"><span class="material-icons md-light align-middle">refresh</span></button>
                         </div>
                         <div class="card-body">
                             <canvas id="graph"></canvas>
@@ -22,7 +22,7 @@
                     <div class="card">
                         <div class="card-header">
                             Welcome Back, {{ current_user.firstname }} {{ current_user.lastname }}!
-                            <span class="material-icons md-light align-middle float-end">refresh</span>
+                            <button class="btn btn-light btn-sm float-end" id="refresh_balance"><span class="material-icons md-light align-middle">refresh</span></button>
                         </div>
                         <div class="card-body">
                             <h5 class="card-title">Account Number: {{ data.acc_number }}</h5>
@@ -40,18 +40,33 @@
                     </div>
                 </div>
                 <div class="justify-content-center pt-3 pb-5">
-                    <div class="col">
-                        <div class="card-header">Recent Transactions</div>
+                    <div class="row align-items-start card">
+                        <div class="card-header">
+                        Recent Transactions
+                        <button class="btn btn-light btn-sm float-end" id="refresh_transactions"><span class="material-icons md-light align-middle">refresh</span></button>
+                        </div>
                         <div class="card text-center align-self-center">
                             <table class="table table-hover table-striped" id="recentTransactionTable">
                                 <thead>
                                     <tr>
                                         <th scope="col">Date</th>
+                                        <th scope="col">Recipient</th>
                                         <th scope="col">Description</th>
                                         <th scope="col">Amount</th>
                                     </tr>
                                 </thead>
-                                <tbody class="table" id="recentTransactionTableBody"></tbody>
+                                <tbody class="table" id="recentTransactionTableBody">
+                                {% if recent_trans %}
+                                {% for trans in recent_trans %}
+                                    <tr>
+                                        <td>{{ trans.date_transferred }}</td>
+                                        <td>{{ trans.transferee_acc }}</td>
+                                        <td>{{ trans.description }}</td>
+                                        <td>${{ trans.amt_transferred }}</td>
+                                    </tr>
+                                {% endfor %}
+                                {% endif %}
+                                </tbody>
                             </table>
                         </div>
                     </div>
