@@ -31,6 +31,7 @@ $(document).ready(function() {
         })
         .done(function(data, textStatus, xhr){
             if (xhr.status === 200) {
+                destroyChart();
                 drawChart(data.money_in, data.money_out);
             }
         })
@@ -96,6 +97,13 @@ function drawChart(moneyInStorage, moneyOutStorage) {
         },
     };
     let yearlyBarChart = new Chart(chartHolderHTML, yearlyBarChartConfig);
+}
+
+function destroyChart() {
+    let chartStatus = Chart.getChart("graph");
+    if (chartStatus != undefined) {
+        chartStatus.destroy();
+    }
 }
 
 function toMonthName(monthNumber) {
