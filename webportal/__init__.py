@@ -20,10 +20,11 @@ from webportal.models.Message import *
 
 
 def create_webportal():
-    app.config['SECRET_KEY'] = secrets.token_hex(16)
+    # app.config['SECRET_KEY'] = secrets.token_hex(16)
+    app.config['SECRET_KEY'] = "thisisasecretkey"
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_NAME}"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=600)
     # app.config['SESSION_COOKIE_SECURE'] = True
     db.init_app(app)
     flask_bcrypt.init_app(app)

@@ -22,6 +22,7 @@ class User(db.Model, UserMixin):
     unlock_ts = db.Column(db.DateTime(timezone=True), nullable=False)
     email_verified = db.Column(db.Boolean, default=False, nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    is_disabled = db.Column(db.Boolean, default=False, nullable=False)
 
     def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret):
         self.username = username
@@ -40,6 +41,7 @@ class User(db.Model, UserMixin):
         self.failed_login_attempts = 0
         self.last_login = datetime.now()
         self.unlock_ts = datetime.now()
+        self.is_disabled = False
 
     def get_totp_uri(self):
         return f'otpauth://totp/HX-Bank:{self.username}?secret={self.otp_secret}&issuer=HX-Bank'

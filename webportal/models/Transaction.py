@@ -31,3 +31,6 @@ def createTransaction(amt_transferred, transferrer_acc_number, transferee_acc_nu
         db.session.rollback()
     finally:
         db.session.close()    
+
+def approveTransaction():
+    pass 
