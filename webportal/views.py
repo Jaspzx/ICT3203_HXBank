@@ -340,6 +340,9 @@ def transfer():
 
     # Check if the form was submitted.
     if request.method == 'POST' and form.validate_on_submit():
+        # Transaction description.
+        description = form.description.data
+
         # Amount to debit and credit from transferee and transferrer respectively.
         amount = form.amount.data
         if amount <= 0:
@@ -360,14 +363,19 @@ def transfer():
             error = "Insufficient funds"
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data)
 
-        # Create a transaction history.
-        require_approval = False
-        if amount > 10000:
-            require_approval = True
-        updateBalance(transferrer_userid, transferee_userid, amount)
+        # Create a transaction. 
         transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
+        require_approval = False
+
+        if amount >= 10000:
+            require_approval = True
+            createTransaction(amount, transferer_acc_number, transferee_acc_number, description, require_approval)
+            error = "Approval is requied by the bank for transactions above $10,000 due to the aising fraud cases. The transaction will be approved within a working day."
+            return redirect(url_for('views.approval_required'))
+
+        createTransaction(amount, transferer_acc_number, transferee_acc_number, description, require_approval)
+        updateBalance(transferrer_userid, transferee_userid, amount)
         message_add(f"You have requested a transfer of ${amount} to {form.transferee_acc.data}.", transferrer_userid)
-        createTransaction(amount, transferer_acc_number, transferee_acc_number, require_approval)
 
         # Return success page.
         return redirect(url_for('views.success'))
@@ -448,7 +456,7 @@ def view_transferee():
     # Init the RemoveTransferForm.
     form = RemoveTransfereeForm()
 
-    #
+    # 
     transferee_data = Transferee.query.filter_by(transferer_id=current_user.id).all()
     data = []
     form_data_list = []
@@ -494,7 +502,8 @@ def topup_balance():
         user_acc = db.session.query(Account).join(User).filter(User.id == current_user.id).first().acc_number
         message_add(f"You have made a request to top up ${form.amount.data}", current_user.id)
         topup(current_user.id, form.amount.data)
-        createTransaction(form.amount.data, user_acc, user_acc, False)
+        description = "Topup"
+        createTransaction(form.amount.data, user_acc, user_acc, description, False)
         return redirect(url_for('views.success'))
     return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data)
 
@@ -527,10 +536,35 @@ def message_center():
     return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)
 
 
+@views.route("/transaction_management.html")
+@login_required
+def transaction_management():
+
+
+    return render_template("/admin/transaction_management.html")
+
+
+@views.route("/user_management.html")
+@login_required
+def user_management():
+    locked_acc = User.query.filter_by(is_disabled=True).all()
+    data = []
+    for user in locked_acc:
+        data.append({"username": user.username, "date_joined": user.date_joined, 
+        "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
+    return render_template("/admin/user_management.html", data=data)
+
+
 @views.route("/success")
 @login_required
 def success():
     return render_template('success.html', title="Success")
+
+
+@views.route("/approval-required")
+@login_required
+def approval_required():
+    return render_template('approval-required.html', title="Approval Required")
 
 
 @views.route("/robots.txt")

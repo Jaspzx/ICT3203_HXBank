@@ -1,0 +1,15 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+<h1>User Management</h1>
+<div>
+    {% for i in data %}
+    <div>
+        <p>Usename: {{ i.username }}</p>
+        <p>Date Joined: {{ i.date_joined }}</p>
+        <p>Failed Login Attempts: {{ i.failed_login_attempts }} </p>
+        <p>Last Login: {{ i.last_login }}</p>
+        <p>UNLOCK BUTTON</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock content %}
