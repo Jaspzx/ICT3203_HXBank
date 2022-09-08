@@ -607,12 +607,12 @@ def make_session_permanent():
 
 @views.after_request
 def add_header(r):
-    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Cache-Control"] = "no-store"
     r.headers["Pragma"] = "no-cache"
     r.headers["Expires"] = "0"
-    r.headers['Cache-Control'] = 'public, max-age=0'
     r.headers['X-Frame-Options'] = 'SAMEORIGIN'
     r.headers['X-Content-Type-Options'] = 'nosniff'
+    r.headers['X-XSS-Protection'] = '1; mode=block'
     # want to do csp header?
     # r.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return r

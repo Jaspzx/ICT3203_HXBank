@@ -25,7 +25,7 @@
                             <p class="card-text">Daily Transfer Remaining: ${{ data.acc_xfer_limit - data.acc_xfer_daily }}</p>
                             <p class="card-text">Daily Transfer Limit: ${{ data.acc_xfer_limit }}</p>
                             <div class="text-center align-self-center">
-                                <a href="#" class="btn btn-success align-middle">
+                                <a href="{{ url_for('views.topup_balance') }}" class="btn btn-success align-middle">
                                     <span class="material-icons md-light align-middle">add_circle_outline</span> Top Up
                                     <span class="material-icons md-light align-middle">navigate_next</span>
                                 </a>
