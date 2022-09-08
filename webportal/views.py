@@ -133,8 +133,8 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
             if flask_bcrypt.check_password_hash(user.password_hash, form.password.data):
-                if datetime.now() < user.unlock_ts:
-                    error = "Account has been locked out, try again later"
+                if user.is_disabled:
+                    error = "Account has been locked out. Please contact customer support for assistance."
                     return render_template('login.html', title="Login", form=form, login_error=error)
                 session['username'] = user.username
                 return redirect(url_for('views.otp_input'))
@@ -500,7 +500,6 @@ def topup_balance():
     form = TopUpForm()
     if request.method == 'POST' and form.validate_on_submit():
         user_acc = db.session.query(Account).join(User).filter(User.id == current_user.id).first().acc_number
-        message_add(f"You have made a request to top up ${form.amount.data}", current_user.id)
         topup(current_user.id, form.amount.data)
         description = "Topup"
         createTransaction(form.amount.data, user_acc, user_acc, description, False)
@@ -584,3 +583,4 @@ def add_header(r):
     r.headers["Expires"] = "0"
     r.headers['Cache-Control'] = 'public, max-age=0'
     return r
+

@@ -1,5 +1,5 @@
 from flask_login import UserMixin
-from datetime import datetime, timedelta
+from datetime import datetime
 from webportal import db
 import pyotp
 
@@ -19,7 +19,6 @@ class User(db.Model, UserMixin):
     date_joined = db.Column(db.DateTime(), nullable=False)
     failed_login_attempts = db.Column(db.INT, nullable=False)
     last_login = db.Column(db.DateTime(timezone=True), nullable=False)
-    unlock_ts = db.Column(db.DateTime(timezone=True), nullable=False)
     email_verified = db.Column(db.Boolean, default=False, nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_disabled = db.Column(db.Boolean, default=False, nullable=False)
@@ -40,7 +39,6 @@ class User(db.Model, UserMixin):
         self.date_joined = datetime.now()
         self.failed_login_attempts = 0
         self.last_login = datetime.now()
-        self.unlock_ts = datetime.now()
         self.is_disabled = False
 
     def get_totp_uri(self):
@@ -87,8 +85,8 @@ def update_on_success(arg_user):
 
 def update_on_failure(arg_user):
     arg_user.failed_login_attempts += 1
-    if arg_user.failed_login_attempts > 6:
-        arg_user.unlock_ts = datetime.now() + timedelta(minutes=30)
+    if arg_user.failed_login_attempts > 3:
+        arg_user.is_disabled = True
     try:
         db.session.commit()
     except:
