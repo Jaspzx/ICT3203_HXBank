@@ -16,6 +16,7 @@ class User(db.Model, UserMixin):
     dob = db.Column(db.Date(), nullable=False)
     password_hash = db.Column(db.String(150), nullable=False)
     otp_secret = db.Column(db.String(16), nullable=False)
+    prev_token = db.Column(db.String(6), nullable=False)
     date_joined = db.Column(db.DateTime(), nullable=False)
     failed_login_attempts = db.Column(db.INT, nullable=False)
     last_login = db.Column(db.DateTime(timezone=True), nullable=False)
@@ -36,6 +37,7 @@ class User(db.Model, UserMixin):
         self.otp_secret = otp_secret
         if self.otp_secret is None:
             self.otp_secret = pyotp.random_base32()
+        self.prev_token = 0
         self.date_joined = datetime.now()
         self.failed_login_attempts = 0
         self.last_login = datetime.now()
@@ -74,9 +76,10 @@ def reset_secret(arg_user):
         db.session.close()
 
 
-def update_on_success(arg_user):
+def update_on_success(arg_user, arg_token):
     arg_user.last_login = datetime.now()
     arg_user.failed_login_attempts = 0
+    arg_user.prev_token = arg_token
     try:
         db.session.commit()
     except:

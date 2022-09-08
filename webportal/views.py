@@ -166,14 +166,17 @@ def otp_input():
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=session['username']).first()
-        if user and user.verify_totp(form.token.data):
+        if user and user.prev_token == form.token.data:
+            error = "Something went wrong"
+            return render_template('otp-input.html', form=form, login_error=error)
+        elif user and user.verify_totp(form.token.data):
             del session['username']
             login_user(user)
             if current_user.failed_login_attempts > 0:
                 message_add(f"There were {current_user.failed_login_attempts} failed login attempt(s) between your "
                             f"current and last session", current_user.id)
             message_add(f"You have logged in on {current_user.last_login}", current_user.id)
-            update_on_success(user)
+            update_on_success(user, form.token.data)
             if current_user.is_admin is True:
                 return redirect(url_for('views.admin_dashboard'))
             return redirect(url_for('views.dashboard'))
