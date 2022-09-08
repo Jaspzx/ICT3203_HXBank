@@ -492,6 +492,7 @@ def topup_balance():
     form = TopUpForm()
     if request.method == 'POST' and form.validate_on_submit():
         user_acc = db.session.query(Account).join(User).filter(User.id == current_user.id).first().acc_number
+        message_add(f"You have made a request to top up ${form.amount.data}", current_user.id)
         topup(current_user.id, form.amount.data)
         createTransaction(form.amount.data, user_acc, user_acc, False)
         return redirect(url_for('views.success'))
@@ -541,3 +542,11 @@ def robots():
 def make_session_permanent():
     session.permanent = True
 
+
+@views.after_request
+def add_header(r):
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
