@@ -102,7 +102,7 @@ class TransferMoneyForm(FlaskForm):
 
 
 class RemoveTransfereeForm(FlaskForm):
-    transferee_acc = SelectField("Remove Account", coerce=str, validators=[InputRequired()])
+    transferee_acc = HiddenField()
     submit = SubmitField("Remove")
 
 

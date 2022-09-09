@@ -1,28 +1,61 @@
 {% extends "layouts/base.html" %}
 {% block content %}
-<h1>View Transferee</h1>
-{% for i in data %}
-    <div>
-        {{ i.acc_num }}
-        {{ i.first_name }}
-        {{ i.last_name }}        
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="my-4 text-center">Transfer Recipients</h1>
+                {% if form.transferee_acc.errors %}
+                    {% for error in form.transferee_acc.errors %}
+                        <div class="alert alert-danger" role="alert">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                <table class="table" id="transferee_table">
+                    <thead>
+                    <tr>
+                        <th>Account Number</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for i in data %}
+                        <tr>
+                            <td>{{ i.acc_num }}</td>
+                            <td>{{ i.first_name }}</td>
+                            <td>{{ i.last_name }}</td>
+                            <form method="POST" action="{{ url_for('views.view_transferee') }}">
+                                {{ form.csrf_token }}
+                                {{ form.transferee_acc(value=i.acc_num) }}
+                                <td>
+                                    {{ form.submit(class="form-btn") }}
+                                </td>
+                            </form>
+                            <td>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-{% endfor %}
-
-<h1>Remove Transferee</h1>
-<form method="POST" action="{{ url_for('views.view_transferee') }}">
-	{{ form.csrf_token }}
-	<p>
-		{{ form.transferee_acc.label }}
-		{{ form.transferee_acc(size=1) }}
-	</p>
-	{% if form.transferee_acc.errors %}
-		<ul class="errors">
-			{% for error in form.transferee_acc.errors %}
-				<li>{{ error }}</li>
-			{% endfor %}
-		</ul>
-	{% endif %}
-	{{ form.submit(class="form-btn") }}
-</form>
 {% endblock content %}
+{% block javascripts %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#transferee_table').DataTable({
+                "columnDefs": [{
+                    target: "_all",
+                    className: "dt-center"
+                }],
+                bInfo: false,
+                orderCellsTop: true,
+                paging: false,
+                bFilter: false
+            });
+        });
+    </script>
+{% endblock javascripts %}
