@@ -712,11 +712,11 @@ def barchart_graph():
     money_out = {x + 1: 0 for x in range(12)}
     for item in transfer_data:
         if item.date_transferred.year == current_year:
-            money_in[item.date_transferred.month] += item.amt_transferred
-    for item in transferee_data:
-        if item.date_transferred.year == current_year:
             if item.transferrer_acc_number != item.transferee_acc_number:
                 money_out[item.date_transferred.month] += item.amt_transferred
+    for item in transferee_data:
+        if item.date_transferred.year == current_year:
+            money_in[item.date_transferred.month] += item.amt_transferred
     return jsonify({'money_in': money_in, 'money_out': money_out}), 200
 
 
