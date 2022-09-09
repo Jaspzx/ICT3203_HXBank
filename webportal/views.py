@@ -633,12 +633,11 @@ def message_center():
     return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)
 
 
-@views.route("/transaction_management.html", methods=["GET", "POST"])
+@views.route("/admin/transaction_management.html", methods=["GET", "POST"])
 @login_required
 def transaction_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
-
     form = ApproveTransactionForm()
     if request.method == "POST" and form.validate_on_submit():
         if form.approve.data:
@@ -649,10 +648,11 @@ def transaction_management():
     data = []
     for item in transactions:
         data.append(item)
-    return render_template("/admin/transaction_management.html", data=data, form=form)
+    msg_data = load_nav_messages()
+    return render_template("/admin/transaction_management.html", data=data, form=form, msg_data=msg_data)
 
 
-@views.route("/user_management.html", methods=["GET", "POST"])
+@views.route("/admin/user_management.html", methods=["GET", "POST"])
 @login_required
 def user_management():
     if not current_user.is_admin:
@@ -668,7 +668,8 @@ def user_management():
     for user in locked_acc:
         data.append({"userid": user.id, "username": user.username, "date_joined": user.date_joined,
                      "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
-    return render_template("/admin/user_management.html", data=data, form=form)
+    msg_data = load_nav_messages()
+    return render_template("/admin/user_management.html", data=data, form=form, msg_data=msg_data)
 
 
 @views.route("/success")
@@ -712,8 +713,9 @@ def barchart_graph():
     money_out = {x + 1: 0 for x in range(12)}
     for item in transfer_data:
         if item.date_transferred.year == current_year:
-            if item.transferrer_acc_number != item.transferee_acc_number:
-                money_out[item.date_transferred.month] += item.amt_transferred
+            if not item.require_approval:
+                if item.transferrer_acc_number != item.transferee_acc_number:
+                    money_out[item.date_transferred.month] += item.amt_transferred
     for item in transferee_data:
         if item.date_transferred.year == current_year:
             money_in[item.date_transferred.month] += item.amt_transferred
