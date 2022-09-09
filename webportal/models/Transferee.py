@@ -14,24 +14,3 @@ class Transferee(db.Model):
         self.date_added = datetime.now()
         self.transferer_id = transferer_id
         self.transferee_id = transferee_id
-        
-
-def transferee_add(transferer_id, transferee_id):
-    new_transferee = Transferee(transferer_id, transferee_id)
-    try:
-        db.session.add(new_transferee)
-        db.session.commit()
-    except:
-        db.session.rollback()
-    finally:
-        db.session.close()
-
-
-def transferee_remove(transferer_id, transferee_id):
-    del_transferee = Transferee.query.filter_by(transferer_id=transferer_id, transferee_id=transferee_id).delete()
-    try:
-        db.session.commit()
-    except:
-        db.session.rollback()
-    finally:
-        db.session.close()
