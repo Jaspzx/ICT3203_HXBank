@@ -116,3 +116,14 @@ class SecureMessageForm(FlaskForm):
 class TopUpForm(FlaskForm):
     amount = FloatField("Amount to Top Up", validators=[InputRequired()])
     submit = SubmitField("Top Up")
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField("Password", validators=[InputRequired()],
+                             render_kw={"placeholder": "Password"})
+    new_password = PasswordField("Password", validators=[InputRequired(), Length(min=8),
+                                                     EqualTo('confirm_password', message='Passwords must match'),
+                                                     Regexp(
+                                                         "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
+                                                         message="Password complexity not met")])
+    confirm_password = PasswordField("Repeat Password")
+    submit = SubmitField("Reset")

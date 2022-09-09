@@ -269,7 +269,7 @@ def reset_pwd():
 @views.route('/reset-username', methods=['GET', 'POST'])
 def reset_username():
     if 'nric' not in session:
-        return redirect(url_for('views.reset_identity'))
+        return redirect(url_for('views.reset_identify'))
     form = ResetUsernameForm(request.form)
     error = "Reset Failed"
     if request.method == 'POST' and form.validate_on_submit():
@@ -538,10 +538,15 @@ def message_center():
 @views.route("/transaction_management.html")
 @login_required
 def transaction_management():
-
-
     return render_template("/admin/transaction_management.html")
 
+@views.route("/personal-banking/account_setting", methods=['GET', 'POST'])
+def setting():
+    data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    msg_data = load_nav_messages()
+    if current_user.is_admin:
+        return render_template('account-setting.html', title="admin setting", data=data, msg_data=msg_data)
+    return render_template('account-setting.html', title="user setting", data=data, msg_data=msg_data)
 
 @views.route("/user_management.html")
 @login_required
@@ -549,10 +554,26 @@ def user_management():
     locked_acc = User.query.filter_by(is_disabled=True).all()
     data = []
     for user in locked_acc:
-        data.append({"username": user.username, "date_joined": user.date_joined, 
+        data.append({"username": user.username, "date_joined": user.date_joined,
         "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
     return render_template("/admin/user_management.html", data=data)
 
+@views.route('/change-pwd', methods=['GET', 'POST'])
+def change_pwd():
+    if 'nric' not in session:
+        return redirect(url_for('views.reset_identify'))
+    form = ChangePasswordForm(request.form)
+    error = "Reset Failed"
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(nric=session['nric']).first()
+        if user:
+            del session['nric']
+            password = flask_bcrypt.generate_password_hash(form.new_password.data)
+            reset_details(user, "password", password)
+            return redirect(url_for("views.login"))
+        else:
+            return render_template('reset-pwd.html', form=form, reset_error=error)
+    return render_template('reset-pwd.html', form=form)
 
 @views.route("/success")
 @login_required

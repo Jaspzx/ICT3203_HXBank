@@ -1,0 +1,65 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 class="my-4 text-center">Account Setting </h1>
+
+                <div class="card">
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <h5 class="card-title">Username</h5>
+                                    <p class="card-text">{{ current_user.firstname }} {{ current_user.lastname }}</p>
+                                    <div class="buttonRight">
+                                        <a href="{{ url_for('views.reset_username') }}" class="btn btn-light align-middle">
+                                            Edit
+                                            <span class="material-icons md-light align-middle">navigate_next</span>
+                                        </a>
+                                    </div>
+
+                                </li>
+                                <li class="list-group-item">
+                                     <h5 class="card-title">Bank Account</h5>
+                                    <p class="card-text"></p>
+                                    <div class="buttonRight">
+                                        <a href="#" class="btn btn-light align-middle">
+                                            <span class="material-icons md-light align-middle">add_circle_outline</span> Add
+                                            <span class="material-icons md-light align-middle">navigate_next</span>
+                                        </a>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <h5 class="card-title">Password</h5>
+                                    <p class="card-text"></p>
+                                    <div class="buttonRight">
+                                        <a href="#" class="btn btn-light align-middle">
+                                            Edit
+                                            <span class="material-icons md-light align-middle">navigate_next</span>
+                                        </a>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <h5 class="card-title">OTP</h5>
+                                    <p class="card-text"></p>
+                                    <div class="buttonRight">
+                                        <a href="{{ url_for('views.otp_setup') }}" class="btn btn-light align-middle">
+                                            Set Up
+                                            <span class="material-icons md-light align-middle">navigate_next</span>
+                                        </a>
+                                        <a href="{{ url_for('views.reset_authenticate') }}" class="btn btn-light align-middle">
+                                            Reset
+                                            <span class="material-icons md-light align-middle">navigate_next</span>
+                                        </a>
+                                    </div>
+                                </li>
+                            </ul>
+
+                        </div>
+                    </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+

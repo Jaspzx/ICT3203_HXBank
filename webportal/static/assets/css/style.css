@@ -60,6 +60,14 @@ p, .lead {
     color: var(--body-text);
 }
 
+.buttonRight{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      position: absolute;
+      top:0;
+      right:0;
+}
 ul {
     list-style-type: none;
 }
