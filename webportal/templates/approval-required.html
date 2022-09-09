@@ -1,5 +1,6 @@
 {% extends "layouts/base.html" %}
 {% block content %}
-<h1>Approval is Required</h1>
-
+<h1>Approval is requied by the bank for transactions above $10,000 due to the aising fraud cases. </h1>
+<h2>The transaction will be approved within a working day.</h2>
+<a href="{{ url_for('views.dashboard') }}" title="Success">Return to homepage.</a>
 {% endblock content %}

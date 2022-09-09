@@ -20,17 +20,3 @@ class Transaction(db.Model):
         self.transferee_acc_number = transferee_acc_number
         self.description = description
         self.require_approval = require_approval
-
-
-def createTransaction(amt_transferred, transferrer_acc_number, transferee_acc_number, description, require_approval):
-    new_transaction = Transaction(amt_transferred, transferrer_acc_number, transferee_acc_number, description, require_approval)
-    try:
-        db.session.add(new_transaction)
-        db.session.commit()
-    except:
-        db.session.rollback()
-    finally:
-        db.session.close()    
-
-def approveTransaction():
-    pass 

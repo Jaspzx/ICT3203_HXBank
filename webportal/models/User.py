@@ -109,3 +109,13 @@ def reset_details(arg_user, arg_field, arg_value):
         db.session.rollback()
     finally:
         db.session.close()
+
+
+def unlock_account(arg_user):
+    arg_user.is_disabled = False
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+    finally:
+        db.session.close()

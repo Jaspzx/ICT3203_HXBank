@@ -116,3 +116,14 @@ class SecureMessageForm(FlaskForm):
 class TopUpForm(FlaskForm):
     amount = DecimalField("Amount to Top Up.", validators=[InputRequired()])
     submit = SubmitField("Top Up")
+
+
+class UnlockUserForm(FlaskForm):
+    userid = HiddenField()
+    unlock = SubmitField("Unlock")
+
+
+class ApproveTransactionForm(FlaskForm):
+    transactionid = HiddenField()
+    approve = SubmitField("Approve")
+    reject = SubmitField("Reject")
