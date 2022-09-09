@@ -15,29 +15,3 @@ class Message(db.Model):
         self.message = message
         self.date_sent = datetime.now()
         self.userid = userid
-
-
-def message_add(arg_message, arg_userid):
-    new_message = Message(arg_message, arg_userid)
-    try:
-        db.session.add(new_message)
-        db.session.commit()
-    except:
-        db.session.rollback()
-
-
-def message_status(arg_message, arg_status):
-    arg_message.read = arg_status
-    try:
-        db.session.add(arg_message)
-        db.session.commit()
-    except:
-        db.session.rollback()
-
-
-def message_del(arg_message):
-    try:
-        db.session.delete(arg_message)
-        db.session.commit()
-    except:
-        db.session.rollback()
