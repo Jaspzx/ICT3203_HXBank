@@ -36,6 +36,33 @@ $(document).ready(function() {
             }
         })
     })
+    $("#refresh_transactions").click(function() {
+        let table_body = document.getElementById("recentTransactionTableBody");
+        $.ajax({
+            url: '/api/recent_transactions',
+            type: 'GET',
+        })
+        .done(function(data, textStatus, xhr){
+            if (xhr.status === 200) {
+                if (table_body.rows.length !== 0) {
+                    while(table_body.hasChildNodes()) {
+                        table_body.removeChild(table_body.firstChild);
+                    }
+                }
+                for (const [key, value] of Object.entries(data)) {
+                    var row = table_body.insertRow(0);
+                    var date = row.insertCell(0);
+                    date.textContent = value.date_transferred;
+                    var recipient = row.insertCell(1);
+                    recipient.textContent = value.transferee_acc;
+                    var desc = row.insertCell(2);
+                    desc.textContent = value.description;
+                    var amt = row.insertCell(3);
+                    amt.textContent = "$" + value.amt_transferred;
+                }
+            }
+        })
+    })
 })
 
 function drawChart(moneyInStorage, moneyOutStorage) {

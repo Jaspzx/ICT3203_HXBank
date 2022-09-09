@@ -301,13 +301,15 @@ def dashboard():
     transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
     data = []
     for item in transfer_data[:5]:
-        data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
-                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
-                     "description": item.description, "require_approval": item.require_approval, "debit": False})
-    for item in transferee_data:
-        data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
-                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
-                     "description": item.description, "require_approval": item.require_approval, "debit": True})
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
+                     "require_approval": item.require_approval, "debit": False})
+    for item in transferee_data[:5]:
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
+                     "require_approval": item.require_approval, "debit": True})
     data.sort(key=lambda r: r["date_transferred"], reverse=True)
     data = {x['date_transferred']: x for x in data}.values()
     msg_data = load_nav_messages()
@@ -461,13 +463,15 @@ def transaction_history():
 
     # Combine the transactions together.
     for item in transfer_data:
-        data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
-                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
-                     "description": item.description, "require_approval": item.require_approval, "debit": False})
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
+                     "require_approval": item.require_approval, "debit": False})
     for item in transferee_data:
-        data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
-                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
-                     "description": item.description, "require_approval": item.require_approval, "debit": True})
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
+                     "require_approval": item.require_approval, "debit": True})
 
     # Sort by latest date first.
     data.sort(key=lambda r: r["date_transferred"], reverse=True)
@@ -618,7 +622,7 @@ def robots():
 @login_required
 def acc_overview():
     if current_user.is_admin:
-        return jsonify({'message': 'not allowed'}), 403
+        abort(403)
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     if data:
         return jsonify({'acc_balance': data.acc_balance, 'acc_xfer_limit': data.acc_xfer_limit,
@@ -629,7 +633,7 @@ def acc_overview():
 @login_required
 def barchart_graph():
     if current_user.is_admin:
-        return jsonify({'message': 'not allowed'}), 403
+        abort(403)
     current_year = datetime.now().year
     user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
     transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
@@ -644,6 +648,36 @@ def barchart_graph():
             if item.transferrer_acc_number != item.transferee_acc_number:
                 money_out[item.date_transferred.month] += item.amt_transferred
     return jsonify({'money_in': money_in, 'money_out': money_out}), 200
+
+
+@views.route("/api/recent_transactions", methods=['GET'])
+@login_required
+def recent_transactions():
+    if current_user.is_admin:
+        abort(403)
+    user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
+    transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
+    transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
+    data = []
+    for item in transfer_data[:5]:
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
+                     "require_approval": item.require_approval, "debit": False})
+    for item in transferee_data[:5]:
+        if item.transferrer_acc_number != item.transferee_acc_number:
+            data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                         "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                         "transferee_acc": item.transferee_acc_number, "description": item.description,
+                         "require_approval": item.require_approval, "debit": True})
+    data.sort(key=lambda r: r["date_transferred"], reverse=True)
+    temp = {}
+    trans_no = 0
+    for item in data:
+        placeholder_temp = str(trans_no)
+        temp[placeholder_temp] = item
+        trans_no += 1
+    return jsonify(temp), 200
 
 
 @views.before_request
