@@ -1,5 +1,48 @@
 {% extends "layouts/base.html" %}
 {% block content %}
-<h1>Welcome Admin!</h1>
-
+<main id="login" class="h-100 pt-5">
+    <section class="container d-flex flex-column justify-content-start h-100">
+        <div class="row align-items-start">
+            <div class="col-lg-10 col-xl-8">
+                <div class="card">
+                    <div class="card-header">Recent Admin Activity</div>
+                    <div class="card-body">
+                        <canvas id="graph"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-xl-4">
+                <div class="card">
+                    <div class="card-header">Welcome Back, {{ current_user.firstname }} {{ current_user.lastname }}!</div>
+                    <div class="card-body">
+                        <p>Here</p>
+                        <div class="text-center align-self-center">
+                            <a href="#" class="btn btn-success align-middle">
+                                <span class="material-icons md-light align-middle">add_circle_outline</span> Top Up
+                                <span class="material-icons md-light align-middle">navigate_next</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="justify-content-center pt-3 pb-5">
+                <div class="col">
+                    <div class="card-header">Recent User Activity</div>
+                    <div class="card text-center align-self-center">
+                        <table class="table table-hover table-striped" id="recentTransactionTable">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table" id="recentTransactionTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
 {% endblock content %}

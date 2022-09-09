@@ -309,7 +309,7 @@ def profile():
     return render_template('profile.html', title="Profile Page", msg_data=msg_data)
 
 
-@views.route("/personal-banking/admin-dashboard", methods=['GET', 'POST'])
+@views.route("/admin/admin-dashboard", methods=['GET', 'POST'])
 @login_required
 def admin_dashboard():
     if not current_user.is_admin:
@@ -327,6 +327,7 @@ def transfer():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
+
     # Init the TransferMoneyForm
     form = TransferMoneyForm()
 
@@ -378,13 +379,14 @@ def transfer():
 
         if amount >= 10000:
             require_approval = True
-            createTransaction(amount, transferer_acc_number, transferee_acc_number, description, require_approval)
-            error = "Approval is requied by the bank for transactions above $10,000 due to the aising fraud cases. The transaction will be approved within a working day."
-            return redirect(url_for('views.approval_required'))
 
         createTransaction(amount, transferer_acc_number, transferee_acc_number, description, require_approval)
-        updateBalance(transferrer_userid, transferee_userid, amount)
+        updateBalance(transferrer_userid, transferee_userid, amount, require_approval)
         message_add(f"You have requested a transfer of ${amount} to {form.transferee_acc.data}.", transferrer_userid)
+
+        # Return approval required page. 
+        if require_approval:
+            return redirect(url_for('views.approval_required'))
 
         # Return success page.
         return redirect(url_for('views.success'))
@@ -560,25 +562,41 @@ def message_center():
     return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)
 
 
-@views.route("/transaction_management.html")
+@views.route("/transaction_management.html", methods=["GET", "POST"])
 @login_required
 def transaction_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
-    return render_template("/admin/transaction_management.html")
+
+    form = ApproveTransactionForm()
+    if request.method == "POST" and form.validate_on_submit():
+        if form.approve.data:
+            print("YES")
+        else:
+            print("NO")
+    transactions = Transaction.query.filter_by(require_approval=True).all()
+    data = []
+    for item in transactions:
+        data.append(item)
+    return render_template("/admin/transaction_management.html", data=data, form=form)
 
 
-@views.route("/user_management.html")
+@views.route("/user_management.html", methods=["GET", "POST"])
 @login_required
 def user_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
+    form = UnlockUserForm()
+    if request.method == "POST" and form.validate_on_submit():
+        user_acc = User.query.filter_by(id=form.userid.data).first()
+        unlock_account(user_acc)
+        return redirect(url_for('views.user_management'))
     locked_acc = User.query.filter_by(is_disabled=True).all()
     data = []
     for user in locked_acc:
-        data.append({"username": user.username, "date_joined": user.date_joined,
-                     "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
-    return render_template("/admin/user_management.html", data=data)
+        data.append({"userid": user.id, "username": user.username, "date_joined": user.date_joined, 
+        "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
+    return render_template("/admin/user_management.html", data=data, form=form)
 
 
 @views.route("/success")
@@ -590,8 +608,6 @@ def success():
 @views.route("/approval-required")
 @login_required
 def approval_required():
-    if not current_user.is_admin:
-        return redirect(url_for('views.dashboard'))
     return render_template('approval-required.html', title="Approval Required")
 
 

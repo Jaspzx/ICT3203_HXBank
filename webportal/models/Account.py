@@ -10,6 +10,7 @@ class Account(db.Model):
 	acc_balance = db.Column(db.Numeric(precision=2, asdecimal=False, decimal_return_scale=None))
 	acc_xfer_limit = db.Column(db.Numeric(precision=2, asdecimal=False, decimal_return_scale=None))
 	acc_xfer_daily = db.Column(db.Numeric(precision=2, asdecimal=False, decimal_return_scale=None))
+	money_on_hold = db.Column(db.Numeric(precision=2, asdecimal=False, decimal_return_scale=None))
 	reset_xfer_limit_date = db.Column(db.DateTime(timezone=True), nullable=False)
 	userid = db.Column(db.INT, db.ForeignKey('user.id'))
 
@@ -18,6 +19,7 @@ class Account(db.Model):
 		self.acc_balance = acc_balance
 		self.acc_xfer_limit = 1000
 		self.acc_xfer_daily = 0 
+		self.money_on_hold = 0 
 		self.reset_xfer_limit_date = datetime.now() + timedelta(days=1)
 		self.userid = userid
 
@@ -59,15 +61,19 @@ def topup(userid, amount):
 		db.session.close()	
 
 
-def updateBalance(transferrer_id, transferee_id, amount):
+def updateBalance(transferrer_id, transferee_id, amount, require_approval):
 	transferrer_acc = Account.query.filter_by(userid=transferrer_id).first()
 	transferee_acc = Account.query.filter_by(userid=transferee_id).first()
-	transferrer_acc.acc_balance -= amount
-	transferee_acc.acc_balance += amount 
-	if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
-		transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
-		transferrer_acc.acc_xfer_daily = 0
-	transferrer_acc.acc_xfer_daily += amount 
+
+	if require_approval:
+		transferrer_acc.money_on_hold += amount
+	else:
+		transferrer_acc.acc_balance -= amount
+		transferee_acc.acc_balance += amount 
+		if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
+			transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
+			transferrer_acc.acc_xfer_daily = 0
+		transferrer_acc.acc_xfer_daily += amount 
 	try:
 		db.session.commit()
 	except:
