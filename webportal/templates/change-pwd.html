@@ -10,7 +10,7 @@
             <div class="row justify-content-center">
                 <div class="col-lg-7 col-xl-6">
                     <div class="form-container text-center align-self-center">
-                        <form method="POST" action="/change-pwd">
+                        <form method="POST" action="{{ url_for('views.change_pwd') }}">
                             {{ form.csrf_token }}
                             <div class="form-title">
                                 <h1 class="title">Change Password</h1>
@@ -22,8 +22,8 @@
                                     <div class="alert alert-danger" role="alert">{{ error }}</div>
                                 {% endfor %}
                                 {% endif %}
-                                {% if form.new_password.errors %}
-                                {% for error in form.new_password.errors %}
+                                {% if form.password.errors %}
+                                {% for error in form.password.errors %}
                                     <div class="alert alert-danger" role="alert">{{ error }}</div>
                                 {% endfor %}
                                 {% endif %}
@@ -38,8 +38,8 @@
                                 {{ form.password(class="form-control", placeholder="Enter your current password") }}
                             </div>
                             <div class="form-group">
-                                {{ form.new_password.label }}
-                                {{ form.new_password(class="form-control", placeholder="Enter your new password") }}
+                                {{ form.password.label }}
+                                {{ form.password(class="form-control", placeholder="Enter your new password") }}
                             </div>
                             <div class="form-group">
                                 {{ form.confirm_password.label }}

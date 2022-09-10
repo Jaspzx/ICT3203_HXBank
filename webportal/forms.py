@@ -118,9 +118,9 @@ class TopUpForm(FlaskForm):
     submit = SubmitField("Top Up")
 
 class ChangePasswordForm(FlaskForm):
-    current_password = PasswordField("Password", validators=[InputRequired()],
+    current_password = PasswordField("Current Password", validators=[InputRequired()],
                              render_kw={"placeholder": "Password"})
-    new_password = PasswordField("Password", validators=[InputRequired(), Length(min=8),
+    password = PasswordField("New Password", validators=[InputRequired(), Length(min=8),
                                                      EqualTo('confirm_password', message='Passwords must match'),
                                                      Regexp(
                                                          "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",

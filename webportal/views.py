@@ -558,22 +558,22 @@ def user_management():
         "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
     return render_template("/admin/user_management.html", data=data)
 
-@views.route('/change-pwd', methods=['GET', 'POST'])
+@views.route('/personal-banking/change-pwd', methods=['GET', 'POST'])
+@login_required
 def change_pwd():
-    if 'nric' not in session:
-        return redirect(url_for('views.reset_identify'))
     form = ChangePasswordForm(request.form)
     error = "Reset Failed"
     if request.method == 'POST' and form.validate_on_submit():
-        user = User.query.filter_by(nric=session['nric']).first()
+        user = User.query.filter_by(username=session['username']).first()
         if user:
-            del session['nric']
-            password = flask_bcrypt.generate_password_hash(form.new_password.data)
-            reset_details(user, "password", password)
-            return redirect(url_for("views.login"))
+            if flask_bcrypt.check_password_hash(user.password_hash, form.current_password.data):
+                del session['username']
+                password = flask_bcrypt.generate_password_hash(form.password.data)
+                reset_details(user, "password", password)
+                return redirect(url_for("views.login"))
         else:
-            return render_template('reset-pwd.html', form=form, reset_error=error)
-    return render_template('reset-pwd.html', form=form)
+            return render_template('change-pwd.html', form=form, reset_error=error)
+    return render_template('change-pwd.html', form=form)
 
 @views.route("/success")
 @login_required
