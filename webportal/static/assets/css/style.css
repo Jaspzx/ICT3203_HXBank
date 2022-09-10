@@ -42,10 +42,17 @@ footer {
     margin-top: auto;
 }
 
-h1, h2, h3, h4 {
+h1 {
     font-family: 'Roboto', sans-serif;
     line-height: 1.2;
     font-size: 4rem;
+    color: var(--secondary-color);
+}
+
+h2 {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.2;
+    font-size: 2rem;
     color: var(--secondary-color);
 }
 
@@ -53,6 +60,14 @@ p, .lead {
     color: var(--body-text);
 }
 
+.buttonRight{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      position: absolute;
+      top:0;
+      right:0;
+}
 ul {
     list-style-type: none;
 }
@@ -859,3 +874,17 @@ body {
 .material-icons.md-24 { font-size: 24px; }
 .material-icons.md-36 { font-size: 36px; }
 .material-icons.md-48 { font-size: 48px; }
+
+.icons {
+    font-size: 300px;
+    position: center;
+}
+
+.information {
+    font-size: 20px;
+    text-align: center;
+    position: center;
+    font-weight: bold;
+}
+
+
