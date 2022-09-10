@@ -397,7 +397,7 @@ def reset_username():
 
 @views.route('/personal-banking/dashboard', methods=['GET'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def dashboard():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -424,7 +424,7 @@ def dashboard():
 
 @views.route("/admin/admin-dashboard", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def admin_dashboard():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
@@ -437,7 +437,7 @@ def admin_dashboard():
 
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def transfer():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -550,7 +550,7 @@ def transfer():
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def add_transferee():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -595,7 +595,7 @@ def add_transferee():
 
 @views.route("/personal-banking/transaction-history", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def transaction_history():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -627,7 +627,7 @@ def transaction_history():
 
 @views.route("/personal-banking/view-transferee", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def view_transferee():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -663,7 +663,7 @@ def view_transferee():
 
 @views.route("/personal-banking/set-transfer-limit", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def set_transfer_limit():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -692,7 +692,7 @@ def set_transfer_limit():
 
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def topup_balance():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -726,7 +726,7 @@ def topup_balance():
 
 @views.route("/personal-banking/message-center", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def message_center():
     msg_data = load_nav_messages()
     form = SecureMessageForm()
@@ -757,7 +757,7 @@ def message_center():
 
 @views.route("/admin/transaction-management", methods=["GET", "POST"])
 @login_required
-@check_email_verification
+# @check_email_verification
 def transaction_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
@@ -777,7 +777,7 @@ def transaction_management():
 
 @views.route("/admin/user_management", methods=["GET", "POST"])
 @login_required
-@check_email_verification
+# @check_email_verification
 def user_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
@@ -798,7 +798,7 @@ def user_management():
 
 @views.route("/account_management/account-settings", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def acc_settings():
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     msg_data = load_nav_messages()
@@ -809,7 +809,7 @@ def acc_settings():
 
 @views.route('/account-management/change-pwd', methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def change_pwd():
     msg_data = load_nav_messages()
     form = ChangePasswordForm()
@@ -840,7 +840,7 @@ def change_pwd():
 
 @views.route('/account-management/change-username', methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def change_username():
     msg_data = load_nav_messages()
     form = ChangeUsernameForm()
@@ -876,14 +876,14 @@ def change_username():
 
 @views.route("/success")
 @login_required
-@check_email_verification
+# @check_email_verification
 def success():
     return render_template('success.html', title="Success")
 
 
 @views.route("/approval-required")
 @login_required
-@check_email_verification
+# @check_email_verification
 def approval_required():
     return render_template('approval-required.html', title="Approval Required")
 
@@ -895,7 +895,7 @@ def robots():
 
 @views.route("/api/acc-overview", methods=['GET'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def acc_overview():
     if current_user.is_admin:
         abort(403)
@@ -907,7 +907,7 @@ def acc_overview():
 
 @views.route("/api/barchart-graph", methods=['GET'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def barchart_graph():
     if current_user.is_admin:
         abort(403)
@@ -930,7 +930,7 @@ def barchart_graph():
 
 @views.route("/api/recent-transactions", methods=['GET'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def recent_transactions():
     if current_user.is_admin:
         abort(403)
