@@ -23,6 +23,7 @@
                     </a>
                     <div class="dropdown-menu dropdown-menu-dark" aria-labelledby="userTransferDropdown">
                         <a class="dropdown-item" href="{{ url_for('views.transfer') }}">Transfer to another account</a>
+                        <a class="dropdown-item" href="{{ url_for('views.transfer_onetime') }}">Transfer to another account (onetime)</a>
                         <a class="dropdown-item" href="{{ url_for('views.add_transferee') }}">Add Transfer Recipient</a>
                         <div class="dropdown-divider border border-secondary"></div>
                         <a class="dropdown-item" href="{{ url_for('views.set_transfer_limit') }}">Set Transfer Limit</a>

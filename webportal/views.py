@@ -548,6 +548,131 @@ def transfer():
                            balance=transferrer_acc.acc_balance)
 
 
+@views.route("/personal-banking/transfer-onetime", methods=['GET', 'POST'])
+@login_required
+# @check_email_verification
+def transfer_onetime():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
+    msg_data = load_nav_messages()
+
+    # Init the TransferMoneyForm
+    form = TransferMoneyOneTimeForm()
+
+    # Get the transferrer's account information.
+    transferrer_userid = current_user.id
+    transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+
+    # Check if the form was submitted.
+    if request.method == 'POST' and form.validate_on_submit():
+        # Transaction description.
+        description = form.description.data
+
+        # Amount to debit and credit from transferee and transferrer respectively.
+        amount = float(Decimal(form.amount.data).quantize(TWO_PLACES))
+        if amount < 0.1:
+            error = "Invalid amount (Minimum $0.10)"
+            return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
+
+        # Get the transferee's account information.
+        transferee_acc_number = form.transferee_acc.data.split(" ")[0]
+        transferee_acc = Account.query.filter_by(acc_number=transferee_acc_number).first()
+
+        # Return error if transferee does not exist.  
+        if transferee_acc is None:
+            error = "Transferee does not exist"
+            return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
+                                balance=transferrer_acc.acc_balance, transferee_error=error)    
+
+        transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
+
+        # Check that the amount to be transferred does not exceed the transfer limit.
+        day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
+
+        if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
+            error = "Amount to be transferred exceeds daily transfer limit"
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
+                                   balance=transferrer_acc.acc_balance)
+        if transferrer_acc.acc_balance < amount:
+            error = "Insufficient funds"
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
+                                   balance=transferrer_acc.acc_balance)
+
+        # Create a transaction.
+        transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
+        require_approval = False
+
+        if amount >= 10000:
+            require_approval = True
+
+        new_transaction = Transaction(amount, transferer_acc_number, transferee_acc_number, description,
+                                      require_approval)
+        add_db_no_close(new_transaction)
+
+        # Update the balance for both transferrer and transferee.
+        transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+        transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
+        if require_approval:
+            money_on_hold = Decimal(transferrer_acc.money_on_hold + amount).quantize(TWO_PLACES)
+            transferrer_acc.money_on_hold = money_on_hold
+        else:
+            transferrer_acc_balance = Decimal(transferrer_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_balance = transferrer_acc_balance
+            transferee_acc_balance = Decimal(transferee_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferee_acc.acc_balance = transferee_acc_balance
+            if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
+                transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
+                transferrer_acc.acc_xfer_daily = 0
+            transferrer_acc_xfer_daily = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_xfer_daily = transferrer_acc_xfer_daily
+
+        update_db_no_close()
+
+        # Return approval required page.
+        if require_approval:
+            html = render_template('/email_templates/transfer-pending.html', amount=amount,
+                                   acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            subject = "HX-Bank - Add Recipient"
+            send_email(current_user.email, subject, html)
+            new_message = Message("HX-Bank",
+                                  f"Your requested transfer of ${amount} to {form.transferee_acc.data} is currently "
+                                  f"pending for approval.",
+                                  transferrer_userid)
+            add_db(new_message)
+            return redirect(url_for('views.approval_required'))
+
+        # Return success page.
+        html = render_template('/email_templates/transfer-success.html', amount=amount,
+                               acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        subject = "HX-Bank - Add Recipient"
+        send_email(current_user.email, subject, html)
+        new_message = Message("HX-Bank", f"Your have requested transfer of ${amount} to {form.transferee_acc.data} is "
+                                         f"successful.", transferrer_userid)
+        add_db(new_message)
+        return redirect(url_for('views.success'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # Render the HTML template.
+    return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
+                           balance=transferrer_acc.acc_balance)    
+
+
+
+
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
 # @check_email_verification

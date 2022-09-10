@@ -1,14 +1,10 @@
 {% extends "layouts/base.html" %}
 {% block title %} Transfer {% endblock %}
 {% block content %}
-    {% if form.transferee_acc.data is defined %}
-    <h1>No transferees has been added yet!</h1>
-    <a href="{{ url_for('views.add_transferee') }}">Add Transferee</a>
-    {% else %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h1 class="my-4 text-center">Transfer</h1>
+                <h1 class="my-4 text-center">Onetime Transfer</h1>
                 {% if form.amount.errors %}
                     {% for error in form.amount.errors %}
                         <div class="alert alert-danger" role="alert">{{ error }}</div>
@@ -27,9 +23,11 @@
                 {% if xfer_error %}
                         <div class="alert alert-danger" role="alert">{{ xfer_error }}</div>
                 {% endif %}
-
+                {% if transferee_error %}
+                        <div class="alert alert-danger" role="alert">{{ transferee_error }}</div>
+                {% endif %}
                 <h2 class="my-4" style="text-size">Remaining Balance: {{ balance }}</h2>
-                <form method="POST" action="{{ url_for('views.transfer') }}">
+                <form method="POST" action="{{ url_for('views.transfer_onetime') }}">
                     {{ form.csrf_token }}
                         <div class="form-group">
                             {{ form.transferee_acc.label(class="mb-2") }}
@@ -48,5 +46,4 @@
             </div>
         </div>
     </div>
-    {% endif %}
 {% endblock content %}
