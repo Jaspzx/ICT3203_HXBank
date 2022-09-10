@@ -13,7 +13,12 @@
                         <form method="POST" action="/reset-username">
                             {{ form.csrf_token }}
                             <div class="form-title">
+                            {%  if current_user.is_authenticated %}
+                                <h1 class="title">Change Username</h1>
+                            {% endif %}
+                            {%  if current_user.is_authenticated == false %}
                                 <h1 class="title">Reset Username</h1>
+                            {% endif %}
                                 {% if reset_error %}
                                     <div class="alert alert-danger" role="alert">{{ reset_error }}</div>
                                 {% endif %}

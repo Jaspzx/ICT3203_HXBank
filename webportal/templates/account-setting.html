@@ -10,9 +10,9 @@
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">
                                     <h5 class="card-title">Username</h5>
-                                    <p class="card-text">{{ current_user.firstname }} {{ current_user.lastname }}</p>
+                                    <p class="card-text">{{ current_user.username }}</p>
                                     <div class="buttonRight">
-                                        <a href="{{ url_for('views.reset_username') }}" class="btn btn-light align-middle">
+                                        <a href="{{ url_for('views.change_username_unauthenticated') }}" class="btn btn-light align-middle">
                                             Edit
                                             <span class="material-icons md-light align-middle">navigate_next</span>
                                         </a>

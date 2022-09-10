@@ -304,21 +304,33 @@ def reset_username():
     error = "Reset Failed"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(nric=session['nric']).first()
-        if user:
+        if current_user.is_authenticated:
             username = User.query.filter_by(username=form.username.data).first()
             if username:
                 return render_template('reset-username.html', form=form, reset_error="Username exists")
             else:
-                del session['nric']
+                if session.get('nric'):
+                    del session['nric']
                 user.username = form.username.data
                 update_db_no_close()
-                new_message = Message(f"You have performed a username reset on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+                new_message = Message(f"You have performed a username changed on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
                 add_db(new_message)
-            return redirect(url_for("views.login"))
+                return redirect(url_for("views.dashboard"))
         else:
-            return render_template('reset-username.html', form=form, reset_error=error)
+            if user:
+                username = User.query.filter_by(username=form.username.data).first()
+                if username:
+                    return render_template('reset-username.html', form=form, reset_error="Username exists")
+                else:
+                    del session['nric']
+                    user.username = form.username.data
+                    update_db_no_close()
+                    new_message = Message(f"You have performed a username reset on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+                    add_db(new_message)
+                return redirect(url_for("views.login"))
+            else:
+                return render_template('reset-username.html', form=form, reset_error=error)
     return render_template('reset-username.html', form=form)
-
 
 @views.route('/personal-banking/dashboard', methods=['GET', 'POST'])
 @login_required
@@ -693,6 +705,15 @@ def change_pwd_unauthenticated():
     session['nric'] = current_user.nric
     session['type'] = "change_pwd"
     return redirect(url_for("views.reset_authenticate"))
+
+@views.route('/personal-banking/change_username_unauthenticated', methods=['GET', 'POST'])
+@login_required
+def change_username_unauthenticated():
+    # Get the user's NRIC
+    session['nric'] = current_user.nric
+    session['type'] = "username"
+    return redirect(url_for("views.reset_authenticate"))
+
 
 
 @views.route('/personal-banking/change_pwd', methods=['GET', 'POST'])
