@@ -84,8 +84,8 @@ class ResetUsernameForm(FlaskForm):
 
 class AddTransfereeForm(FlaskForm):
     transferee_acc = StringField("Transferee Account No", validators=[InputRequired(), Length(min=10, max=10),
-                                                                       Regexp("^\\d{10,10}$",
-                                                                              message="Invalid account number")])
+                                                                      Regexp("^\\d{10,10}$",
+                                                                             message="Invalid account number")])
     submit = SubmitField("Add")
 
 
@@ -117,6 +117,7 @@ class TopUpForm(FlaskForm):
     amount = DecimalField("Amount to Top Up", validators=[InputRequired()])
     submit = SubmitField("Top Up")
 
+
 class UnlockUserForm(FlaskForm):
     userid = HiddenField()
     unlock = SubmitField("Unlock")
@@ -130,11 +131,25 @@ class ApproveTransactionForm(FlaskForm):
 
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField("Current Password", validators=[InputRequired()],
-                             render_kw={"placeholder": "Password"})
+                                     render_kw={"placeholder": "Password"})
     password = PasswordField("New Password", validators=[InputRequired(), Length(min=8),
-                                                     EqualTo('confirm_password', message='Passwords must match'),
-                                                     Regexp(
-                                                         "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
-                                                         message="Password complexity not met")])
+                                                         EqualTo('confirm_password', message='Passwords must match'),
+                                                         Regexp(
+                                                             "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
+                                                             message="Password complexity not met")])
     confirm_password = PasswordField("Repeat Password")
-    submit = SubmitField("Reset")
+    token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp("^\\d{6,6}$")],
+                        render_kw={"placeholder": "OTP Token"})
+    submit = SubmitField("Change")
+
+
+class ChangeUsernameForm(FlaskForm):
+    old_username = StringField("Old Username", validators=[InputRequired(), Length(min=3, max=20),
+                                                           Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$",
+                                                                  message="Invalid username")])
+    new_username = StringField("New Username", validators=[InputRequired(), Length(min=3, max=20),
+                                                           Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$",
+                                                                  message="Invalid username")])
+    token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp("^\\d{6,6}$")],
+                        render_kw={"placeholder": "OTP Token"})
+    submit = SubmitField("Change")

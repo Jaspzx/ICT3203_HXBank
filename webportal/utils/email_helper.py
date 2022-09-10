@@ -1,4 +1,4 @@
-from flask_mail import Message
+from flask_mail import Message as Mail_Message
 from webportal import app, mail
 from itsdangerous import URLSafeTimedSerializer
 
@@ -18,5 +18,9 @@ def confirm_token(token, expiration=3600):
 
 
 def send_email(to, subject, template) -> None:
-    msg = Message(subject, recipients=[to], html=template, sender=app.config['MAIL_DEFAULT_SENDER'])
-    mail.send(msg)
+    try:
+        msg = Mail_Message(subject, recipients=[to], html=template, sender=app.config['MAIL_DEFAULT_SENDER'])
+        mail.send(msg)
+    except:
+        # temp try except
+        pass
