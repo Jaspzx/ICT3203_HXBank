@@ -10,8 +10,8 @@ class Message(db.Model):
     date_sent = db.Column(db.DateTime(timezone=True), nullable=False)
     userid = db.Column(db.INT, db.ForeignKey('user.id'))
 
-    def __init__(self, message, userid):
-        self.sender = "HX Bank"
+    def __init__(self, sender, message, userid):
+        self.sender = sender
         self.message = message
         self.date_sent = datetime.now()
         self.userid = userid

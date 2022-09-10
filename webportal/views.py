@@ -74,7 +74,7 @@ def register():
         random_gen = SystemRandom()
         acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
         welcome_amt = random_gen.randrange(1000, 10000)
-        new_message = Message(welcome_msg(welcome_amt), user.id)
+        new_message = Message("HX Bank", welcome_msg(welcome_amt), user.id)
         add_db_no_close(new_message)
         new_account = Account(acc_number, user.id, welcome_amt)
         add_db(new_account)
@@ -112,7 +112,8 @@ def qrcode():
     user.otp_secret = pyotp.random_base32()
     update_db_no_close()
     if user.prev_token != 0:
-        new_message = Message(f"You have performed a OTP secret reset on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+        new_message = Message("HX Bank", f"You have performed a OTP secret reset on "
+                                         f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
         add_db_no_close(new_message)
     del session['username']
     url = pyqrcode.create(user.get_totp_uri())
@@ -182,14 +183,15 @@ def otp_input():
             del session['username']
             login_user(user)
             if current_user.failed_login_attempts > 0:
-                new_message = Message(f"There were {current_user.failed_login_attempts} failed login attempt(s) "
-                                      f"between your current and last session", current_user.id)
+                new_message = Message("HX Bank", f"There were {current_user.failed_login_attempts} failed login "
+                                                 f"attempt(s) between your current and last session", current_user.id)
                 add_db_no_close(new_message)
             user.last_login = datetime.now()
             user.failed_login_attempts = 0
             user.prev_token = form.token.data
             update_db_no_close()
-            new_message = Message(f"You have logged in on {current_user.last_login}.strftime('%Y-%m-%d %H:%M:%S')",
+            new_message = Message("HX Bank", f"You have logged in on "
+                                             f"{current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}",
                                   current_user.id)
             add_db_no_close(new_message)
             if current_user.is_admin is True:
@@ -282,7 +284,8 @@ def reset_pwd():
             password = flask_bcrypt.generate_password_hash(form.password.data)
             user.password_hash = password
             update_db_no_close()
-            new_message = Message(f"You have performed a password reset on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+            new_message = Message("HX Bank", f"You have performed a password reset on "
+                                             f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
             add_db(new_message)
             return redirect(url_for("views.login"))
         else:
@@ -306,7 +309,8 @@ def reset_username():
                 del session['nric']
                 user.username = form.username.data
                 update_db_no_close()
-                new_message = Message(f"You have performed a username reset on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+                new_message = Message("HX Bank", f"You have performed a username reset on "
+                                                 f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
                 add_db(new_message)
             return redirect(url_for("views.login"))
         else:
@@ -436,7 +440,7 @@ def transfer():
 
         update_db()
 
-        new_message = Message(f"You have requested a transfer of ${amount} to {form.transferee_acc.data}.",
+        new_message = Message("HX Bank", f"You have requested a transfer of ${amount} to {form.transferee_acc.data}.",
                               transferrer_userid)
         add_db(new_message)
 
@@ -476,8 +480,8 @@ def add_transferee():
 
             # Add to DB if it does not exist.
             else:
-                new_message = Message(f"You have added account number: {transferee_acc.acc_number}, as a transfer "
-                                      f"recipient", current_user.id)
+                new_message = Message("HX Bank", f"You have added account number: {transferee_acc.acc_number}, as a "
+                                                 f"transfer recipient", current_user.id)
                 add_db_no_close(new_message)
                 new_transferee = Transferee(current_user.id, transferee_acc.userid)
                 add_db(new_transferee)
@@ -590,7 +594,7 @@ def topup_balance():
             return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data, topup_error=error)
         acc = Account.query.filter_by(userid=current_user.id).first()
         acc.acc_balance += amount
-        new_message = Message(f"You have made a request to top up ${amount}", current_user.id)
+        new_message = Message("HX Bank", f"You have made a request to top up ${amount}", current_user.id)
         add_db_no_close(new_message)
         update_db()
         description = f"Self-service top up of ${amount}"
