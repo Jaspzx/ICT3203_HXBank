@@ -1,0 +1,24 @@
+{% extends "layouts/base.html" %}
+{% block title %} Email Verification Required {% endblock %}
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+
+{% block content %}
+    <main id="login" class="h-100 pt-5">
+        <section class="container d-flex flex-column justify-content-start h-100">
+            <div class="row justify-content-center">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="form-container text-center align-self-center">
+                        <h1>Welcome!</h1>
+                        <br>
+                        <p>At HX-Bank, we pride ourselves in our security measures.</p>
+                        <p>As you have not verified your email address. Please check your inbox (and your spam folder) - you should have received an email with a confirmation link.</p>
+                        <br>
+                        <p>Didn't get the email? <a href="/resend-verification">Click here to request a resend.</a></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}

@@ -75,6 +75,4 @@ def del_db_no_close(target_obj) -> None:
         db.session.commit()
     except:
         db.session.rollback()
-    finally:
-        db.session.close()
 
