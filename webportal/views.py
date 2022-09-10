@@ -1,3 +1,4 @@
+from decimal import Decimal
 from io import BytesIO
 from .utils.interact_db import *
 import pyqrcode
@@ -11,6 +12,7 @@ from .utils.email_helper import *
 from functools import wraps
 
 views = Blueprint('views', __name__)
+TWO_PLACES = Decimal(10) ** -2
 
 
 def check_email_verification(func):
@@ -393,7 +395,7 @@ def reset_username():
     return render_template('reset-username.html', form=form)
 
 
-@views.route('/personal-banking/dashboard', methods=['GET', 'POST'])
+@views.route('/personal-banking/dashboard', methods=['GET'])
 @login_required
 @check_email_verification
 def dashboard():
@@ -404,16 +406,17 @@ def dashboard():
     transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
     transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
     data = []
-    for item in transfer_data[:5:-1]:
+    for item in list(reversed(transfer_data))[:5]:
         data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
                      "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
                      "transferee_acc": item.transferee_acc_number, "description": item.description,
                      "require_approval": item.require_approval, "debit": False})
-    for item in transferee_data[:5:-1]:
-        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
-                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
-                     "transferee_acc": item.transferee_acc_number, "description": item.description,
-                     "require_approval": item.require_approval, "debit": True})
+    for item in list(reversed(transferee_data))[:5]:
+        if item.transferrer_acc_number != item.transferee_acc_number:
+            data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                         "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                         "transferee_acc": item.transferee_acc_number, "description": item.description,
+                         "require_approval": item.require_approval, "debit": True})
     data = {x['date_transferred']: x for x in data}.values()
     msg_data = load_nav_messages()
     return render_template('dashboard.html', title="Dashboard", data=user_data, msg_data=msg_data, recent_trans=data)
@@ -466,7 +469,7 @@ def transfer():
         description = form.description.data
 
         # Amount to debit and credit from transferee and transferrer respectively.
-        amount = form.amount.data
+        amount = float(Decimal(form.amount.data).quantize(TWO_PLACES))
         if amount < 0.1:
             error = "Invalid amount (Minimum $0.10)"
             return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
@@ -476,7 +479,7 @@ def transfer():
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
 
         # Check that the amount to be transferred does not exceed the transfer limit.
-        day_amount = transferrer_acc.acc_xfer_daily + amount
+        day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
 
         if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
             error = "Amount to be transferred exceeds daily transfer limit"
@@ -496,20 +499,24 @@ def transfer():
 
         new_transaction = Transaction(amount, transferer_acc_number, transferee_acc_number, description,
                                       require_approval)
-        add_db(new_transaction)
+        add_db_no_close(new_transaction)
 
         # Update the balance for both transferrer and transferee.
         transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         if require_approval:
-            transferrer_acc.money_on_hold += amount
+            money_on_hold = Decimal(transferrer_acc.money_on_hold + amount).quantize(TWO_PLACES)
+            transferrer_acc.money_on_hold = money_on_hold
         else:
-            transferrer_acc.acc_balance -= amount
-            transferee_acc.acc_balance += amount
+            transferrer_acc_balance = Decimal(transferrer_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_balance = transferrer_acc_balance
+            transferee_acc_balance = Decimal(transferee_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferee_acc.acc_balance = transferee_acc_balance
             if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
                 transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
                 transferrer_acc.acc_xfer_daily = 0
-            transferrer_acc.acc_xfer_daily += amount
+            transferrer_acc_xfer_daily = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_xfer_daily = transferrer_acc_xfer_daily
 
         update_db_no_close()
 
@@ -692,12 +699,13 @@ def topup_balance():
     form = TopUpForm()
     if request.method == 'POST' and form.validate_on_submit():
         user_acc = db.session.query(Account).join(User).filter(User.id == current_user.id).first().acc_number
-        amount = form.amount.data
+        amount = float(Decimal(form.amount.data).quantize(TWO_PLACES))
         if amount < 1:
             error = "Invalid amount (Minimum $1)"
             return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data, topup_error=error)
         acc = Account.query.filter_by(userid=current_user.id).first()
-        acc.acc_balance += amount
+        acc_balance = Decimal(acc.acc_balance + amount).quantize(TWO_PLACES)
+        acc.acc_balance = acc_balance
         new_message = Message("HX-Bank", f"You have made a request to top up ${amount}", current_user.id)
         add_db_no_close(new_message)
         html = render_template('/email_templates/top-up.html', amount=amount,
@@ -929,12 +937,12 @@ def recent_transactions():
     transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
     transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
     data = []
-    for item in transfer_data[:5:-1]:
+    for item in list(reversed(transfer_data))[:5]:
         data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
                      "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
                      "transferee_acc": item.transferee_acc_number, "description": item.description,
                      "require_approval": item.require_approval, "debit": False})
-    for item in transferee_data[:5:-1]:
+    for item in list(reversed(transferee_data))[:5]:
         if item.transferrer_acc_number != item.transferee_acc_number:
             data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
                          "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
