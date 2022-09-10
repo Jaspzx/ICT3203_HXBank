@@ -501,22 +501,25 @@ def transfer():
                                       require_approval)
         add_db_no_close(new_transaction)
 
-        # Update the balance for both transferrer and transferee.
+        # Get the transferrer and transferee accounts. 
         transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
+
+        # Add money to onhold if approval is required. 
         if require_approval:
             money_on_hold = Decimal(transferrer_acc.money_on_hold + amount).quantize(TWO_PLACES)
             transferrer_acc.money_on_hold = money_on_hold
-        else:
-            transferrer_acc_balance = Decimal(transferrer_acc.acc_balance - amount).quantize(TWO_PLACES)
-            transferrer_acc.acc_balance = transferrer_acc_balance
-            transferee_acc_balance = Decimal(transferee_acc.acc_balance - amount).quantize(TWO_PLACES)
-            transferee_acc.acc_balance = transferee_acc_balance
-            if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
-                transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
-                transferrer_acc.acc_xfer_daily = 0
-            transferrer_acc_xfer_daily = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
-            transferrer_acc.acc_xfer_daily = transferrer_acc_xfer_daily
+        
+        # Update the balance for both transferrer and transferee.
+        transferrer_acc_balance = Decimal(transferrer_acc.acc_balance - amount).quantize(TWO_PLACES)
+        transferrer_acc.acc_balance = transferrer_acc_balance
+        transferee_acc_balance = Decimal(transferee_acc.acc_balance - amount).quantize(TWO_PLACES)
+        transferee_acc.acc_balance = transferee_acc_balance
+        if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
+            transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
+            transferrer_acc.acc_xfer_daily = 0
+        transferrer_acc_xfer_daily = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
+        transferrer_acc.acc_xfer_daily = transferrer_acc_xfer_daily
 
         update_db_no_close()
 
