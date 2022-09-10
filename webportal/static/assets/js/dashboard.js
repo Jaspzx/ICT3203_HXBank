@@ -1,6 +1,6 @@
 $(document).ready(function() {
     $.ajax({
-        url: '/api/barchart_graph',
+        url: '/api/barchart-graph',
         type: 'GET',
     })
     .done(function(data, textStatus, xhr){
@@ -13,7 +13,7 @@ $(document).ready(function() {
         let acc_remain = document.getElementById("acc_remain");
         let acc_limit = document.getElementById("acc_limit");
         $.ajax({
-            url: '/api/acc_overview',
+            url: '/api/acc-overview',
             type: 'GET',
         })
         .done(function(data, textStatus, xhr){
@@ -26,7 +26,7 @@ $(document).ready(function() {
     })
     $("#refresh_chart").click(function() {
         $.ajax({
-            url: '/api/barchart_graph',
+            url: '/api/barchart-graph',
             type: 'GET',
         })
         .done(function(data, textStatus, xhr){
@@ -39,7 +39,7 @@ $(document).ready(function() {
     $("#refresh_transactions").click(function() {
         let table_body = document.getElementById("recentTransactionTableBody");
         $.ajax({
-            url: '/api/recent_transactions',
+            url: '/api/recent-transactions',
             type: 'GET',
         })
         .done(function(data, textStatus, xhr){
