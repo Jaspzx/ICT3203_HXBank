@@ -83,7 +83,7 @@ class ResetUsernameForm(FlaskForm):
 
 
 class AddTransfereeForm(FlaskForm):
-    transferee_acc = StringField("Transferee Account No.", validators=[InputRequired(), Length(min=10, max=10),
+    transferee_acc = StringField("Transferee Account No", validators=[InputRequired(), Length(min=10, max=10),
                                                                        Regexp("^\\d{10,10}$",
                                                                               message="Invalid account number")])
     submit = SubmitField("Add")
@@ -102,7 +102,7 @@ class TransferMoneyForm(FlaskForm):
 
 
 class RemoveTransfereeForm(FlaskForm):
-    transferee_acc = SelectField("Remove Account", coerce=str, validators=[InputRequired()])
+    transferee_acc = HiddenField()
     submit = SubmitField("Remove")
 
 
@@ -114,9 +114,8 @@ class SecureMessageForm(FlaskForm):
 
 
 class TopUpForm(FlaskForm):
-    amount = DecimalField("Amount to Top Up.", validators=[InputRequired()])
+    amount = DecimalField("Amount to Top Up", validators=[InputRequired()])
     submit = SubmitField("Top Up")
-
 
 class UnlockUserForm(FlaskForm):
     userid = HiddenField()
@@ -127,3 +126,15 @@ class ApproveTransactionForm(FlaskForm):
     transactionid = HiddenField()
     approve = SubmitField("Approve")
     reject = SubmitField("Reject")
+
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField("Current Password", validators=[InputRequired()],
+                             render_kw={"placeholder": "Password"})
+    password = PasswordField("New Password", validators=[InputRequired(), Length(min=8),
+                                                     EqualTo('confirm_password', message='Passwords must match'),
+                                                     Regexp(
+                                                         "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
+                                                         message="Password complexity not met")])
+    confirm_password = PasswordField("Repeat Password")
+    submit = SubmitField("Reset")
