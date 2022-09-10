@@ -1,5 +1,12 @@
 {% extends "layouts/base.html" %}
-{% block title %} Reset Username {% endblock %}
+{% block title %}
+    {%  if current_user.is_authenticated %}
+        Change Username
+    {% endif %}
+    {%  if current_user.is_authenticated == false %}
+        Reset Username
+    {% endif %}
+{% endblock %}
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
 
