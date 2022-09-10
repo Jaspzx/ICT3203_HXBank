@@ -880,4 +880,11 @@ body {
     position: center;
 }
 
+.information {
+    font-size: 20px;
+    text-align: center;
+    position: center;
+    font-weight: bold;
+}
+
 
