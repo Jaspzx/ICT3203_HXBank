@@ -8,8 +8,19 @@ from webportal.models.Transferee import *
 from .forms import *
 from .utils.messaging import *
 from .utils.email_helper import *
+from functools import wraps
 
 views = Blueprint('views', __name__)
+
+
+def check_email_verification(func):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        if current_user.email_verified is False:
+            return redirect(url_for('views.unverified_email'))
+        return func(*args, **kwargs)
+
+    return decorated_function
 
 
 @login_manager.user_loader
@@ -83,7 +94,7 @@ def register():
         session['username'] = username
         confirm_url = url_for('views.confirm_email', token=token, _external=True)
         html = render_template('/email_templates/activate.html', confirm_url=confirm_url)
-        subject = "HX-Bank - Please confirm your email"
+        subject = "HX-Bank - Email Verification"
         send_email(email, subject, html)
 
         # Return OTP setup page.
@@ -135,7 +146,11 @@ def qrcode():
         abort(404)
     user.otp_secret = pyotp.random_base32()
     update_db_no_close()
-    if user.prev_token != 0:
+    if user.prev_token != "0":
+        html = render_template('/email_templates/reset.html', reset="OTP",
+                               time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        subject = "HX-Bank - OTP Reset"
+        send_email(user.email, subject, html)
         new_message = Message("HX-Bank", f"You have performed a OTP secret reset on "
                                          f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
         add_db_no_close(new_message)
@@ -218,12 +233,43 @@ def otp_input():
                                              f"{current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}",
                                   current_user.id)
             add_db_no_close(new_message)
-            if current_user.is_admin is True:
+            if current_user.is_admin:
                 return redirect(url_for('views.admin_dashboard'))
-            return redirect(url_for('views.dashboard'))
+            if current_user.email_verified is False:
+                return redirect(url_for('views.unverified_email'))
+            else:
+                return redirect(url_for('views.dashboard'))
         else:
             return render_template('otp-input.html', form=form, login_error=error)
     return render_template('otp-input.html', form=form)
+
+
+@views.route('/unverified-email', methods=['GET'])
+@login_required
+def unverified_email():
+    msg_data = load_nav_messages()
+    if current_user.email_verified:
+        if current_user.is_admin:
+            return redirect(url_for('views.admin_dashboard'))
+        else:
+            return redirect(url_for('views.dashboard'))
+    return render_template('verify-email.html', msg_data=msg_data)
+
+
+@views.route('/resend-verification', methods=['GET'])
+@login_required
+def resend_verification():
+    if current_user.email_verified:
+        if current_user.is_admin:
+            return redirect(url_for('views.admin_dashboard'))
+        else:
+            return redirect(url_for('views.dashboard'))
+    token = generate_token(current_user.email)
+    confirm_url = url_for('views.confirm_email', token=token, _external=True)
+    html = render_template('/email_templates/activate.html', confirm_url=confirm_url)
+    subject = "HX-Bank - Email Verification"
+    send_email(current_user.email, subject, html)
+    return redirect(url_for('views.unverified_email'))
 
 
 @views.route('/reset-identify', methods=['GET', 'POST'])
@@ -305,6 +351,10 @@ def reset_pwd():
             password = flask_bcrypt.generate_password_hash(form.password.data)
             user.password_hash = password
             update_db_no_close()
+            html = render_template('/email_templates/reset.html', reset="password",
+                                   time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            subject = "HX-Bank - Password Reset"
+            send_email(user.email, subject, html)
             new_message = Message("HX-Bank", f"You have performed a password reset on "
                                              f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
             add_db(new_message)
@@ -330,8 +380,12 @@ def reset_username():
                 del session['nric']
                 user.username = form.username.data
                 update_db_no_close()
-                new_message = Message(
-                    f"You have performed a username change on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+                html = render_template('/email_templates/reset.html', reset="username",
+                                       time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                subject = "HX-Bank - Username Reset"
+                send_email(user.email, subject, html)
+                new_message = Message("HX-Bank", f"You have performed a username change on "
+                                                 f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
                 add_db(new_message)
             return redirect(url_for("views.logout"))
         else:
@@ -341,6 +395,7 @@ def reset_username():
 
 @views.route('/personal-banking/dashboard', methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def dashboard():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -364,15 +419,9 @@ def dashboard():
     return render_template('dashboard.html', title="Dashboard", data=user_data, msg_data=msg_data, recent_trans=data)
 
 
-@views.route("/personal-banking/profile", methods=['GET', 'POST'])
-@login_required
-def profile():
-    msg_data = load_nav_messages()
-    return render_template('profile.html', title="Profile Page", msg_data=msg_data)
-
-
 @views.route("/admin/admin-dashboard", methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def admin_dashboard():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
@@ -385,6 +434,7 @@ def admin_dashboard():
 
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def transfer():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -418,7 +468,7 @@ def transfer():
         # Amount to debit and credit from transferee and transferrer respectively.
         amount = form.amount.data
         if amount < 0.1:
-            error = "Invalid amount (Minimum $0.01)"
+            error = "Invalid amount (Minimum $0.10)"
             return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
 
         # Get the transferee's account information.
@@ -461,17 +511,29 @@ def transfer():
                 transferrer_acc.acc_xfer_daily = 0
             transferrer_acc.acc_xfer_daily += amount
 
-        update_db()
-
-        new_message = Message("HX-Bank", f"You have requested a transfer of ${amount} to {form.transferee_acc.data}.",
-                              transferrer_userid)
-        add_db(new_message)
+        update_db_no_close()
 
         # Return approval required page.
         if require_approval:
+            html = render_template('/email_templates/transfer-pending.html', amount=amount,
+                                   acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            subject = "HX-Bank - Add Recipient"
+            send_email(current_user.email, subject, html)
+            new_message = Message("HX-Bank",
+                                  f"Your requested transfer of ${amount} to {form.transferee_acc.data} is currently "
+                                  f"pending for approval.",
+                                  transferrer_userid)
+            add_db(new_message)
             return redirect(url_for('views.approval_required'))
 
         # Return success page.
+        html = render_template('/email_templates/transfer-success.html', amount=amount,
+                               acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        subject = "HX-Bank - Add Recipient"
+        send_email(current_user.email, subject, html)
+        new_message = Message("HX-Bank", f"Your have requested transfer of ${amount} to {form.transferee_acc.data} is "
+                                         f"successful.", transferrer_userid)
+        add_db(new_message)
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
@@ -481,6 +543,7 @@ def transfer():
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def add_transferee():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -506,6 +569,10 @@ def add_transferee():
                 new_message = Message("HX-Bank", f"You have added account number: {transferee_acc.acc_number}, as a "
                                                  f"transfer recipient", current_user.id)
                 add_db_no_close(new_message)
+                html = render_template('/email_templates/recipient.html', recipient=transferee_acc.acc_number,
+                                       time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                subject = "HX-Bank - Add Recipient"
+                send_email(current_user.email, subject, html)
                 new_transferee = Transferee(current_user.id, transferee_acc.userid)
                 add_db(new_transferee)
                 return redirect(url_for('views.success'))
@@ -521,6 +588,7 @@ def add_transferee():
 
 @views.route("/personal-banking/transaction-history", methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def transaction_history():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -552,6 +620,7 @@ def transaction_history():
 
 @views.route("/personal-banking/view-transferee", methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def view_transferee():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -580,13 +649,14 @@ def view_transferee():
         transferee_acc = form.transferee_acc.data.split(" ")[0]
         transferee_id = Account.query.filter_by(acc_number=transferee_acc).first().userid
         del_transferee = Transferee.query.filter_by(transferer_id=current_user.id, transferee_id=transferee_id).delete()
-        update_db()  # there is a method that deletes the record
+        update_db()
         return redirect(url_for('views.success'))
     return render_template('view-transferee.html', title="View Transferee", data=data, form=form, msg_data=msg_data)
 
 
 @views.route("/personal-banking/set-transfer-limit", methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def set_transfer_limit():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -602,6 +672,10 @@ def set_transfer_limit():
         acc = Account.query.filter_by(userid=current_user.id).first()
         new_message = Message("HX-Bank", f"Your new transfer limit is ${form.transfer_limit.data}", current_user.id)
         add_db_no_close(new_message)
+        html = render_template('/email_templates/transfer-limit.html', amount=form.transfer_limit.data,
+                               time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        subject = "HX-Bank - New Transfer Limit"
+        send_email(current_user.email, subject, html)
         acc.acc_xfer_limit = form.transfer_limit.data
         update_db()
         return redirect(url_for('views.success'))
@@ -610,6 +684,7 @@ def set_transfer_limit():
 
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def topup_balance():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -625,6 +700,10 @@ def topup_balance():
         acc.acc_balance += amount
         new_message = Message("HX-Bank", f"You have made a request to top up ${amount}", current_user.id)
         add_db_no_close(new_message)
+        html = render_template('/email_templates/top-up.html', amount=amount,
+                               time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        subject = "HX-Bank - Top Up"
+        send_email(current_user.email, subject, html)
         update_db()
         description = f"Self-service top up of ${amount}"
 
@@ -638,6 +717,7 @@ def topup_balance():
 
 @views.route("/personal-banking/message-center", methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def message_center():
     msg_data = load_nav_messages()
     form = SecureMessageForm()
@@ -668,6 +748,7 @@ def message_center():
 
 @views.route("/admin/transaction-management", methods=["GET", "POST"])
 @login_required
+@check_email_verification
 def transaction_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
@@ -687,6 +768,7 @@ def transaction_management():
 
 @views.route("/admin/user_management", methods=["GET", "POST"])
 @login_required
+@check_email_verification
 def user_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
@@ -707,6 +789,7 @@ def user_management():
 
 @views.route("/account_management/account-settings", methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def acc_settings():
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     msg_data = load_nav_messages()
@@ -717,6 +800,7 @@ def acc_settings():
 
 @views.route('/account-management/change-pwd', methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def change_pwd():
     msg_data = load_nav_messages()
     form = ChangePasswordForm()
@@ -730,6 +814,10 @@ def change_pwd():
                 password = flask_bcrypt.generate_password_hash(form.password.data)
                 user.password_hash = password
                 update_db_no_close()
+                html = render_template('/email_templates/reset.html', reset="password",
+                                       time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                subject = "HX-Bank - Change Password"
+                send_email(current_user.email, subject, html)
                 new_message = Message("HX-Bank",
                                       f"You have performed a password change on "
                                       f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
@@ -743,6 +831,7 @@ def change_pwd():
 
 @views.route('/account-management/change-username', methods=['GET', 'POST'])
 @login_required
+@check_email_verification
 def change_username():
     msg_data = load_nav_messages()
     form = ChangeUsernameForm()
@@ -761,6 +850,10 @@ def change_username():
                     return render_template('change-username.html', form=form, reset_error=error, msg_data=msg_data)
                 user.username = form.new_username.data
                 update_db_no_close()
+                html = render_template('/email_templates/reset.html', reset="username",
+                                       time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                subject = "HX-Bank - Change Username"
+                send_email(current_user.email, subject, html)
                 new_message = Message("HX-Bank",
                                       f"You have performed a username change on "
                                       f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
@@ -774,12 +867,14 @@ def change_username():
 
 @views.route("/success")
 @login_required
+@check_email_verification
 def success():
     return render_template('success.html', title="Success")
 
 
 @views.route("/approval-required")
 @login_required
+@check_email_verification
 def approval_required():
     return render_template('approval-required.html', title="Approval Required")
 
@@ -791,6 +886,7 @@ def robots():
 
 @views.route("/api/acc-overview", methods=['GET'])
 @login_required
+@check_email_verification
 def acc_overview():
     if current_user.is_admin:
         abort(403)
@@ -802,6 +898,7 @@ def acc_overview():
 
 @views.route("/api/barchart-graph", methods=['GET'])
 @login_required
+@check_email_verification
 def barchart_graph():
     if current_user.is_admin:
         abort(403)
@@ -824,6 +921,7 @@ def barchart_graph():
 
 @views.route("/api/recent-transactions", methods=['GET'])
 @login_required
+@check_email_verification
 def recent_transactions():
     if current_user.is_admin:
         abort(403)

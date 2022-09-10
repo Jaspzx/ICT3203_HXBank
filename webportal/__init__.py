@@ -34,7 +34,6 @@ def create_webportal():
     # app.config['MAIL_PASSWORD'] = ''
     # app.config['MAIL_DEFAULT_SENDER'] = ''
     # app.config['MAIL_USE_TLS'] = True
-
     db.init_app(app)
     mail.init_app(app)
     flask_bcrypt.init_app(app)
