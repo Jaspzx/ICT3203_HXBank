@@ -360,8 +360,10 @@ def dashboard():
 @views.route("/personal-banking/profile", methods=['GET', 'POST'])
 @login_required
 def profile():
+    user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
     msg_data = load_nav_messages()
-    return render_template('profile.html', title="Profile Page", msg_data=msg_data)
+    return render_template('profile.html', title="Profile Page", data=user_data, msg_data=msg_data)
 
 
 @views.route("/admin/admin-dashboard", methods=['GET', 'POST'])
