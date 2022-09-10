@@ -7,6 +7,7 @@ from webportal import flask_bcrypt, login_manager
 from webportal.models.Transferee import *
 from .forms import *
 from .utils.messaging import *
+from .utils.email_helper import *
 
 views = Blueprint('views', __name__)
 
@@ -66,7 +67,8 @@ def register():
             return render_template('register.html', title="Register", form=form,
                                    register_error="Invalid date")
         password = flask_bcrypt.generate_password_hash(form.password.data)
-        new_user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None)
+        token = generate_token(email)
+        new_user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None, token)
         add_db(new_user)
         user = User.query.filter_by(username=username).first()
 
@@ -79,10 +81,32 @@ def register():
         new_account = Account(acc_number, user.id, welcome_amt)
         add_db(new_account)
         session['username'] = username
+        confirm_url = url_for('views.confirm_email', token=token, _external=True)
+        html = render_template('/email_templates/activate.html', confirm_url=confirm_url)
+        subject = "HX-Bank - Please confirm your email"
+        # send_email(email, subject, html)
 
         # Return OTP setup page.
         return redirect(url_for("views.otp_setup"))
     return render_template('register.html', title="Register", form=form)
+
+
+@views.route('/confirm/<token>')
+def confirm_email(token):
+    try:
+        email = confirm_token(token)
+        user = User.query.filter_by(email=email).first()
+        if user.email_token != token:
+            abort(404)
+        elif user.email_verified:
+            return redirect(url_for('views.logout'))
+        else:
+            user.email_verified = True
+            user.email_token = None
+            update_db()
+            return redirect(url_for('views.login'))
+    except:
+        abort(404)
 
 
 @views.route('/otp-setup')
@@ -637,7 +661,7 @@ def message_center():
     return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)
 
 
-@views.route("/admin/transaction_management.html", methods=["GET", "POST"])
+@views.route("/admin/transaction_management", methods=["GET", "POST"])
 @login_required
 def transaction_management():
     if not current_user.is_admin:
@@ -656,7 +680,7 @@ def transaction_management():
     return render_template("/admin/transaction_management.html", data=data, form=form, msg_data=msg_data)
 
 
-@views.route("/admin/user_management.html", methods=["GET", "POST"])
+@views.route("/admin/user_management", methods=["GET", "POST"])
 @login_required
 def user_management():
     if not current_user.is_admin:
@@ -688,7 +712,7 @@ def approval_required():
     return render_template('approval-required.html', title="Approval Required")
 
 
-@views.route("/robots.txt")
+@views.route("/robots.txt", methods=['GET'])
 def robots():
     return render_template('robots.txt', title="Robots")
 

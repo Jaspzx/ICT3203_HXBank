@@ -1,15 +1,17 @@
-import secrets
 from flask import Flask
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
+from flask_mail import Mail
+import os
 
 app = Flask(__name__)
 db = SQLAlchemy()
 flask_bcrypt = Bcrypt()
 login_manager = LoginManager()
 csrf = CSRFProtect()
+mail = Mail()
 DB_NAME = "database.db"
 
 from webportal.models.User import *
@@ -24,8 +26,17 @@ def create_webportal():
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_NAME}"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=600)
-    # app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SECURITY_PASSWORD_SALT'] = "test"
+    app.config['SESSION_COOKIE_SECURE'] = True
+    # app.config['MAIL_SERVER'] = ''
+    # app.config['MAIL_PORT'] = 587
+    # app.config['MAIL_USERNAME'] = ''
+    # app.config['MAIL_PASSWORD'] = ''
+    # app.config['MAIL_DEFAULT_SENDER'] = ''
+    # app.config['MAIL_USE_TLS'] = True
+
     db.init_app(app)
+    mail.init_app(app)
     flask_bcrypt.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)

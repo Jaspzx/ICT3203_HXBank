@@ -21,10 +21,11 @@ class User(db.Model, UserMixin):
     failed_login_attempts = db.Column(db.INT, nullable=False)
     last_login = db.Column(db.DateTime(timezone=True), nullable=False)
     email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    email_token = db.Column(db.String(150))
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_disabled = db.Column(db.Boolean, default=False, nullable=False)
 
-    def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret):
+    def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret, token):
         self.username = username
         self.firstname = firstname
         self.lastname = lastname
@@ -41,6 +42,7 @@ class User(db.Model, UserMixin):
         self.date_joined = datetime.now()
         self.failed_login_attempts = 0
         self.last_login = datetime.now()
+        self.email_token = token
         self.is_disabled = False
 
     def get_totp_uri(self):
