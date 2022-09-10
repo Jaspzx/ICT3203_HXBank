@@ -672,18 +672,19 @@ def set_transfer_limit():
     # Init the SetTransferLimitForm.
     form = SetTransferLimitForm()
     if request.method == 'POST' and form.validate_on_submit():
-        if form.transfer_limit.data < 0.1:
+        amount = float(Decimal(form.transfer_limit.data).quantize(TWO_PLACES))
+        if amount < 0.1:
             error = "Invalid value"
             return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data,
                                    limit_error=error)
         acc = Account.query.filter_by(userid=current_user.id).first()
-        new_message = Message("HX-Bank", f"Your new transfer limit is ${form.transfer_limit.data}", current_user.id)
+        new_message = Message("HX-Bank", f"Your new transfer limit is ${amount}", current_user.id)
         add_db_no_close(new_message)
-        html = render_template('/email_templates/transfer-limit.html', amount=form.transfer_limit.data,
+        html = render_template('/email_templates/transfer-limit.html', amount=amount,
                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - New Transfer Limit"
         send_email(current_user.email, subject, html)
-        acc.acc_xfer_limit = form.transfer_limit.data
+        acc.acc_xfer_limit = amount
         update_db()
         return redirect(url_for('views.success'))
     return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data)
