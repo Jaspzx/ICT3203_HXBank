@@ -114,9 +114,8 @@ class SecureMessageForm(FlaskForm):
 
 
 class TopUpForm(FlaskForm):
-    amount = FloatField("Amount to Top Up", validators=[InputRequired()])
+    amount = DecimalField("Amount to Top Up", validators=[InputRequired()])
     submit = SubmitField("Top Up")
-
 
 class UnlockUserForm(FlaskForm):
     userid = HiddenField()
@@ -139,5 +138,3 @@ class ChangePasswordForm(FlaskForm):
                                                          message="Password complexity not met")])
     confirm_password = PasswordField("Repeat Password")
     submit = SubmitField("Reset")
-    amount = DecimalField("Amount to Top Up.", validators=[InputRequired()])
-    submit = SubmitField("Top Up")

@@ -262,7 +262,13 @@ def reset_authenticate():
             elif session['type'] == "username":
                 del session['type']
                 return redirect(url_for("views.reset_username"))
+            elif session['type'] == "change_pwd":
+                del session['type']
+                return redirect(url_for("views.change_pwd"))
             else:
+                del session['type']
+                if current_user.is_authenticated:
+                    return redirect(url_for("views.dashboard"))
                 return redirect(url_for('views.login'))
         else:
             return render_template('reset-authenticate.html', form=form, authenticate_error=error)
@@ -636,17 +642,6 @@ def message_center():
 @views.route("/transaction_management.html", methods=["GET", "POST"])
 @login_required
 def transaction_management():
-    return render_template("/admin/transaction_management.html")
-
-@views.route("/personal-banking/account_setting", methods=['GET', 'POST'])
-def setting():
-    data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
-    msg_data = load_nav_messages()
-    if current_user.is_admin:
-        return render_template('account-setting.html', title="admin setting", data=data, msg_data=msg_data)
-    return render_template('account-setting.html', title="user setting", data=data, msg_data=msg_data)
-
-@views.route("/user_management.html")
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
 
@@ -661,7 +656,6 @@ def setting():
     for item in transactions:
         data.append(item)
     return render_template("/admin/transaction_management.html", data=data, form=form)
-
 
 @views.route("/user_management.html", methods=["GET", "POST"])
 @login_required
@@ -681,22 +675,52 @@ def user_management():
                      "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
     return render_template("/admin/user_management.html", data=data, form=form)
 
-@views.route('/personal-banking/change-pwd', methods=['GET', 'POST'])
+
+
+@views.route("/personal-banking/account_setting", methods=['GET', 'POST'])
+def setting():
+    data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    msg_data = load_nav_messages()
+    if current_user.is_admin:
+        return render_template('account-setting.html', title="admin setting", data=data, msg_data=msg_data)
+    return render_template('account-setting.html', title="user setting", data=data, msg_data=msg_data)
+
+
+@views.route('/personal-banking/change_pwd_unauthenticated', methods=['GET', 'POST'])
+@login_required
+def change_pwd_unauthenticated():
+    # Get the user's NRIC
+    session['nric'] = current_user.nric
+    session['type'] = "change_pwd"
+    return redirect(url_for("views.reset_authenticate"))
+
+
+@views.route('/personal-banking/change_pwd', methods=['GET', 'POST'])
 @login_required
 def change_pwd():
     form = ChangePasswordForm(request.form)
     error = "Reset Failed"
     if request.method == 'POST' and form.validate_on_submit():
-        user = User.query.filter_by(username=session['username']).first()
-        if user:
-            if flask_bcrypt.check_password_hash(user.password_hash, form.current_password.data):
-                del session['username']
-                password = flask_bcrypt.generate_password_hash(form.password.data)
-                reset_details(user, "password", password)
-                return redirect(url_for("views.login"))
+        if current_user.is_authenticated:
+            user = User.query.filter_by(username=current_user.username).first()
+            if user:
+                if session.get('nric'):
+                    del session['nric']
+                if flask_bcrypt.check_password_hash(user.password_hash, form.current_password.data):
+                    password = flask_bcrypt.generate_password_hash(form.password.data)
+                    user.password_hash = password
+                    update_db_no_close()
+                    new_message = Message(
+                        f"You have performed a password changed on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+                    add_db_no_close(new_message)
+                    return redirect(url_for("views.login"))
+                else:
+                    error = "Incorrect Password"
+                    return render_template('change-pwd.html', title="Change Password", form=form, reset_error=error)
         else:
             return render_template('change-pwd.html', form=form, reset_error=error)
     return render_template('change-pwd.html', form=form)
+
 
 @views.route("/success")
 @login_required
