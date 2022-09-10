@@ -5,7 +5,7 @@ from flask_login import current_user
 from webportal import db
 
 
-def load_nav_messages():
+def load_nav_messages() -> list:
     msg_query = db.session.query(Message).join(User).filter(User.id == current_user.id).order_by(
         desc(Message.date_sent)).all()
     msg_data = []
@@ -21,6 +21,6 @@ def load_nav_messages():
     return msg_data
 
 
-def welcome_msg(arg_amt):
+def welcome_msg(arg_amt) -> str:
     welcome = f"Welcome! As a welcome gift, ${arg_amt} has been debited to your account!"
     return welcome

@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm, RecaptchaField
 from flask_login import current_user
 from wtforms import StringField, DateField, IntegerField, BooleanField, PasswordField, SubmitField, SelectField, \
-    FloatField, HiddenField
+    DecimalField, HiddenField
 from wtforms.validators import InputRequired, Length, Email, EqualTo, Regexp
 from webportal.models.Account import *
 
@@ -96,8 +96,8 @@ class SetTransferLimitForm(FlaskForm):
 
 class TransferMoneyForm(FlaskForm):
     transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
-    amount = FloatField("Amount to Transfer", validators=[InputRequired()])
-    description = StringField("Description", validators=[InputRequired(), Length(min=1, max=50)])
+    amount = DecimalField("Amount to Transfer.", validators=[InputRequired()])
+    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
     submit = SubmitField("Transfer")
 
 
@@ -117,6 +117,18 @@ class TopUpForm(FlaskForm):
     amount = FloatField("Amount to Top Up", validators=[InputRequired()])
     submit = SubmitField("Top Up")
 
+
+class UnlockUserForm(FlaskForm):
+    userid = HiddenField()
+    unlock = SubmitField("Unlock")
+
+
+class ApproveTransactionForm(FlaskForm):
+    transactionid = HiddenField()
+    approve = SubmitField("Approve")
+    reject = SubmitField("Reject")
+
+
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField("Current Password", validators=[InputRequired()],
                              render_kw={"placeholder": "Password"})
@@ -127,3 +139,5 @@ class ChangePasswordForm(FlaskForm):
                                                          message="Password complexity not met")])
     confirm_password = PasswordField("Repeat Password")
     submit = SubmitField("Reset")
+    amount = DecimalField("Amount to Top Up.", validators=[InputRequired()])
+    submit = SubmitField("Top Up")

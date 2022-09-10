@@ -1,6 +1,7 @@
 from io import BytesIO
+from .utils.interact_db import *
 import pyqrcode
-from flask import Blueprint, redirect, url_for, render_template, request, session, abort
+from flask import Blueprint, redirect, url_for, render_template, request, session, abort, jsonify
 from flask_login import login_required, login_user, logout_user
 from webportal import flask_bcrypt, login_manager
 from webportal.models.Transferee import *
@@ -65,10 +66,21 @@ def register():
             return render_template('register.html', title="Register", form=form,
                                    register_error="Invalid date")
         password = flask_bcrypt.generate_password_hash(form.password.data)
-        createUser(username, firstname, lastname, address, email, mobile, nric, dob, password)
+        new_user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None)
+        add_db(new_user)
         user = User.query.filter_by(username=username).first()
-        createAccount(user.id)
+
+        # Create a bank acc for the newly created user.
+        random_gen = SystemRandom()
+        acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
+        welcome_amt = random_gen.randrange(1000, 10000)
+        new_message = Message(welcome_msg(welcome_amt), user.id)
+        add_db_no_close(new_message)
+        new_account = Account(acc_number, user.id, welcome_amt)
+        add_db(new_account)
         session['username'] = username
+
+        # Return OTP setup page.
         return redirect(url_for("views.otp_setup"))
     return render_template('register.html', title="Register", form=form)
 
@@ -92,31 +104,25 @@ def otp_setup():
 def qrcode():
     if 'username' not in session:
         abort(404)
-    if not current_user.is_authenticated:
-        user = User.query.filter_by(username=session['username']).first()
-        if user is None:
-            abort(404)
-        del session['username']
-        url = pyqrcode.create(user.get_totp_uri())
-        stream = BytesIO()
-        url.svg(stream, scale=3)
-        return stream.getvalue(), 200, {
-            'Content-Type': 'image/svg+xml',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'}
-    elif current_user.is_authenticated:
-        user = User.query.filter_by(username=current_user.id).first()
-        if user is None:
-            abort(404)
-        url = pyqrcode.create(user.get_totp_uri())
-        stream = BytesIO()
-        url.svg(stream, scale=3)
-        return stream.getvalue(), 200, {
-            'Content-Type': 'image/svg+xml',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'}
+    if current_user.is_authenticated:
+        return redirect(url_for('views.dashboard'))
+    user = User.query.filter_by(username=session['username']).first()
+    if user is None:
+        abort(404)
+    user.otp_secret = pyotp.random_base32()
+    update_db_no_close()
+    if user.prev_token != 0:
+        new_message = Message(f"You have performed a OTP secret reset on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+        add_db_no_close(new_message)
+    del session['username']
+    url = pyqrcode.create(user.get_totp_uri())
+    stream = BytesIO()
+    url.svg(stream, scale=3)
+    return stream.getvalue(), 200, {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'}
 
 
 @views.route('/login', methods=['GET', 'POST'])
@@ -133,13 +139,16 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
             if flask_bcrypt.check_password_hash(user.password_hash, form.password.data):
-                if datetime.now() < user.unlock_ts:
-                    error = "Account has been locked out, try again later"
+                if user.is_disabled:
+                    error = "Account has been locked out. Please contact customer support for assistance."
                     return render_template('login.html', title="Login", form=form, login_error=error)
                 session['username'] = user.username
                 return redirect(url_for('views.otp_input'))
             else:
-                update_on_failure(user)
+                user.failed_login_attempts += 1
+                if user.failed_login_attempts > 3:
+                    user.is_disabled = True
+                update_db()
                 return render_template('login.html', title="Login", form=form, login_error=error)
         else:
             return render_template('login.html', title="Login", form=form, login_error=error)
@@ -166,14 +175,23 @@ def otp_input():
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=session['username']).first()
-        if user and user.verify_totp(form.token.data):
+        if user and user.prev_token == form.token.data:
+            error = "Something went wrong"
+            return render_template('otp-input.html', form=form, login_error=error)
+        elif user and user.verify_totp(form.token.data):
             del session['username']
             login_user(user)
             if current_user.failed_login_attempts > 0:
-                message_add(f"There were {current_user.failed_login_attempts} failed login attempt(s) between your "
-                            f"current and last session", current_user.id)
-            message_add(f"You have logged in on {current_user.last_login}", current_user.id)
-            update_on_success(user)
+                new_message = Message(f"There were {current_user.failed_login_attempts} failed login attempt(s) "
+                                      f"between your current and last session", current_user.id)
+                add_db_no_close(new_message)
+            user.last_login = datetime.now()
+            user.failed_login_attempts = 0
+            user.prev_token = form.token.data
+            update_db_no_close()
+            new_message = Message(f"You have logged in on {current_user.last_login}.strftime('%Y-%m-%d %H:%M:%S')",
+                                  current_user.id)
+            add_db_no_close(new_message)
             if current_user.is_admin is True:
                 return redirect(url_for('views.admin_dashboard'))
             return redirect(url_for('views.dashboard'))
@@ -234,7 +252,10 @@ def reset_authenticate():
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(nric=session['nric']).first()
-        if user and user.verify_totp(form.token.data):
+        if user and user.prev_token == form.token.data:
+            error = "Something went wrong"
+            return render_template('otp-input.html', form=form, authenticate_error=error)
+        elif user and user.verify_totp(form.token.data):
             if session['type'] == "pwd":
                 del session['type']
                 return redirect(url_for("views.reset_pwd"))
@@ -259,7 +280,10 @@ def reset_pwd():
         if user:
             del session['nric']
             password = flask_bcrypt.generate_password_hash(form.password.data)
-            reset_details(user, "password", password)
+            user.password_hash = password
+            update_db_no_close()
+            new_message = Message(f"You have performed a password reset on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+            add_db(new_message)
             return redirect(url_for("views.login"))
         else:
             return render_template('reset-pwd.html', form=form, reset_error=error)
@@ -280,7 +304,10 @@ def reset_username():
                 return render_template('reset-username.html', form=form, reset_error="Username exists")
             else:
                 del session['nric']
-                reset_details(user, "username", form.username.data)
+                user.username = form.username.data
+                update_db_no_close()
+                new_message = Message(f"You have performed a username reset on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+                add_db(new_message)
             return redirect(url_for("views.login"))
         else:
             return render_template('reset-username.html', form=form, reset_error=error)
@@ -290,11 +317,26 @@ def reset_username():
 @views.route('/personal-banking/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
-    msg_data = load_nav_messages()
     if current_user.is_admin:
-        return render_template('admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
-    return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
+        return redirect(url_for('views.admin_dashboard'))
+    user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
+    transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
+    transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
+    data = []
+    for item in transfer_data[:5:-1]:
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
+                     "require_approval": item.require_approval, "debit": False})
+    for item in transferee_data[:5:-1]:
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
+                     "require_approval": item.require_approval, "debit": True})
+    data = {x['date_transferred']: x for x in data}.values()
+    msg_data = load_nav_messages()
+    return render_template('dashboard.html', title="Dashboard", data=user_data, msg_data=msg_data, recent_trans=data)
 
 
 @views.route("/personal-banking/profile", methods=['GET', 'POST'])
@@ -304,9 +346,11 @@ def profile():
     return render_template('profile.html', title="Profile Page", msg_data=msg_data)
 
 
-@views.route("/personal-banking/admin-dashboard", methods=['GET', 'POST'])
+@views.route("/admin/admin-dashboard", methods=['GET', 'POST'])
 @login_required
 def admin_dashboard():
+    if not current_user.is_admin:
+        return redirect(url_for('views.dashboard'))
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     msg_data = load_nav_messages()
     if not current_user.is_admin:
@@ -317,7 +361,10 @@ def admin_dashboard():
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
 @login_required
 def transfer():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
+
     # Init the TransferMoneyForm
     form = TransferMoneyForm()
 
@@ -345,11 +392,11 @@ def transfer():
 
         # Amount to debit and credit from transferee and transferrer respectively.
         amount = form.amount.data
-        if amount <= 0:
-            error = "Invalid amount"
-            return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error, balance=transferrer_acc.acc_balance)
+        if amount < 1:
+            error = "Invalid amount (Minimum $1)"
+            return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
 
-        # Get the transferee's account information. 
+        # Get the transferee's account information.
         transferee_acc_number = form.transferee_acc.data.split(" ")[0]
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
 
@@ -363,37 +410,59 @@ def transfer():
             error = "Insufficient funds"
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data, balance=transferrer_acc.acc_balance)
 
-        # Create a transaction. 
+        # Create a transaction.
         transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
         require_approval = False
 
         if amount >= 10000:
             require_approval = True
-            createTransaction(amount, transferer_acc_number, transferee_acc_number, description, require_approval)
-            error = "Approval is requied by the bank for transactions above $10,000 due to the aising fraud cases. The transaction will be approved within a working day."
-            return redirect(url_for('views.approval_required'))
 
-        createTransaction(amount, transferer_acc_number, transferee_acc_number, description, require_approval)
-        updateBalance(transferrer_userid, transferee_userid, amount)
-        message_add(f"You have requested a transfer of ${amount} to {form.transferee_acc.data}.", transferrer_userid)
+        new_transaction = Transaction(amount, transferer_acc_number, transferee_acc_number, description,
+                                      require_approval)
+        add_db(new_transaction)
+
+        # Update the balance for both transferrer and transferee.
+        transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+        transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
+        if require_approval:
+            transferrer_acc.money_on_hold += amount
+        else:
+            transferrer_acc.acc_balance -= amount
+            transferee_acc.acc_balance += amount
+            if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
+                transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
+                transferrer_acc.acc_xfer_daily = 0
+            transferrer_acc.acc_xfer_daily += amount
+
+        update_db()
+
+        new_message = Message(f"You have requested a transfer of ${amount} to {form.transferee_acc.data}.",
+                              transferrer_userid)
+        add_db(new_message)
+
+        # Return approval required page.
+        if require_approval:
+            return redirect(url_for('views.approval_required'))
 
         # Return success page.
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
-    return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, balance=transferrer_acc.acc_balance)
+    return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data,
+                           balance=transferrer_acc.acc_balance)
 
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
 def add_transferee():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     form = AddTransfereeForm()
     if request.method == 'POST' and form.validate_on_submit():
         # Get the transferee info based on the account number provided by the user.
         transferee_acc = Account.query.filter_by(acc_number=form.transferee_acc.data).first()
 
-        print(transferee_acc)
         # Check that the transferee info does not exist already in the current user's transferee list.
         if transferee_acc:
             validate_if_exist = Transferee.query.filter_by(transferer_id=current_user.id,
@@ -407,9 +476,11 @@ def add_transferee():
 
             # Add to DB if it does not exist.
             else:
-                message_add(f"You have added account number:{transferee_acc.acc_number}, as a transfer recipient",
-                            current_user.id)
-                transferee_add(current_user.id, transferee_acc.userid)
+                new_message = Message(f"You have added account number: {transferee_acc.acc_number}, as a transfer "
+                                      f"recipient", current_user.id)
+                add_db_no_close(new_message)
+                new_transferee = Transferee(current_user.id, transferee_acc.userid)
+                add_db(new_transferee)
                 return redirect(url_for('views.success'))
 
         # Return error if the transferee info does not exist based on the account number provided by the user.
@@ -424,6 +495,8 @@ def add_transferee():
 @views.route("/personal-banking/transaction-history", methods=['GET', 'POST'])
 @login_required
 def transaction_history():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     # Get the list of transactions that the user is involved in.
     user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
@@ -432,17 +505,18 @@ def transaction_history():
     data = []
 
     # Combine the transactions together.
-    for item in transfer_data:
-        data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
-                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+    for item in transfer_data[::-1]:
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
                      "require_approval": item.require_approval, "debit": False})
-    for item in transferee_data:
-        data.append({"date_transferred": item.date_transferred, "amt_transferred": item.amt_transferred,
-                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+    for item in transferee_data[::-1]:
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
                      "require_approval": item.require_approval, "debit": True})
 
     # Sort by latest date first.
-    data.sort(key=lambda r: r["date_transferred"], reverse=True)
     data = {x['date_transferred']: x for x in data}.values()
 
     # Render template.
@@ -452,11 +526,13 @@ def transaction_history():
 @views.route("/personal-banking/view-transferee", methods=['GET', 'POST'])
 @login_required
 def view_transferee():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     # Init the RemoveTransferForm.
     form = RemoveTransfereeForm()
 
-    # 
+    #
     transferee_data = Transferee.query.filter_by(transferer_id=current_user.id).all()
     data = []
     form_data_list = []
@@ -476,7 +552,8 @@ def view_transferee():
     if request.method == "POST" and form.validate_on_submit():
         transferee_acc = form.transferee_acc.data.split(" ")[0]
         transferee_id = Account.query.filter_by(acc_number=transferee_acc).first().userid
-        transferee_remove(current_user.id, transferee_id)
+        del_transferee = Transferee.query.filter_by(transferer_id=current_user.id, transferee_id=transferee_id).delete()
+        update_db()
         return redirect(url_for('views.success'))
     return render_template('view-transferee.html', title="View Transferee", data=data, form=form, msg_data=msg_data)
 
@@ -484,11 +561,16 @@ def view_transferee():
 @views.route("/personal-banking/set-transfer-limit", methods=['GET', 'POST'])
 @login_required
 def set_transfer_limit():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
+
     # Init the SetTransferLimitForm.
     form = SetTransferLimitForm()
     if request.method == 'POST' and form.validate_on_submit():
-        setTransferLimit(current_user.id, form.transfer_limit.data)
+        acc = Account.query.filter_by(userid=current_user.id).first()
+        acc.acc_xfer_limit = form.transfer_limit.data
+        update_db()
         return redirect(url_for('views.success'))
     return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data)
 
@@ -496,13 +578,27 @@ def set_transfer_limit():
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
 @login_required
 def topup_balance():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
     form = TopUpForm()
     if request.method == 'POST' and form.validate_on_submit():
         user_acc = db.session.query(Account).join(User).filter(User.id == current_user.id).first().acc_number
-        topup(current_user.id, form.amount.data)
-        description = "Topup"
-        createTransaction(form.amount.data, user_acc, user_acc, description, False)
+        amount = form.amount.data
+        if amount < 1:
+            error = "Invalid amount (Minimum $1)"
+            return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data, topup_error=error)
+        acc = Account.query.filter_by(userid=current_user.id).first()
+        acc.acc_balance += amount
+        new_message = Message(f"You have made a request to top up ${amount}", current_user.id)
+        add_db_no_close(new_message)
+        update_db()
+        description = f"Self-service top up of ${amount}"
+
+        # Create transaction
+        new_transaction = Transaction(form.amount.data, user_acc, user_acc, description, False)
+        add_db(new_transaction)
+
         return redirect(url_for('views.success'))
     return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data)
 
@@ -522,11 +618,13 @@ def message_center():
                                    msg_error=error)
         if check:
             if form.data["mark"]:
-                message_status(msg, True)
+                msg.read = True
+                update_db()
             elif form.data["unmark"]:
-                message_status(msg, False)
+                msg.read = False
+                update_db()
             elif form.data["delete"]:
-                message_del(msg)
+                del_db(msg)
         else:
             error = "Something went wrong"
             return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form,
@@ -535,7 +633,7 @@ def message_center():
     return render_template('message_center.html', title="Secure Message Center", msg_data=msg_data, form=form)
 
 
-@views.route("/transaction_management.html")
+@views.route("/transaction_management.html", methods=["GET", "POST"])
 @login_required
 def transaction_management():
     return render_template("/admin/transaction_management.html")
@@ -549,14 +647,39 @@ def setting():
     return render_template('account-setting.html', title="user setting", data=data, msg_data=msg_data)
 
 @views.route("/user_management.html")
+    if not current_user.is_admin:
+        return redirect(url_for('views.dashboard'))
+
+    form = ApproveTransactionForm()
+    if request.method == "POST" and form.validate_on_submit():
+        if form.approve.data:
+            print("YES")
+        else:
+            print("NO")
+    transactions = Transaction.query.filter_by(require_approval=True).all()
+    data = []
+    for item in transactions:
+        data.append(item)
+    return render_template("/admin/transaction_management.html", data=data, form=form)
+
+
+@views.route("/user_management.html", methods=["GET", "POST"])
 @login_required
 def user_management():
+    if not current_user.is_admin:
+        return redirect(url_for('views.dashboard'))
+    form = UnlockUserForm()
+    if request.method == "POST" and form.validate_on_submit():
+        user_acc = User.query.filter_by(id=form.userid.data).first()
+        user_acc.is_disabled = False
+        update_db()
+        return redirect(url_for('views.user_management'))
     locked_acc = User.query.filter_by(is_disabled=True).all()
     data = []
     for user in locked_acc:
-        data.append({"username": user.username, "date_joined": user.date_joined,
-        "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
-    return render_template("/admin/user_management.html", data=data)
+        data.append({"userid": user.id, "username": user.username, "date_joined": user.date_joined,
+                     "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
+    return render_template("/admin/user_management.html", data=data, form=form)
 
 @views.route('/personal-banking/change-pwd', methods=['GET', 'POST'])
 @login_required
@@ -592,7 +715,81 @@ def robots():
     return render_template('robots.txt', title="Robots")
 
 
+@views.route("/api/acc_overview", methods=['GET'])
+@login_required
+def acc_overview():
+    if current_user.is_admin:
+        abort(403)
+    data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    if data:
+        return jsonify({'acc_balance': data.acc_balance, 'acc_xfer_limit': data.acc_xfer_limit,
+                        'acc_xfer_daily': data.acc_xfer_daily}), 200
+
+
+@views.route("/api/barchart_graph", methods=['GET'])
+@login_required
+def barchart_graph():
+    if current_user.is_admin:
+        abort(403)
+    current_year = datetime.now().year
+    user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
+    transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
+    transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
+    money_in = {x + 1: 0 for x in range(12)}
+    money_out = {x + 1: 0 for x in range(12)}
+    for item in transfer_data:
+        if item.date_transferred.year == current_year:
+            if item.transferrer_acc_number != item.transferee_acc_number:
+                money_out[item.date_transferred.month] += item.amt_transferred
+    for item in transferee_data:
+        if item.date_transferred.year == current_year:
+            money_in[item.date_transferred.month] += item.amt_transferred
+    return jsonify({'money_in': money_in, 'money_out': money_out}), 200
+
+
+@views.route("/api/recent_transactions", methods=['GET'])
+@login_required
+def recent_transactions():
+    if current_user.is_admin:
+        abort(403)
+    user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
+    transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
+    transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
+    data = []
+    for item in transfer_data[:5:-1]:
+        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                     "transferee_acc": item.transferee_acc_number, "description": item.description,
+                     "require_approval": item.require_approval, "debit": False})
+    for item in transferee_data[:5:-1]:
+        if item.transferrer_acc_number != item.transferee_acc_number:
+            data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                         "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
+                         "transferee_acc": item.transferee_acc_number, "description": item.description,
+                         "require_approval": item.require_approval, "debit": True})
+    data.sort(key=lambda r: r["date_transferred"], reverse=False)
+    temp = {}
+    trans_no = 0
+    for item in data:
+        placeholder_temp = str(trans_no)
+        temp[placeholder_temp] = item
+        trans_no += 1
+    return jsonify(temp), 200
+
+
 @views.before_request
 def make_session_permanent():
     session.permanent = True
 
+
+@views.after_request
+def add_header(r):
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    r.headers['X-Content-Type-Options'] = 'nosniff'
+    r.headers['X-XSS-Protection'] = '1; mode=block'
+    # want to do csp header?
+    # r.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return r
