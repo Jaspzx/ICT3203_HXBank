@@ -725,8 +725,7 @@ def change_pwd():
         if user:
             if user.prev_token == form.token.data:
                 error = "Something went wrong"
-                return render_template('change-pwd.html', title="Change Password", form=form, reset_error=error,
-                                       msg_data=msg_data)
+                return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
             if flask_bcrypt.check_password_hash(user.password_hash, form.current_password.data) and user.verify_totp(form.token.data):
                 password = flask_bcrypt.generate_password_hash(form.password.data)
                 user.password_hash = password
@@ -737,9 +736,8 @@ def change_pwd():
                 add_db(new_message)
                 return redirect(url_for("views.acc_settings"))
             else:
-                error = "Incorrect Password"
-                return render_template('change-pwd.html', title="Change Password", form=form, reset_error=error,
-                                       msg_data=msg_data)
+                error = "Incorrect OTP"
+                return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
     return render_template('change-pwd.html', form=form, msg_data=msg_data)
 
 
@@ -748,6 +746,29 @@ def change_pwd():
 def change_username():
     msg_data = load_nav_messages()
     form = ChangeUsernameForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(username=current_user.username).first()
+        if user:
+            if user.prev_token == form.token.data:
+                error = "Something went wrong"
+                return render_template('change-username.html', form=form, reset_error=error, msg_data=msg_data)
+            if user.verify_totp(form.token.data):
+                if form.old_username.data == form.new_username.data:
+                    error = "Username cannot be the same"
+                    return render_template('change-username.html', form=form, reset_error=error, msg_data=msg_data)
+                if form.old_username.data == user.username:
+                    error = "Something went wrong"
+                    return render_template('change-username.html', form=form, reset_error=error, msg_data=msg_data)
+                user.username = form.new_username.data
+                update_db_no_close()
+                new_message = Message("HX-Bank",
+                                      f"You have performed a username change on "
+                                      f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
+                add_db(new_message)
+                return redirect(url_for("views.acc_settings"))
+            else:
+                error = "Incorrect OTP"
+                return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
     return render_template('change-username.html', form=form, msg_data=msg_data)
 
 
