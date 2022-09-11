@@ -485,7 +485,7 @@ def transfer():
             error = "Amount to be transferred exceeds daily transfer limit"
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=transferrer_acc.acc_balance)
-        if transferrer_acc.acc_balance < amount:
+        if transferrer_acc.acc_balance - transferrer_acc.money_on_hold < amount:
             error = "Insufficient funds"
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=transferrer_acc.acc_balance)
@@ -493,12 +493,14 @@ def transfer():
         # Create a transaction.
         transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
         require_approval = False
-
+        status = 0 
+        
         if amount >= 10000:
             require_approval = True
+            status = 1
 
         new_transaction = Transaction(amount, transferer_acc_number, transferee_acc_number, description,
-                                      require_approval)
+                                      require_approval, status)
         add_db_no_close(new_transaction)
 
         # Get the transferrer and transferee accounts. 
@@ -510,16 +512,17 @@ def transfer():
             money_on_hold = Decimal(transferrer_acc.money_on_hold + amount).quantize(TWO_PLACES)
             transferrer_acc.money_on_hold = money_on_hold
         
-        # Update the balance for both transferrer and transferee.
-        transferrer_acc_balance = Decimal(transferrer_acc.acc_balance - amount).quantize(TWO_PLACES)
-        transferrer_acc.acc_balance = transferrer_acc_balance
-        transferee_acc_balance = Decimal(transferee_acc.acc_balance - amount).quantize(TWO_PLACES)
-        transferee_acc.acc_balance = transferee_acc_balance
-        if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
-            transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
-            transferrer_acc.acc_xfer_daily = 0
-        transferrer_acc_xfer_daily = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
-        transferrer_acc.acc_xfer_daily = transferrer_acc_xfer_daily
+        else:
+            # Update the balance for both transferrer and transferee.
+            transferrer_acc_balance = Decimal(transferrer_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_balance = transferrer_acc_balance
+            transferee_acc_balance = Decimal(transferee_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferee_acc.acc_balance = transferee_acc_balance
+            if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
+                transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
+                transferrer_acc.acc_xfer_daily = 0
+            transferrer_acc_xfer_daily = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_xfer_daily = transferrer_acc_xfer_daily
 
         update_db_no_close()
 
@@ -604,12 +607,14 @@ def transfer_onetime():
         # Create a transaction.
         transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
         require_approval = False
+        status = 0 
 
         if amount >= 10000:
             require_approval = True
+            status = 1
 
         new_transaction = Transaction(amount, transferer_acc_number, transferee_acc_number, description,
-                                      require_approval)
+                                      require_approval, status)
         add_db_no_close(new_transaction)
 
         # Update the balance for both transferrer and transferee.
@@ -654,26 +659,9 @@ def transfer_onetime():
         add_db(new_message)
         return redirect(url_for('views.success'))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # Render the HTML template.
     return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
                            balance=transferrer_acc.acc_balance)    
-
-
 
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
@@ -739,12 +727,12 @@ def transaction_history():
         data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
                      "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
                      "transferee_acc": item.transferee_acc_number, "description": item.description,
-                     "require_approval": item.require_approval, "debit": False})
+                     "require_approval": item.require_approval, "status": item.status, "debit": False})
     for item in transferee_data[::-1]:
         data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
                      "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
                      "transferee_acc": item.transferee_acc_number, "description": item.description,
-                     "require_approval": item.require_approval, "debit": True})
+                     "require_approval": item.require_approval, "status": item.status, "debit": True})
 
     # Sort by latest date first.
     data = {x['date_transferred']: x for x in data}.values()
@@ -845,7 +833,7 @@ def topup_balance():
         description = f"Self-service top up of ${amount}"
 
         # Create transaction
-        new_transaction = Transaction(form.amount.data, user_acc, user_acc, description, False)
+        new_transaction = Transaction(form.amount.data, user_acc, user_acc, description, False, 0)
         add_db(new_transaction)
 
         return redirect(url_for('views.success'))
@@ -890,11 +878,32 @@ def transaction_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
     form = ApproveTransactionForm()
+
+    # Check that the form was submitted.
     if request.method == "POST" and form.validate_on_submit():
+        # Get the transaction id. 
+        transaction = Transaction.query.filter_by(id=form.transactionid.data).first()
+
+        # Get the transferrer's account information.
+        transferrer_acc = Account.query.filter_by(acc_number=transaction.transferrer_acc_number).first()
+
+        # Update the balance for both transferrer and transferee if approved. 
         if form.approve.data:
-            print("YES")
+            transferee_acc = Account.query.filter_by(acc_number=transaction.transferee_acc_number).first()
+            transferee_acc.acc_balance += transferrer_acc.money_on_hold
+            transferrer_acc.acc_balance -= transferrer_acc.money_on_hold
+            transferrer_acc.money_on_hold -= transferrer_acc.money_on_hold
+            transaction.status = 0
+            transaction.require_approval = False
+            update_db_no_close()
+
+        # Update the balance for the transferrer.
         else:
-            print("NO")
+            transferrer_acc.acc_balance += transferrer_acc.money_on_hold
+            transferrer_acc.money_on_hold -= transferrer_acc.money_on_hold
+            transaction.status = 2      
+            transaction.require_approval = False 
+            update_db_no_close()     
     transactions = Transaction.query.filter_by(require_approval=True).all()
     data = []
     for item in transactions:

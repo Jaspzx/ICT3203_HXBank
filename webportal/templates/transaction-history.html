@@ -26,10 +26,12 @@
                             <td>{{ i.transferee_acc }}</td>
                             <td>{{ i.description }}</td>
                             <td>
-                                {% if i.require_approval is true %}
+                                {% if i.status == 0 %}
+                                    Approved
+                                {% elif i.status == 1%}
                                     Pending Approval
                                 {% else %}
-                                    Approved
+                                    Rejected
                                 {% endif %}
                             </td>
                         </tr>                           

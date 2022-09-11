@@ -1,7 +1,6 @@
 {% extends "layouts/base.html" %}
 {% block title %} Transfer {% endblock %}
 {% block content %}
-    {% if form.transferee_acc.data is defined %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
@@ -45,8 +44,4 @@
             </div>
         </div>
     </div>
-    {% else %}
-    <h1>No transferees has been added yet!</h1>
-    <a href="{{ url_for('views.add_transferee') }}">Add Transferee</a>
-    {% endif %}
 {% endblock content %}
