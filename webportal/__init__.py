@@ -36,9 +36,10 @@ def create_webportal():
     # app.config['MAIL_DEFAULT_SENDER'] = ''
     # app.config['MAIL_USE_TLS'] = True
     # Get environment variables from the env file
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=600)
+    # app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=600)
     # With .env file
     load_dotenv()
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=int(os.getenv('PERMANENT_SESSION_LIFETIME')))
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS')
