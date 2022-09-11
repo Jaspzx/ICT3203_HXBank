@@ -112,7 +112,7 @@ def confirm_email(token):
         if user.email_token != token:
             abort(404)
         elif user.email_verified:
-            return redirect(url_for('views.logout'))
+            return redirect(url_for('views.login'))
         else:
             user.email_verified = True
             user.email_token = None
@@ -125,12 +125,12 @@ def confirm_email(token):
 @views.route('/otp-setup')
 def otp_setup():
     if 'username' not in session:
-        return render_template('home.html', title="Home Page")
+        return redirect(url_for('views.login'))
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
     user = User.query.filter_by(username=session['username']).first()
     if user is None:
-        return render_template('home.html', title="Home Page")
+        return redirect(url_for('views.login'))
     return render_template('otp-setup.html'), 200, {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
@@ -148,7 +148,7 @@ def qrcode():
         abort(404)
     user.otp_secret = pyotp.random_base32()
     update_db_no_close()
-    if user.prev_token != "0":
+    if user.prev_token is not None:
         html = render_template('/email_templates/reset.html', reset="OTP",
                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - OTP Reset"
@@ -173,8 +173,6 @@ def login():
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
         return redirect(url_for('views.dashboard'))
-    if 'type' in session:
-        del session['type']
     form = LoginForm()
     error = "Login Failed"
     if request.method == 'POST' and form.validate_on_submit():
@@ -286,7 +284,7 @@ def reset_identify():
     else:
         if selected is None:
             if 'type' not in session:
-                return redirect(url_for('views.logout'))
+                return redirect(url_for('views.login'))
     form = ResetFormIdentify(request.form)
     if request.method == 'POST' and form.validate_on_submit():
         error = "Identification Failed"
@@ -295,13 +293,15 @@ def reset_identify():
             session['nric'] = user.nric
             session['dob'] = user.dob
             if "username" in session and session['type'] == "otp":
+                session['email'] = user.email
                 user_username = User.query.filter_by(username=session['username']).first()
-                if user_username.nric == session['nric'] and user_username.dob == session['dob']:
+                if user_username.nric == session['nric'] and user_username.dob == session[
+                    'dob'] and user_username.email == session['email']:
                     del session['nric']
                     del session['dob']
-                    return redirect(url_for("views.otp_setup"))
+                    return redirect(url_for("views.reset_email_auth"))
                 else:
-                    return redirect(url_for("views.logout"))
+                    return redirect(url_for("views.login"))
             else:
                 if form.dob.data == session['dob']:
                     del session['dob']
@@ -313,12 +313,43 @@ def reset_identify():
     return render_template('reset-identify.html', form=form)
 
 
+@views.route('/reset-email-auth', methods=['GET', 'POST'])
+def reset_email_auth():
+    email = session['email']
+    del session['email']
+    token = generate_token(email)
+    user = User.query.filter_by(username=session['username']).first()
+    user.email_token = token
+    update_db()
+    confirm_url = url_for('views.confirm_otp', token=token, _external=True)
+    html = render_template('/email_templates/otp.html', confirm_url=confirm_url,
+                           time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    subject = "HX-Bank - OTP Reset"
+    send_email(email, subject, html)
+    return redirect(url_for('views.login'))
+
+
+@views.route('/confirm_otp/<token>')
+def confirm_otp(token):
+    try:
+        email = confirm_token(token)
+        user = User.query.filter_by(email=email).first()
+        if user.email_token != token:
+            abort(404)
+        else:
+            user.email_token = None
+            update_db()
+            return redirect(url_for('views.otp_setup'))
+    except:
+        abort(404)
+
+
 @views.route('/reset-authenticate', methods=['GET', 'POST'])
 def reset_authenticate():
     if 'nric' not in session:
         return redirect(url_for('views.reset_identify'))
     if 'type' not in session:
-        return redirect(url_for("views.logout"))
+        return redirect(url_for("views.login"))
     form = ResetFormAuthenticate(request.form)
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
@@ -334,7 +365,7 @@ def reset_authenticate():
                 del session['type']
                 return redirect(url_for("views.reset_username"))
             else:
-                return redirect(url_for('views.logout'))
+                return redirect(url_for('views.login'))
         else:
             return render_template('reset-authenticate.html', form=form, authenticate_error=error)
     return render_template('reset-authenticate.html', form=form)
@@ -360,7 +391,7 @@ def reset_pwd():
             new_message = Message("HX-Bank", f"You have performed a password reset on "
                                              f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
             add_db(new_message)
-            return redirect(url_for("views.logout"))
+            return redirect(url_for("views.login"))
         else:
             return render_template('change-pwd.html', form=form, reset_error=error)
     return render_template('change-pwd.html', form=form)
@@ -389,7 +420,7 @@ def reset_username():
                 new_message = Message("HX-Bank", f"You have performed a username change on "
                                                  f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
                 add_db(new_message)
-            return redirect(url_for("views.logout"))
+            return redirect(url_for("views.login"))
         else:
             return render_template('reset-username.html', form=form, reset_error=error)
     return render_template('reset-username.html', form=form)
@@ -493,8 +524,8 @@ def transfer():
         # Create a transaction.
         transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
         require_approval = False
-        status = 0 
-        
+        status = 0
+
         if amount >= 10000:
             require_approval = True
             status = 1
@@ -511,7 +542,7 @@ def transfer():
         if require_approval:
             money_on_hold = Decimal(transferrer_acc.money_on_hold + amount).quantize(TWO_PLACES)
             transferrer_acc.money_on_hold = money_on_hold
-        
+
         else:
             # Update the balance for both transferrer and transferee.
             transferrer_acc_balance = Decimal(transferrer_acc.acc_balance - amount).quantize(TWO_PLACES)
@@ -588,7 +619,7 @@ def transfer_onetime():
         if transferee_acc is None:
             error = "Transferee does not exist"
             return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
-                                balance=transferrer_acc.acc_balance, transferee_error=error)    
+                                   balance=transferrer_acc.acc_balance, transferee_error=error)
 
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
 
@@ -607,7 +638,7 @@ def transfer_onetime():
         # Create a transaction.
         transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
         require_approval = False
-        status = 0 
+        status = 0
 
         if amount >= 10000:
             require_approval = True
@@ -661,7 +692,7 @@ def transfer_onetime():
 
     # Render the HTML template.
     return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
-                           balance=transferrer_acc.acc_balance)    
+                           balance=transferrer_acc.acc_balance)
 
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
@@ -901,9 +932,9 @@ def transaction_management():
         else:
             transferrer_acc.acc_balance += transferrer_acc.money_on_hold
             transferrer_acc.money_on_hold -= transferrer_acc.money_on_hold
-            transaction.status = 2      
-            transaction.require_approval = False 
-            update_db_no_close()     
+            transaction.status = 2
+            transaction.require_approval = False
+            update_db_no_close()
     transactions = Transaction.query.filter_by(require_approval=True).all()
     data = []
     for item in transactions:
@@ -956,7 +987,8 @@ def change_pwd():
             if user.prev_token == form.token.data:
                 error = "Something went wrong"
                 return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
-            if flask_bcrypt.check_password_hash(user.password_hash, form.current_password.data) and user.verify_totp(form.token.data):
+            if flask_bcrypt.check_password_hash(user.password_hash, form.current_password.data) and user.verify_totp(
+                    form.token.data):
                 password = flask_bcrypt.generate_password_hash(form.password.data)
                 user.password_hash = password
                 update_db_no_close()
@@ -1009,6 +1041,59 @@ def change_username():
                 error = "Incorrect OTP"
                 return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
     return render_template('change-username.html', form=form, msg_data=msg_data)
+
+
+@views.route('/account-management/change-otp', methods=['GET', 'POST'])
+@login_required
+# @check_email_verification
+def change_otp():
+    msg_data = load_nav_messages()
+    form = Token2FAForm()
+    error = "Invalid Token"
+    if request.method == 'POST' and form.validate_on_submit():
+        if current_user.prev_token == form.token.data:
+            error = "Something went wrong"
+            return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
+        elif current_user.verify_totp(form.token.data):
+            return redirect(url_for("views.auth_otp_reset"))
+        else:
+            return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
+    return render_template('auth-change-otp.html', form=form, msg_data=msg_data)
+
+
+@views.route('/account-management/otp-setup', methods=['GET'])
+@login_required
+# @check_email_verification
+def auth_otp_reset():
+    msg_data = load_nav_messages()
+    return render_template('change-otp.html', msg_data=msg_data), 200, {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'}
+
+
+@views.route('/account-management/qrcode', methods=['GET'])
+@login_required
+# @check_email_verification
+def auth_qrcode():
+    current_user.otp_secret = pyotp.random_base32()
+    update_db_no_close()
+    if current_user.prev_token is not None:
+        html = render_template('/email_templates/reset.html', reset="OTP",
+                               time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        subject = "HX-Bank - OTP Reset"
+        send_email(current_user.email, subject, html)
+        new_message = Message("HX-Bank", f"You have performed a OTP secret reset on "
+                                         f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", current_user.id)
+        add_db_no_close(new_message)
+    url = pyqrcode.create(current_user.get_totp_uri())
+    stream = BytesIO()
+    url.svg(stream, scale=3)
+    return stream.getvalue(), 200, {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'}
 
 
 @views.route("/success")
