@@ -16,7 +16,7 @@ class User(db.Model, UserMixin):
     dob = db.Column(db.Date(), nullable=False)
     password_hash = db.Column(db.String(150), nullable=False)
     otp_secret = db.Column(db.String(16), nullable=False)
-    prev_token = db.Column(db.String(6), nullable=False)
+    prev_token = db.Column(db.String(6))
     date_joined = db.Column(db.DateTime(), nullable=False)
     failed_login_attempts = db.Column(db.INT, nullable=False)
     last_login = db.Column(db.DateTime(timezone=True), nullable=False)
@@ -25,7 +25,8 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_disabled = db.Column(db.Boolean, default=False, nullable=False)
 
-    def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret, token):
+    def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret,
+                 token):
         self.username = username
         self.firstname = firstname
         self.lastname = lastname
@@ -38,7 +39,7 @@ class User(db.Model, UserMixin):
         self.otp_secret = otp_secret
         if self.otp_secret is None:
             self.otp_secret = pyotp.random_base32()
-        self.prev_token = 0
+        self.prev_token = None
         self.date_joined = datetime.now()
         self.failed_login_attempts = 0
         self.last_login = datetime.now()

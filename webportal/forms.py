@@ -101,6 +101,15 @@ class TransferMoneyForm(FlaskForm):
     submit = SubmitField("Transfer")
 
 
+class TransferMoneyOneTimeForm(FlaskForm):
+    transferee_acc = StringField("Transferee Account No", validators=[InputRequired(), Length(min=10, max=10),
+                                                                      Regexp("^\\d{10,10}$",
+                                                                             message="Invalid account number")])    
+    amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
+    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
+    submit = SubmitField("Transfer")
+
+
 class RemoveTransfereeForm(FlaskForm):
     transferee_acc = HiddenField()
     submit = SubmitField("Remove")

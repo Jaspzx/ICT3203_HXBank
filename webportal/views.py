@@ -112,7 +112,7 @@ def confirm_email(token):
         if user.email_token != token:
             abort(404)
         elif user.email_verified:
-            return redirect(url_for('views.logout'))
+            return redirect(url_for('views.login'))
         else:
             user.email_verified = True
             user.email_token = None
@@ -125,12 +125,12 @@ def confirm_email(token):
 @views.route('/otp-setup')
 def otp_setup():
     if 'username' not in session:
-        return render_template('home.html', title="Home Page")
+        return redirect(url_for('views.login'))
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
     user = User.query.filter_by(username=session['username']).first()
     if user is None:
-        return render_template('home.html', title="Home Page")
+        return redirect(url_for('views.login'))
     return render_template('otp-setup.html'), 200, {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
@@ -148,7 +148,7 @@ def qrcode():
         abort(404)
     user.otp_secret = pyotp.random_base32()
     update_db_no_close()
-    if user.prev_token != "0":
+    if user.prev_token is not None:
         html = render_template('/email_templates/reset.html', reset="OTP",
                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - OTP Reset"
@@ -173,8 +173,6 @@ def login():
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
         return redirect(url_for('views.dashboard'))
-    if 'type' in session:
-        del session['type']
     form = LoginForm()
     error = "Login Failed"
     if request.method == 'POST' and form.validate_on_submit():
@@ -286,7 +284,7 @@ def reset_identify():
     else:
         if selected is None:
             if 'type' not in session:
-                return redirect(url_for('views.logout'))
+                return redirect(url_for('views.login'))
     form = ResetFormIdentify(request.form)
     if request.method == 'POST' and form.validate_on_submit():
         error = "Identification Failed"
@@ -295,13 +293,15 @@ def reset_identify():
             session['nric'] = user.nric
             session['dob'] = user.dob
             if "username" in session and session['type'] == "otp":
+                session['email'] = user.email
                 user_username = User.query.filter_by(username=session['username']).first()
-                if user_username.nric == session['nric'] and user_username.dob == session['dob']:
+                if user_username.nric == session['nric'] and user_username.dob == session[
+                    'dob'] and user_username.email == session['email']:
                     del session['nric']
                     del session['dob']
-                    return redirect(url_for("views.otp_setup"))
+                    return redirect(url_for("views.reset_email_auth"))
                 else:
-                    return redirect(url_for("views.logout"))
+                    return redirect(url_for("views.login"))
             else:
                 if form.dob.data == session['dob']:
                     del session['dob']
@@ -313,12 +313,43 @@ def reset_identify():
     return render_template('reset-identify.html', form=form)
 
 
+@views.route('/reset-email-auth', methods=['GET', 'POST'])
+def reset_email_auth():
+    email = session['email']
+    del session['email']
+    token = generate_token(email)
+    user = User.query.filter_by(username=session['username']).first()
+    user.email_token = token
+    update_db()
+    confirm_url = url_for('views.confirm_otp', token=token, _external=True)
+    html = render_template('/email_templates/otp.html', confirm_url=confirm_url,
+                           time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    subject = "HX-Bank - OTP Reset"
+    send_email(email, subject, html)
+    return redirect(url_for('views.login'))
+
+
+@views.route('/confirm_otp/<token>')
+def confirm_otp(token):
+    try:
+        email = confirm_token(token)
+        user = User.query.filter_by(email=email).first()
+        if user.email_token != token:
+            abort(404)
+        else:
+            user.email_token = None
+            update_db()
+            return redirect(url_for('views.otp_setup'))
+    except:
+        abort(404)
+
+
 @views.route('/reset-authenticate', methods=['GET', 'POST'])
 def reset_authenticate():
     if 'nric' not in session:
         return redirect(url_for('views.reset_identify'))
     if 'type' not in session:
-        return redirect(url_for("views.logout"))
+        return redirect(url_for("views.login"))
     form = ResetFormAuthenticate(request.form)
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
@@ -334,7 +365,7 @@ def reset_authenticate():
                 del session['type']
                 return redirect(url_for("views.reset_username"))
             else:
-                return redirect(url_for('views.logout'))
+                return redirect(url_for('views.login'))
         else:
             return render_template('reset-authenticate.html', form=form, authenticate_error=error)
     return render_template('reset-authenticate.html', form=form)
@@ -360,7 +391,7 @@ def reset_pwd():
             new_message = Message("HX-Bank", f"You have performed a password reset on "
                                              f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
             add_db(new_message)
-            return redirect(url_for("views.logout"))
+            return redirect(url_for("views.login"))
         else:
             return render_template('change-pwd.html', form=form, reset_error=error)
     return render_template('change-pwd.html', form=form)
@@ -389,7 +420,7 @@ def reset_username():
                 new_message = Message("HX-Bank", f"You have performed a username change on "
                                                  f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
                 add_db(new_message)
-            return redirect(url_for("views.logout"))
+            return redirect(url_for("views.login"))
         else:
             return render_template('reset-username.html', form=form, reset_error=error)
     return render_template('reset-username.html', form=form)
@@ -397,7 +428,7 @@ def reset_username():
 
 @views.route('/personal-banking/dashboard', methods=['GET'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def dashboard():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -424,7 +455,7 @@ def dashboard():
 
 @views.route("/admin/admin-dashboard", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def admin_dashboard():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
@@ -437,7 +468,7 @@ def admin_dashboard():
 
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def transfer():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -485,6 +516,120 @@ def transfer():
             error = "Amount to be transferred exceeds daily transfer limit"
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=transferrer_acc.acc_balance)
+        if transferrer_acc.acc_balance - transferrer_acc.money_on_hold < amount:
+            error = "Insufficient funds"
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
+                                   balance=transferrer_acc.acc_balance)
+
+        # Create a transaction.
+        transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
+        require_approval = False
+        status = 0
+
+        if amount >= 10000:
+            require_approval = True
+            status = 1
+
+        new_transaction = Transaction(amount, transferer_acc_number, transferee_acc_number, description,
+                                      require_approval, status)
+        add_db_no_close(new_transaction)
+
+        # Get the transferrer and transferee accounts. 
+        transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+        transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
+
+        # Add money to onhold if approval is required. 
+        if require_approval:
+            money_on_hold = Decimal(transferrer_acc.money_on_hold + amount).quantize(TWO_PLACES)
+            transferrer_acc.money_on_hold = money_on_hold
+
+        else:
+            # Update the balance for both transferrer and transferee.
+            transferrer_acc_balance = Decimal(transferrer_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_balance = transferrer_acc_balance
+            transferee_acc_balance = Decimal(transferee_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferee_acc.acc_balance = transferee_acc_balance
+            if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
+                transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
+                transferrer_acc.acc_xfer_daily = 0
+            transferrer_acc_xfer_daily = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_xfer_daily = transferrer_acc_xfer_daily
+
+        update_db_no_close()
+
+        # Return approval required page.
+        if require_approval:
+            html = render_template('/email_templates/transfer-pending.html', amount=amount,
+                                   acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            subject = "HX-Bank - Add Recipient"
+            send_email(current_user.email, subject, html)
+            new_message = Message("HX-Bank",
+                                  f"Your requested transfer of ${amount} to {form.transferee_acc.data} is currently "
+                                  f"pending for approval.",
+                                  transferrer_userid)
+            add_db(new_message)
+            return redirect(url_for('views.approval_required'))
+
+        # Return success page.
+        html = render_template('/email_templates/transfer-success.html', amount=amount,
+                               acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        subject = "HX-Bank - Add Recipient"
+        send_email(current_user.email, subject, html)
+        new_message = Message("HX-Bank", f"Your have requested transfer of ${amount} to {form.transferee_acc.data} is "
+                                         f"successful.", transferrer_userid)
+        add_db(new_message)
+        return redirect(url_for('views.success'))
+
+    # Render the HTML template.
+    return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data,
+                           balance=transferrer_acc.acc_balance)
+
+
+@views.route("/personal-banking/transfer-onetime", methods=['GET', 'POST'])
+@login_required
+# @check_email_verification
+def transfer_onetime():
+    if current_user.is_admin:
+        return redirect(url_for('views.admin_dashboard'))
+    msg_data = load_nav_messages()
+
+    # Init the TransferMoneyForm
+    form = TransferMoneyOneTimeForm()
+
+    # Get the transferrer's account information.
+    transferrer_userid = current_user.id
+    transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+
+    # Check if the form was submitted.
+    if request.method == 'POST' and form.validate_on_submit():
+        # Transaction description.
+        description = form.description.data
+
+        # Amount to debit and credit from transferee and transferrer respectively.
+        amount = float(Decimal(form.amount.data).quantize(TWO_PLACES))
+        if amount < 0.1:
+            error = "Invalid amount (Minimum $0.10)"
+            return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
+
+        # Get the transferee's account information.
+        transferee_acc_number = form.transferee_acc.data.split(" ")[0]
+        transferee_acc = Account.query.filter_by(acc_number=transferee_acc_number).first()
+
+        # Return error if transferee does not exist.  
+        if transferee_acc is None:
+            error = "Transferee does not exist"
+            return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
+                                   balance=transferrer_acc.acc_balance, transferee_error=error)
+
+        transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
+
+        # Check that the amount to be transferred does not exceed the transfer limit.
+        day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
+
+        if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
+            error = "Amount to be transferred exceeds daily transfer limit"
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
+                                   balance=transferrer_acc.acc_balance)
         if transferrer_acc.acc_balance < amount:
             error = "Insufficient funds"
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
@@ -493,12 +638,14 @@ def transfer():
         # Create a transaction.
         transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
         require_approval = False
+        status = 0
 
         if amount >= 10000:
             require_approval = True
+            status = 1
 
         new_transaction = Transaction(amount, transferer_acc_number, transferee_acc_number, description,
-                                      require_approval)
+                                      require_approval, status)
         add_db_no_close(new_transaction)
 
         # Update the balance for both transferrer and transferee.
@@ -544,13 +691,13 @@ def transfer():
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
-    return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data,
+    return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
                            balance=transferrer_acc.acc_balance)
 
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def add_transferee():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -595,7 +742,7 @@ def add_transferee():
 
 @views.route("/personal-banking/transaction-history", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def transaction_history():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -611,12 +758,12 @@ def transaction_history():
         data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
                      "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
                      "transferee_acc": item.transferee_acc_number, "description": item.description,
-                     "require_approval": item.require_approval, "debit": False})
+                     "require_approval": item.require_approval, "status": item.status, "debit": False})
     for item in transferee_data[::-1]:
         data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
                      "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
                      "transferee_acc": item.transferee_acc_number, "description": item.description,
-                     "require_approval": item.require_approval, "debit": True})
+                     "require_approval": item.require_approval, "status": item.status, "debit": True})
 
     # Sort by latest date first.
     data = {x['date_transferred']: x for x in data}.values()
@@ -627,7 +774,7 @@ def transaction_history():
 
 @views.route("/personal-banking/view-transferee", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def view_transferee():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -663,7 +810,7 @@ def view_transferee():
 
 @views.route("/personal-banking/set-transfer-limit", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def set_transfer_limit():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -692,7 +839,7 @@ def set_transfer_limit():
 
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def topup_balance():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -717,7 +864,7 @@ def topup_balance():
         description = f"Self-service top up of ${amount}"
 
         # Create transaction
-        new_transaction = Transaction(form.amount.data, user_acc, user_acc, description, False)
+        new_transaction = Transaction(form.amount.data, user_acc, user_acc, description, False, 0)
         add_db(new_transaction)
 
         return redirect(url_for('views.success'))
@@ -726,7 +873,7 @@ def topup_balance():
 
 @views.route("/personal-banking/message-center", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def message_center():
     msg_data = load_nav_messages()
     form = SecureMessageForm()
@@ -757,16 +904,37 @@ def message_center():
 
 @views.route("/admin/transaction-management", methods=["GET", "POST"])
 @login_required
-@check_email_verification
+# @check_email_verification
 def transaction_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
     form = ApproveTransactionForm()
+
+    # Check that the form was submitted.
     if request.method == "POST" and form.validate_on_submit():
+        # Get the transaction id. 
+        transaction = Transaction.query.filter_by(id=form.transactionid.data).first()
+
+        # Get the transferrer's account information.
+        transferrer_acc = Account.query.filter_by(acc_number=transaction.transferrer_acc_number).first()
+
+        # Update the balance for both transferrer and transferee if approved. 
         if form.approve.data:
-            print("YES")
+            transferee_acc = Account.query.filter_by(acc_number=transaction.transferee_acc_number).first()
+            transferee_acc.acc_balance += transferrer_acc.money_on_hold
+            transferrer_acc.acc_balance -= transferrer_acc.money_on_hold
+            transferrer_acc.money_on_hold -= transferrer_acc.money_on_hold
+            transaction.status = 0
+            transaction.require_approval = False
+            update_db_no_close()
+
+        # Update the balance for the transferrer.
         else:
-            print("NO")
+            transferrer_acc.acc_balance += transferrer_acc.money_on_hold
+            transferrer_acc.money_on_hold -= transferrer_acc.money_on_hold
+            transaction.status = 2
+            transaction.require_approval = False
+            update_db_no_close()
     transactions = Transaction.query.filter_by(require_approval=True).all()
     data = []
     for item in transactions:
@@ -777,7 +945,7 @@ def transaction_management():
 
 @views.route("/admin/user_management", methods=["GET", "POST"])
 @login_required
-@check_email_verification
+# @check_email_verification
 def user_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
@@ -798,7 +966,7 @@ def user_management():
 
 @views.route("/account_management/account-settings", methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def acc_settings():
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     msg_data = load_nav_messages()
@@ -809,7 +977,7 @@ def acc_settings():
 
 @views.route('/account-management/change-pwd', methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def change_pwd():
     msg_data = load_nav_messages()
     form = ChangePasswordForm()
@@ -819,7 +987,8 @@ def change_pwd():
             if user.prev_token == form.token.data:
                 error = "Something went wrong"
                 return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
-            if flask_bcrypt.check_password_hash(user.password_hash, form.current_password.data) and user.verify_totp(form.token.data):
+            if flask_bcrypt.check_password_hash(user.password_hash, form.current_password.data) and user.verify_totp(
+                    form.token.data):
                 password = flask_bcrypt.generate_password_hash(form.password.data)
                 user.password_hash = password
                 update_db_no_close()
@@ -840,7 +1009,7 @@ def change_pwd():
 
 @views.route('/account-management/change-username', methods=['GET', 'POST'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def change_username():
     msg_data = load_nav_messages()
     form = ChangeUsernameForm()
@@ -874,16 +1043,69 @@ def change_username():
     return render_template('change-username.html', form=form, msg_data=msg_data)
 
 
+@views.route('/account-management/change-otp', methods=['GET', 'POST'])
+@login_required
+# @check_email_verification
+def change_otp():
+    msg_data = load_nav_messages()
+    form = Token2FAForm()
+    error = "Invalid Token"
+    if request.method == 'POST' and form.validate_on_submit():
+        if current_user.prev_token == form.token.data:
+            error = "Something went wrong"
+            return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
+        elif current_user.verify_totp(form.token.data):
+            return redirect(url_for("views.auth_otp_reset"))
+        else:
+            return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
+    return render_template('auth-change-otp.html', form=form, msg_data=msg_data)
+
+
+@views.route('/account-management/otp-setup', methods=['GET'])
+@login_required
+# @check_email_verification
+def auth_otp_reset():
+    msg_data = load_nav_messages()
+    return render_template('change-otp.html', msg_data=msg_data), 200, {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'}
+
+
+@views.route('/account-management/qrcode', methods=['GET'])
+@login_required
+# @check_email_verification
+def auth_qrcode():
+    current_user.otp_secret = pyotp.random_base32()
+    update_db_no_close()
+    if current_user.prev_token is not None:
+        html = render_template('/email_templates/reset.html', reset="OTP",
+                               time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        subject = "HX-Bank - OTP Reset"
+        send_email(current_user.email, subject, html)
+        new_message = Message("HX-Bank", f"You have performed a OTP secret reset on "
+                                         f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", current_user.id)
+        add_db_no_close(new_message)
+    url = pyqrcode.create(current_user.get_totp_uri())
+    stream = BytesIO()
+    url.svg(stream, scale=3)
+    return stream.getvalue(), 200, {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'}
+
+
 @views.route("/success")
 @login_required
-@check_email_verification
+# @check_email_verification
 def success():
     return render_template('success.html', title="Success")
 
 
 @views.route("/approval-required")
 @login_required
-@check_email_verification
+# @check_email_verification
 def approval_required():
     return render_template('approval-required.html', title="Approval Required")
 
@@ -895,7 +1117,7 @@ def robots():
 
 @views.route("/api/acc-overview", methods=['GET'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def acc_overview():
     if current_user.is_admin:
         abort(403)
@@ -907,7 +1129,7 @@ def acc_overview():
 
 @views.route("/api/barchart-graph", methods=['GET'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def barchart_graph():
     if current_user.is_admin:
         abort(403)
@@ -930,7 +1152,7 @@ def barchart_graph():
 
 @views.route("/api/recent-transactions", methods=['GET'])
 @login_required
-@check_email_verification
+# @check_email_verification
 def recent_transactions():
     if current_user.is_admin:
         abort(403)
