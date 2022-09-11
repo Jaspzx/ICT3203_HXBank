@@ -61,6 +61,14 @@ $(document).ready(function() {
                     desc.textContent = value.description;
                     var amt = row.insertCell(3);
                     amt.textContent = "$" + value.amt_transferred;
+                    var status = row.insertCell(4);
+                    if (value.status === 0) {
+                        status.textContent = "Approved";
+                    } else if (value.status === 1) {
+                        status.textContent = "Pending Approval";
+                    } else {
+                        status.textContent = "Rejected";
+                    }
                 }
             }
         })
