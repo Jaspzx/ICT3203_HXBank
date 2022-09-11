@@ -439,15 +439,17 @@ def dashboard():
     data = []
     for item in list(reversed(transfer_data))[:5]:
         data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
-                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
-                     "transferee_acc": item.transferee_acc_number, "description": item.description,
-                     "require_approval": item.require_approval, "debit": False})
+                     "amt_transferred": Decimal(item.amt_transferred).quantize(TWO_PLACES),
+                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+                     "description": item.description, "require_approval": item.require_approval,
+                     "status": item.status, "debit": False})
     for item in list(reversed(transferee_data))[:5]:
         if item.transferrer_acc_number != item.transferee_acc_number:
             data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
-                         "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
-                         "transferee_acc": item.transferee_acc_number, "description": item.description,
-                         "require_approval": item.require_approval, "debit": True})
+                         "amt_transferred": Decimal(item.amt_transferred).quantize(TWO_PLACES),
+                         "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+                         "description": item.description, "require_approval": item.require_approval,
+                         "status": item.status, "debit": True})
     data = {x['date_transferred']: x for x in data}.values()
     msg_data = load_nav_messages()
     return render_template('dashboard.html', title="Dashboard", data=user_data, msg_data=msg_data, recent_trans=data)
@@ -530,8 +532,8 @@ def transfer():
             require_approval = True
             status = 1
 
-        new_transaction = Transaction(amount, transferer_acc_number, transferee_acc_number, description,
-                                      require_approval, status)
+        new_transaction = Transaction(Decimal(amount).quantize(TWO_PLACES), transferer_acc_number,
+                                      transferee_acc_number, description, require_approval, status)
         add_db_no_close(new_transaction)
 
         # Get the transferrer and transferee accounts. 
@@ -559,30 +561,32 @@ def transfer():
 
         # Return approval required page.
         if require_approval:
-            html = render_template('/email_templates/transfer-pending.html', amount=amount,
+            html = render_template('/email_templates/transfer-pending.html',
+                                   amount=Decimal(amount).quantize(TWO_PLACES),
                                    acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             subject = "HX-Bank - Add Recipient"
             send_email(current_user.email, subject, html)
             new_message = Message("HX-Bank",
-                                  f"Your requested transfer of ${amount} to {form.transferee_acc.data} is currently "
-                                  f"pending for approval.",
-                                  transferrer_userid)
+                                  f"Your requested transfer of "
+                                  f"${Decimal(amount).quantize(TWO_PLACES)} to "
+                                  f"{form.transferee_acc.data} is currently pending for approval.", transferrer_userid)
             add_db(new_message)
             return redirect(url_for('views.approval_required'))
 
         # Return success page.
-        html = render_template('/email_templates/transfer-success.html', amount=amount,
+        html = render_template('/email_templates/transfer-success.html',
+                               amount=Decimal(amount).quantize(TWO_PLACES),
                                acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - Add Recipient"
         send_email(current_user.email, subject, html)
-        new_message = Message("HX-Bank", f"Your have requested transfer of ${amount} to {form.transferee_acc.data} is "
-                                         f"successful.", transferrer_userid)
+        new_message = Message("HX-Bank", f"Your have requested transfer of ${Decimal(amount).quantize(TWO_PLACES)}"
+                                         f" to {form.transferee_acc.data} is successful.", transferrer_userid)
         add_db(new_message)
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
     return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data,
-                           balance=transferrer_acc.acc_balance)
+                           balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES))
 
 
 @views.route("/personal-banking/transfer-onetime", methods=['GET', 'POST'])
@@ -619,7 +623,8 @@ def transfer_onetime():
         if transferee_acc is None:
             error = "Transferee does not exist"
             return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
-                                   balance=transferrer_acc.acc_balance, transferee_error=error)
+                                   balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES),
+                                   transferee_error=error)
 
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
 
@@ -629,11 +634,11 @@ def transfer_onetime():
         if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
             error = "Amount to be transferred exceeds daily transfer limit"
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
-                                   balance=transferrer_acc.acc_balance)
+                                   balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES))
         if transferrer_acc.acc_balance < amount:
             error = "Insufficient funds"
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
-                                   balance=transferrer_acc.acc_balance)
+                                   balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES))
 
         # Create a transaction.
         transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
@@ -644,7 +649,7 @@ def transfer_onetime():
             require_approval = True
             status = 1
 
-        new_transaction = Transaction(amount, transferer_acc_number, transferee_acc_number, description,
+        new_transaction = Transaction(Decimal(amount).quantize(TWO_PLACES), transferer_acc_number, transferee_acc_number, description,
                                       require_approval, status)
         add_db_no_close(new_transaction)
 
@@ -669,24 +674,26 @@ def transfer_onetime():
 
         # Return approval required page.
         if require_approval:
-            html = render_template('/email_templates/transfer-pending.html', amount=amount,
+            html = render_template('/email_templates/transfer-pending.html',
+                                   amount=Decimal(amount).quantize(TWO_PLACES),
                                    acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             subject = "HX-Bank - Add Recipient"
             send_email(current_user.email, subject, html)
             new_message = Message("HX-Bank",
-                                  f"Your requested transfer of ${amount} to {form.transferee_acc.data} is currently "
-                                  f"pending for approval.",
-                                  transferrer_userid)
+                                  f"Your requested transfer of $"
+                                  f"{Decimal(amount).quantize(TWO_PLACES)} to {form.transferee_acc.data} "
+                                  f"is currently pending for approval.", transferrer_userid)
             add_db(new_message)
             return redirect(url_for('views.approval_required'))
 
         # Return success page.
-        html = render_template('/email_templates/transfer-success.html', amount=amount,
+        html = render_template('/email_templates/transfer-success.html',
+                               amount=Decimal(amount).quantize(TWO_PLACES),
                                acc_num=transferee_acc.acc_number, time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - Add Recipient"
         send_email(current_user.email, subject, html)
-        new_message = Message("HX-Bank", f"Your have requested transfer of ${amount} to {form.transferee_acc.data} is "
-                                         f"successful.", transferrer_userid)
+        new_message = Message("HX-Bank", f"Your have requested transfer of ${Decimal(amount).quantize(TWO_PLACES)}"
+                                         f" to {form.transferee_acc.data} is successful.", transferrer_userid)
         add_db(new_message)
         return redirect(url_for('views.success'))
 
@@ -754,16 +761,19 @@ def transaction_history():
     data = []
 
     # Combine the transactions together.
-    for item in transfer_data[::-1]:
+    for item in reversed(transfer_data):
         data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
-                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
-                     "transferee_acc": item.transferee_acc_number, "description": item.description,
-                     "require_approval": item.require_approval, "status": item.status, "debit": False})
-    for item in transferee_data[::-1]:
-        data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
-                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
-                     "transferee_acc": item.transferee_acc_number, "description": item.description,
-                     "require_approval": item.require_approval, "status": item.status, "debit": True})
+                     "amt_transferred": Decimal(item.amt_transferred).quantize(TWO_PLACES),
+                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+                     "description": item.description, "require_approval": item.require_approval, "status": item.status,
+                     "debit": False})
+    for item in reversed(transferee_data):
+        if item.transferrer_acc_number != item.transferee_acc_number:
+            data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
+                         "amt_transferred": Decimal(item.amt_transferred).quantize(TWO_PLACES),
+                         "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+                         "description": item.description, "require_approval": item.require_approval,
+                         "status": item.status, "debit": True})
 
     # Sort by latest date first.
     data = {x['date_transferred']: x for x in data}.values()
@@ -825,13 +835,14 @@ def set_transfer_limit():
             return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data,
                                    limit_error=error)
         acc = Account.query.filter_by(userid=current_user.id).first()
-        new_message = Message("HX-Bank", f"Your new transfer limit is ${amount}", current_user.id)
+        new_message = Message("HX-Bank", f"Your new transfer limit is ${Decimal(amount).quantize(TWO_PLACES)}",
+                              current_user.id)
         add_db_no_close(new_message)
-        html = render_template('/email_templates/transfer-limit.html', amount=amount,
+        html = render_template('/email_templates/transfer-limit.html', amount=Decimal(amount).quantize(TWO_PLACES),
                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - New Transfer Limit"
         send_email(current_user.email, subject, html)
-        acc.acc_xfer_limit = amount
+        acc.acc_xfer_limit = Decimal(amount).quantize(TWO_PLACES)
         update_db()
         return redirect(url_for('views.success'))
     return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data)
@@ -854,14 +865,15 @@ def topup_balance():
         acc = Account.query.filter_by(userid=current_user.id).first()
         acc_balance = Decimal(acc.acc_balance + amount).quantize(TWO_PLACES)
         acc.acc_balance = acc_balance
-        new_message = Message("HX-Bank", f"You have made a request to top up ${amount}", current_user.id)
+        new_message = Message("HX-Bank", f"You have made a request to top up $"
+                                         f"{Decimal(amount).quantize(TWO_PLACES)}", current_user.id)
         add_db_no_close(new_message)
-        html = render_template('/email_templates/top-up.html', amount=amount,
+        html = render_template('/email_templates/top-up.html', amount=Decimal(amount).quantize(TWO_PLACES),
                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - Top Up"
         send_email(current_user.email, subject, html)
         update_db()
-        description = f"Self-service top up of ${amount}"
+        description = f"Self-service top up of ${Decimal(amount).quantize(TWO_PLACES)}"
 
         # Create transaction
         new_transaction = Transaction(form.amount.data, user_acc, user_acc, description, False, 0)
@@ -1123,8 +1135,10 @@ def acc_overview():
         abort(403)
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     if data:
-        return jsonify({'acc_balance': data.acc_balance, 'acc_xfer_limit': data.acc_xfer_limit,
-                        'acc_xfer_daily': data.acc_xfer_daily}), 200
+        return jsonify({'acc_balance': Decimal(data.acc_balance).quantize(TWO_PLACES),
+                        'acc_balance_on_hold': Decimal(data.money_on_hold).quantize(TWO_PLACES),
+                        'acc_xfer_limit': Decimal(data.acc_xfer_limit).quantize(TWO_PLACES),
+                        'acc_xfer_daily': Decimal(data.acc_xfer_daily).quantize(TWO_PLACES)}), 200
 
 
 @views.route("/api/barchart-graph", methods=['GET'])
@@ -1162,15 +1176,17 @@ def recent_transactions():
     data = []
     for item in list(reversed(transfer_data))[:5]:
         data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
-                     "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
-                     "transferee_acc": item.transferee_acc_number, "description": item.description,
-                     "require_approval": item.require_approval, "debit": False})
+                     "amt_transferred": Decimal(item.amt_transferred).quantize(TWO_PLACES),
+                     "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+                     "description": item.description, "require_approval": item.require_approval,
+                     "status": item.status, "debit": False})
     for item in list(reversed(transferee_data))[:5]:
         if item.transferrer_acc_number != item.transferee_acc_number:
             data.append({"date_transferred": item.date_transferred.strftime('%Y-%m-%d %H:%M:%S'),
-                         "amt_transferred": item.amt_transferred, "transferrer_acc": item.transferrer_acc_number,
-                         "transferee_acc": item.transferee_acc_number, "description": item.description,
-                         "require_approval": item.require_approval, "debit": True})
+                         "amt_transferred": Decimal(item.amt_transferred).quantize(TWO_PLACES),
+                         "transferrer_acc": item.transferrer_acc_number, "transferee_acc": item.transferee_acc_number,
+                         "description": item.description, "require_approval": item.require_approval,
+                         "status": item.status, "debit": True})
     data.sort(key=lambda r: r["date_transferred"], reverse=False)
     temp = {}
     trans_no = 0
