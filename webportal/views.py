@@ -112,7 +112,7 @@ def confirm_email(token):
         if user.email_token != token:
             abort(404)
         elif user.email_verified:
-            return redirect(url_for('views.logout'))
+            return redirect(url_for('views.login'))
         else:
             user.email_verified = True
             user.email_token = None
@@ -124,13 +124,14 @@ def confirm_email(token):
 
 @views.route('/otp-setup')
 def otp_setup():
+    print(session)
     if 'username' not in session:
-        return render_template('home.html', title="Home Page")
+        return redirect(url_for('views.login'))
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
     user = User.query.filter_by(username=session['username']).first()
     if user is None:
-        return render_template('home.html', title="Home Page")
+        return redirect(url_for('views.login'))
     return render_template('otp-setup.html'), 200, {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
@@ -148,7 +149,7 @@ def qrcode():
         abort(404)
     user.otp_secret = pyotp.random_base32()
     update_db_no_close()
-    if user.prev_token != "0":
+    if user.prev_token is not None:
         html = render_template('/email_templates/reset.html', reset="OTP",
                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - OTP Reset"
@@ -173,8 +174,6 @@ def login():
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
         return redirect(url_for('views.dashboard'))
-    if 'type' in session:
-        del session['type']
     form = LoginForm()
     error = "Login Failed"
     if request.method == 'POST' and form.validate_on_submit():
@@ -286,7 +285,7 @@ def reset_identify():
     else:
         if selected is None:
             if 'type' not in session:
-                return redirect(url_for('views.logout'))
+                return redirect(url_for('views.login'))
     form = ResetFormIdentify(request.form)
     if request.method == 'POST' and form.validate_on_submit():
         error = "Identification Failed"
@@ -295,13 +294,14 @@ def reset_identify():
             session['nric'] = user.nric
             session['dob'] = user.dob
             if "username" in session and session['type'] == "otp":
+                session['email'] = user.email
                 user_username = User.query.filter_by(username=session['username']).first()
-                if user_username.nric == session['nric'] and user_username.dob == session['dob']:
+                if user_username.nric == session['nric'] and user_username.dob == session['dob'] and user_username.email == session['email']:
                     del session['nric']
                     del session['dob']
-                    return redirect(url_for("views.otp_setup"))
+                    return redirect(url_for("views.reset_email_auth"))
                 else:
-                    return redirect(url_for("views.logout"))
+                    return redirect(url_for("views.login"))
             else:
                 if form.dob.data == session['dob']:
                     del session['dob']
@@ -313,12 +313,44 @@ def reset_identify():
     return render_template('reset-identify.html', form=form)
 
 
+@views.route('/reset-email-auth', methods=['GET', 'POST'])
+def reset_email_auth():
+    email = session['email']
+    del session['email']
+    token = generate_token(email)
+    user = User.query.filter_by(username=session['username']).first()
+    user.email_token = token
+    update_db()
+    confirm_url = url_for('views.confirm_otp', token=token, _external=True)
+    html = render_template('/email_templates/otp.html', confirm_url=confirm_url,
+                           time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    subject = "HX-Bank - OTP Reset"
+    send_email(email, subject, html)
+    return redirect(url_for('views.login'))
+
+
+@views.route('/confirm_otp/<token>')
+def confirm_otp(token):
+    try:
+        email = confirm_token(token)
+        user = User.query.filter_by(email=email).first()
+        if user.email_token != token:
+            abort(404)
+        else:
+            user.email_token = None
+            update_db()
+            return redirect(url_for('views.otp_setup'))
+    except:
+        abort(404)
+
+
 @views.route('/reset-authenticate', methods=['GET', 'POST'])
 def reset_authenticate():
+    print(session)
     if 'nric' not in session:
         return redirect(url_for('views.reset_identify'))
     if 'type' not in session:
-        return redirect(url_for("views.logout"))
+        return redirect(url_for("views.login"))
     form = ResetFormAuthenticate(request.form)
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
@@ -334,7 +366,7 @@ def reset_authenticate():
                 del session['type']
                 return redirect(url_for("views.reset_username"))
             else:
-                return redirect(url_for('views.logout'))
+                return redirect(url_for('views.login'))
         else:
             return render_template('reset-authenticate.html', form=form, authenticate_error=error)
     return render_template('reset-authenticate.html', form=form)
@@ -360,7 +392,7 @@ def reset_pwd():
             new_message = Message("HX-Bank", f"You have performed a password reset on "
                                              f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
             add_db(new_message)
-            return redirect(url_for("views.logout"))
+            return redirect(url_for("views.login"))
         else:
             return render_template('change-pwd.html', form=form, reset_error=error)
     return render_template('change-pwd.html', form=form)
@@ -389,7 +421,7 @@ def reset_username():
                 new_message = Message("HX-Bank", f"You have performed a username change on "
                                                  f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
                 add_db(new_message)
-            return redirect(url_for("views.logout"))
+            return redirect(url_for("views.login"))
         else:
             return render_template('reset-username.html', form=form, reset_error=error)
     return render_template('reset-username.html', form=form)
