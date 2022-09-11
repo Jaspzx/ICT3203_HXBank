@@ -1065,7 +1065,8 @@ def change_otp():
 @login_required
 # @check_email_verification
 def auth_otp_reset():
-    return render_template('change-otp.html'), 200, {
+    msg_data = load_nav_messages()
+    return render_template('change-otp.html', msg_data=msg_data), 200, {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'}
