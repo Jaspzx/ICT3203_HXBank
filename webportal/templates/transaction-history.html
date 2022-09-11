@@ -21,7 +21,7 @@
                         {% for i in data %}
                         <tr>
                             <td>{{ i.date_transferred }}</td>
-                            <td>{{ i.amt_transferred }}</td>
+                            <td>${{ i.amt_transferred }}</td>
                             <td>{{ i.transferrer_acc }}</td>
                             <td>{{ i.transferee_acc }}</td>
                             <td>{{ i.description }}</td>
@@ -45,7 +45,9 @@
 <script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function () {
-        $('#approve_transactions').DataTable();
+        $('#approve_transactions').DataTable({
+            order: [[0, 'desc']],
+        });
     });
 </script>                
 {% endblock content %}

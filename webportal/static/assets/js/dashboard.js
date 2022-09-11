@@ -10,6 +10,7 @@ $(document).ready(function() {
     })
     $("#refresh_balance").click(function() {
         let acc_balance = document.getElementById("acc_balance");
+        let balance_on_hold = document.getElementById("balance_on_hold");
         let acc_remain = document.getElementById("acc_remain");
         let acc_limit = document.getElementById("acc_limit");
         $.ajax({
@@ -19,6 +20,7 @@ $(document).ready(function() {
         .done(function(data, textStatus, xhr){
             if (xhr.status === 200) {
                 acc_balance.textContent = "Total Balance: $" + data.acc_balance;
+                balance_on_hold.textContent = "Total Available Balance: $" + (data.acc_balance - data.acc_balance_on_hold);
                 acc_remain.textContent = "Daily Transfer Remaining: $" + (data.acc_xfer_limit - data.acc_xfer_daily);
                 acc_limit.textContent = "Daily Transfer Limit: $" + data.acc_xfer_limit;
             }
