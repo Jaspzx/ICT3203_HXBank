@@ -4,7 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
+from logging.config import dictConfig
 import os
+import socket
 
 app = Flask(__name__)
 db = SQLAlchemy()
@@ -36,7 +38,7 @@ LOGGING_CONFIG = {
             'format': formatted
         }
     },
-    
+
     "handlers": {
         'default': {
             'class': 'logging.StreamHandler',
@@ -61,7 +63,7 @@ LOGGING_CONFIG = {
             'level': "INFO",
             'filename': '{}/transaction.log'.format(log_dir),
             'formatter': 'standard',
-        }        
+        }
     },
 
     "loggers": {
@@ -75,7 +77,7 @@ LOGGING_CONFIG = {
         },
         "user_activity_log": {
             'handlers': ['user_activity'],
-            'level': "INFO"           
+            'level': "INFO"
         }
     }
 }
@@ -83,6 +85,7 @@ LOGGING_CONFIG = {
 dictConfig(LOGGING_CONFIG)
 app = Flask(__name__)
 # LOGGING
+
 
 def create_webportal():
     load_dotenv()

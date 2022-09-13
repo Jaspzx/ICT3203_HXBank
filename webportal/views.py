@@ -2,6 +2,8 @@ from decimal import Decimal
 from io import BytesIO
 from .utils.interact_db import *
 import pyqrcode
+import logging
+import ipaddress
 from flask import Blueprint, redirect, url_for, render_template, request, session, abort, jsonify
 from flask_login import login_required, login_user, logout_user
 from webportal import flask_bcrypt, login_manager
@@ -21,7 +23,6 @@ def check_email_verification(func):
         if current_user.email_verified is False:
             return redirect(url_for('views.unverified_email'))
         return func(*args, **kwargs)
-
     return decorated_function
 
 
@@ -48,6 +49,7 @@ def about():
 
 @views.route('/register', methods=['GET', 'POST'])
 def register():
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
     if current_user.is_authenticated:
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
@@ -83,6 +85,11 @@ def register():
         token = generate_token(email)
         new_user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None, token)
         add_db(new_user)
+
+        # Logging.
+        logger = logging.getLogger('user_activity_log')
+        logger.info(f"src_ip {ip_source} -> {username} user account created")
+
         user = User.query.filter_by(username=username).first()
 
         # Create a bank acc for the newly created user.
@@ -92,6 +99,10 @@ def register():
         new_message = Message("HX-Bank", welcome_msg(welcome_amt), user.id)
         add_db_no_close(new_message)
         new_account = Account(acc_number, user.id, welcome_amt)
+
+        # Logging
+        logger.info(f"src_ip {ip_source} -> Bank acc {acc_number} created and linked to {username}")
+
         add_db(new_account)
         session['username'] = username
         confirm_url = url_for('views.confirm_email', token=token, _external=True)
@@ -169,7 +180,12 @@ def qrcode():
 
 @views.route('/login', methods=['GET', 'POST'])
 def login():
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
+    logger = logging.getLogger('auth_log')
     if current_user.is_authenticated:
+        # Logging.
+        logger.info(f"src_ip {ip_source} -> {current_user.username} user account successfully logged in")
+
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
         return redirect(url_for('views.dashboard'))
@@ -187,8 +203,15 @@ def login():
             else:
                 user.failed_login_attempts += 1
                 if user.failed_login_attempts > 3:
+                    # Logging.
+                    logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")
+
                     user.is_disabled = True
                 update_db()
+
+                # Logging.
+                logger.warning(f"src_ip {ip_source} -> {user.username} user account failed to login")
+
                 return render_template('login.html', title="Login", form=form, login_error=error)
         else:
             return render_template('login.html', title="Login", form=form, login_error=error)
@@ -198,6 +221,12 @@ def login():
 @views.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
+
+    # Logging.
+    logger = logging.getLogger('auth_log')
+    logger.info(f"src_ip {ip_source} -> {current_user.username} user account successfully logged out")
+
     logout_user()
     session.clear()
     return redirect(url_for('views.login'))
@@ -205,6 +234,7 @@ def logout():
 
 @views.route('/otp-input', methods=['GET', 'POST'])
 def otp_input():
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
     if 'username' not in session:
         return redirect(url_for('views.login'))
     if current_user.is_authenticated:
@@ -232,6 +262,11 @@ def otp_input():
             new_message = Message("HX-Bank", f"You have logged in on "
                                              f"{current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}",
                                   current_user.id)
+
+            # Logging.
+            log_message = f"src_ip {ip_source} -> {current_user.username} logged in on {current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}"
+            logger = logging.getLogger('auth_log')
+            logger.info(log_message)
             add_db_no_close(new_message)
             if current_user.is_admin:
                 return redirect(url_for('views.admin_dashboard'))
@@ -294,8 +329,8 @@ def reset_identify():
             if "username" in session and session['type'] == "otp":
                 session['email'] = user.email
                 user_username = User.query.filter_by(username=session['username']).first()
-                if user_username.nric == session['nric'] and user_username.dob == session[
-                    'dob'] and user_username.email == session['email']:
+                if user_username.nric == session['nric'] and user_username.dob == session['dob'] \
+                        and user_username.email == session['email']:
                     del session['nric']
                     del session['dob']
                     return redirect(url_for("views.reset_email_auth"))
@@ -474,6 +509,7 @@ def transfer():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
 
     # Init the TransferMoneyForm
     form = TransferMoneyForm()
@@ -558,6 +594,10 @@ def transfer():
 
         update_db_no_close()
 
+        # Logging.
+        logger = logging.getLogger('transaction_log')
+        logger.info(f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
+
         # Return approval required page.
         if require_approval:
             html = render_template('/email_templates/transfer-pending.html',
@@ -595,6 +635,7 @@ def transfer_onetime():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
 
     # Init the TransferMoneyForm
     form = TransferMoneyOneTimeForm()
@@ -652,6 +693,10 @@ def transfer_onetime():
                                       transferee_acc_number, description, require_approval, status)
         add_db_no_close(new_transaction)
 
+        # Logging.
+        logger = logging.getLogger('transaction_log')
+        logger.info(f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
+
         # Update the balance for both transferrer and transferee.
         transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
@@ -708,6 +753,7 @@ def add_transferee():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
     form = AddTransfereeForm()
     if request.method == 'POST' and form.validate_on_submit():
         # Get the transferee info based on the account number provided by the user.
@@ -735,6 +781,11 @@ def add_transferee():
                 send_email(current_user.email, subject, html)
                 new_transferee = Transferee(current_user.id, transferee_acc.userid)
                 add_db(new_transferee)
+
+                # Logging.
+                logger = logging.getLogger('user_activity_log')
+                logger.info(f"src_ip {ip_source} -> {current_user.username} has added {transferee_acc.acc_number} as a transferee")
+
                 return redirect(url_for('views.success'))
 
         # Return error if the transferee info does not exist based on the account number provided by the user.
@@ -824,6 +875,7 @@ def set_transfer_limit():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
 
     # Init the SetTransferLimitForm.
     form = SetTransferLimitForm()
@@ -841,8 +893,14 @@ def set_transfer_limit():
                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - New Transfer Limit"
         send_email(current_user.email, subject, html)
+
+        # Logging.
+        logger = logging.getLogger('user_activity_log')
+        logger.info(f"src_ip {ip_source} -> {current_user.username} has updated transfer limit to ${amount}")
+
         acc.acc_xfer_limit = Decimal(amount).quantize(TWO_PLACES)
         update_db()
+
         return redirect(url_for('views.success'))
     return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data)
 
@@ -854,6 +912,7 @@ def topup_balance():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
     form = TopUpForm()
     if request.method == 'POST' and form.validate_on_submit():
         user_acc = db.session.query(Account).join(User).filter(User.id == current_user.id).first().acc_number
@@ -871,6 +930,11 @@ def topup_balance():
                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         subject = "HX-Bank - Top Up"
         send_email(current_user.email, subject, html)
+
+        # Logging.
+        logger = logging.getLogger('user_activity_log')
+        logger.info(f"src_ip {ip_source} -> {current_user.username} has updated topped up {amount}")
+
         update_db()
         description = f"Self-service top up of ${Decimal(amount).quantize(TWO_PLACES)}"
 
@@ -887,6 +951,7 @@ def topup_balance():
 # @check_email_verification
 def compose():
     msg_data = load_nav_messages()
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
     form = ComposeMessage()
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=form.recipient.data).first()
@@ -894,6 +959,11 @@ def compose():
             error = "Message Sent!"
             new_message = Message(current_user.username, form.message.data, user.id)
             add_db_no_close(new_message)
+
+            # Logging.
+            logger = logging.getLogger('user_activity_log')
+            logger.info(f"src_ip {ip_source} -> {current_user.username} has sent a message to {user.username}")
+
             return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
         else:
             error = "User does not exist"
@@ -1011,6 +1081,7 @@ def acc_settings():
 def change_pwd():
     msg_data = load_nav_messages()
     form = ChangePasswordForm()
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=current_user.username).first()
         if user:
@@ -1026,10 +1097,16 @@ def change_pwd():
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 subject = "HX-Bank - Change Password"
                 send_email(current_user.email, subject, html)
+
+                # Logging.
+                logger = logging.getLogger('user_activity_log')
+                logger.info(f"src_ip {ip_source} -> {current_user.username} has changed their password")
+
                 new_message = Message("HX-Bank",
                                       f"You have performed a password change on "
                                       f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
                 add_db(new_message)
+
                 return redirect(url_for("views.acc_settings"))
             else:
                 error = "Incorrect OTP"
@@ -1043,6 +1120,7 @@ def change_pwd():
 def change_username():
     msg_data = load_nav_messages()
     form = ChangeUsernameForm()
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=current_user.username).first()
         if user:
@@ -1062,6 +1140,11 @@ def change_username():
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 subject = "HX-Bank - Change Username"
                 send_email(current_user.email, subject, html)
+
+                # Logging.
+                logger = logging.getLogger('user_activity_log')
+                logger.info(f"src_ip {ip_source} -> {current_user.username} has updated their username")
+
                 new_message = Message("HX-Bank",
                                       f"You have performed a username change on "
                                       f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
@@ -1079,12 +1162,17 @@ def change_username():
 def change_otp():
     msg_data = load_nav_messages()
     form = Token2FAForm()
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
         if current_user.prev_token == form.token.data:
             error = "Something went wrong"
             return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
         elif current_user.verify_totp(form.token.data):
+            # Logging.
+            logger = logging.getLogger('user_activity_log')
+            logger.info(f"src_ip {ip_source} -> {current_user.username} has updated their OTP")
+
             return redirect(url_for("views.auth_otp_reset"))
         else:
             return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
