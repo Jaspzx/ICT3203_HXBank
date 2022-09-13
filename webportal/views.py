@@ -181,6 +181,7 @@ def qrcode():
 
 @views.route('/login', methods=['GET', 'POST'])
 def login():
+    ip_source = ipaddress.IPv4Address(request.remote_addr)
     logger = logging.getLogger('auth_log')
     if current_user.is_authenticated:
         # Logging. 
@@ -194,6 +195,7 @@ def login():
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
+            username = user.username
             if flask_bcrypt.check_password_hash(user.password_hash, form.password.data):
                 if user.is_disabled:
                     error = "Account has been locked out. Please contact customer support for assistance."
@@ -204,13 +206,13 @@ def login():
                 user.failed_login_attempts += 1
                 if user.failed_login_attempts > 3:
                     # Logging. 
-                    logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")
+                    logger.warning(f"src_ip {ip_source} -> {username} user account has been locked out")
 
                     user.is_disabled = True
                 update_db()
 
                 # Logging. 
-                logger.warning(f"src_ip {ip_source} -> {user.username} user account failed to login")
+                logger.warning(f"src_ip {ip_source} -> {username} user account failed to login")
 
                 return render_template('login.html', title="Login", form=form, login_error=error)
         else:
