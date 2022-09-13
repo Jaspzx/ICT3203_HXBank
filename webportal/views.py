@@ -690,8 +690,8 @@ def transfer_onetime():
             require_approval = True
             status = 1
 
-        new_transaction = Transaction(Decimal(amount).quantize(TWO_PLACES), transferer_acc_number,
-                                      transferee_acc_number, description, require_approval, status)
+        new_transaction = Transaction(Decimal(amount).quantize(TWO_PLACES), transferer_acc_number, transferee_acc_number, description,
+                                      require_approval, status)
         add_db_no_close(new_transaction)
 
         # Logging. 
@@ -743,7 +743,7 @@ def transfer_onetime():
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
-    return render_template('transfer-onetime.html', title="Transfer (One-Time)", form=form, msg_data=msg_data,
+    return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
                            balance=transferrer_acc.acc_balance)
 
 
@@ -1273,13 +1273,11 @@ def recent_transactions():
 
 @views.route("/personal-banking/profile", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
 def profile():
     user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
     msg_data = load_nav_messages()
     return render_template('profile.html', title="Profile Page", data=user_data, msg_data=msg_data)
-
 
 @views.before_request
 def make_session_permanent():

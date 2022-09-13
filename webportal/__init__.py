@@ -87,12 +87,27 @@ app = Flask(__name__)
 # LOGGING
 
 def create_webportal():
+    # Without .env file
+    # app.config['SECRET_KEY'] = "thisisasecretkey"
+    # app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_NAME}"
+    # app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # app.config['SECURITY_PASSWORD_SALT'] = "test"
+    # app.config['SESSION_COOKIE_SECURE'] = True
+    # app.config['MAIL_SERVER'] = ''
+    # app.config['MAIL_PORT'] = 587
+    # app.config['MAIL_USERNAME'] = ''
+    # app.config['MAIL_PASSWORD'] = ''
+    # app.config['MAIL_DEFAULT_SENDER'] = ''
+    # app.config['MAIL_USE_TLS'] = True
+    # Get environment variables from the env file
+    # app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=600)
+    # With .env file
     load_dotenv()
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=int(os.getenv('PERMANENT_SESSION_LIFETIME')))
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS')
     app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=int(os.getenv('PERMANENT_SESSION_LIFETIME')))
     app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE')
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
     app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
