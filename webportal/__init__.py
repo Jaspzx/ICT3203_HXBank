@@ -21,6 +21,68 @@ from webportal.models.Transferee import *
 from webportal.models.Message import *
 from dotenv import load_dotenv
 
+# LOGGING
+FORMAT = "%(asctime)s {app} [%(thread)d] %(levelname)-5s %(name)s - %(message)s."
+formatted = FORMAT.format(app=__name__)
+log_dir = f'{os.getcwd()}\\webportal\\log'
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+LOGGING_CONFIG = {
+    "version": 1,
+    'disable_existing_loggers': False,
+    "formatters": {
+        'standard': {
+            'format': formatted
+        }
+    },
+    
+    "handlers": {
+        'default': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+            'level': "INFO",
+            'stream': 'ext://sys.stdout'
+        },
+        'auth': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'utc': True,
+            'backupCount': 1,
+            'level': "INFO",
+            'filename': '{}/auth.log'.format(log_dir),
+            'formatter': 'standard',
+        },
+        'user_activity': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'utc': True,
+            'backupCount': 1,
+            'level': "INFO",
+            'filename': '{}/transaction.log'.format(log_dir),
+            'formatter': 'standard',
+        }        
+    },
+
+    "loggers": {
+        "": {
+            'handlers': ['default'],
+            'level': "INFO"
+        },
+        "auth_log": {
+            'handlers': ['auth'],
+            'level': "INFO"
+        },
+        "user_activity_log": {
+            'handlers': ['user_activity'],
+            'level': "INFO"           
+        }
+    }
+}
+
+dictConfig(LOGGING_CONFIG)
+app = Flask(__name__)
+# LOGGING
 
 def create_webportal():
     load_dotenv()
