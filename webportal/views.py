@@ -2,8 +2,6 @@ from decimal import Decimal
 from io import BytesIO
 from .utils.interact_db import *
 import pyqrcode
-import logging
-import ipaddress
 from flask import Blueprint, redirect, url_for, render_template, request, session, abort, jsonify
 from flask_login import login_required, login_user, logout_user
 from webportal import flask_bcrypt, login_manager
@@ -50,7 +48,6 @@ def about():
 
 @views.route('/register', methods=['GET', 'POST'])
 def register():
-    ip_source = ipaddress.IPv4Address(request.remote_addr)
     if current_user.is_authenticated:
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
@@ -86,11 +83,6 @@ def register():
         token = generate_token(email)
         new_user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None, token)
         add_db(new_user)
-
-        # Logging. 
-        logger = logging.getLogger('user_activity_log')
-        logger.info(f"src_ip {ip_source} -> {username} user account created")
-
         user = User.query.filter_by(username=username).first()
 
         # Create a bank acc for the newly created user.
@@ -100,10 +92,6 @@ def register():
         new_message = Message("HX-Bank", welcome_msg(welcome_amt), user.id)
         add_db_no_close(new_message)
         new_account = Account(acc_number, user.id, welcome_amt)
-
-        # Logging
-        logger.info(f"src_ip {ip_source} -> Bank acc {acc_number} created and linked to {username}")
-
         add_db(new_account)
         session['username'] = username
         confirm_url = url_for('views.confirm_email', token=token, _external=True)
@@ -181,12 +169,7 @@ def qrcode():
 
 @views.route('/login', methods=['GET', 'POST'])
 def login():
-    ip_source = ipaddress.IPv4Address(request.remote_addr)
-    logger = logging.getLogger('auth_log')
     if current_user.is_authenticated:
-        # Logging. 
-        logger.info(f"src_ip {ip_source} -> {user.username} user account successfully logged in")
-
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
         return redirect(url_for('views.dashboard'))
@@ -195,7 +178,6 @@ def login():
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user:
-            username = user.username
             if flask_bcrypt.check_password_hash(user.password_hash, form.password.data):
                 if user.is_disabled:
                     error = "Account has been locked out. Please contact customer support for assistance."
@@ -205,15 +187,8 @@ def login():
             else:
                 user.failed_login_attempts += 1
                 if user.failed_login_attempts > 3:
-                    # Logging. 
-                    logger.warning(f"src_ip {ip_source} -> {username} user account has been locked out")
-
                     user.is_disabled = True
                 update_db()
-
-                # Logging. 
-                logger.warning(f"src_ip {ip_source} -> {username} user account failed to login")
-
                 return render_template('login.html', title="Login", form=form, login_error=error)
         else:
             return render_template('login.html', title="Login", form=form, login_error=error)
@@ -223,12 +198,6 @@ def login():
 @views.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
-    ip_source = ipaddress.IPv4Address(request.remote_addr)
-
-    # Logging.
-    logger = logging.getLogger('auth_log')
-    logger.info(f"src_ip {ip_source} -> {current_user.username} user account successfully logged out")
-
     logout_user()
     session.clear()
     return redirect(url_for('views.login'))
@@ -236,7 +205,6 @@ def logout():
 
 @views.route('/otp-input', methods=['GET', 'POST'])
 def otp_input():
-    ip_source = ipaddress.IPv4Address(request.remote_addr)
     if 'username' not in session:
         return redirect(url_for('views.login'))
     if current_user.is_authenticated:
@@ -264,10 +232,6 @@ def otp_input():
             new_message = Message("HX-Bank", f"You have logged in on "
                                              f"{current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}",
                                   current_user.id)
-
-            log_message = f"src_ip {ip_source} -> {current_user.username} logged in on {current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}"
-            logger = logging.getLogger('auth_log')
-            logger.info(log_message)
             add_db_no_close(new_message)
             if current_user.is_admin:
                 return redirect(url_for('views.admin_dashboard'))
@@ -283,13 +247,12 @@ def otp_input():
 @views.route('/unverified-email', methods=['GET'])
 @login_required
 def unverified_email():
-    msg_data = load_nav_messages()
     if current_user.email_verified:
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
         else:
             return redirect(url_for('views.dashboard'))
-    return render_template('verify-email.html', msg_data=msg_data)
+    return render_template('verify-email.html')
 
 
 @views.route('/resend-verification', methods=['GET'])
@@ -501,7 +464,7 @@ def admin_dashboard():
     msg_data = load_nav_messages()
     if not current_user.is_admin:
         return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
-    return render_template('admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
+    return render_template('/admin/admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
 
 
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
@@ -571,11 +534,6 @@ def transfer():
         new_transaction = Transaction(Decimal(amount).quantize(TWO_PLACES), transferer_acc_number,
                                       transferee_acc_number, description, require_approval, status)
         add_db_no_close(new_transaction)
-
-        # Logging. 
-        logger = logging.getLogger('transaction_log')
-        logger.info(f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
-
 
         # Get the transferrer and transferee accounts. 
         transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
@@ -690,13 +648,9 @@ def transfer_onetime():
             require_approval = True
             status = 1
 
-        new_transaction = Transaction(Decimal(amount).quantize(TWO_PLACES), transferer_acc_number, transferee_acc_number, description,
-                                      require_approval, status)
+        new_transaction = Transaction(Decimal(amount).quantize(TWO_PLACES), transferer_acc_number,
+                                      transferee_acc_number, description, require_approval, status)
         add_db_no_close(new_transaction)
-
-        # Logging. 
-        logger = logging.getLogger('transaction_log')
-        logger.info(f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
         # Update the balance for both transferrer and transferee.
         transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
@@ -743,7 +697,7 @@ def transfer_onetime():
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
-    return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
+    return render_template('transfer-onetime.html', title="Transfer (One-Time)", form=form, msg_data=msg_data,
                            balance=transferrer_acc.acc_balance)
 
 
@@ -781,11 +735,6 @@ def add_transferee():
                 send_email(current_user.email, subject, html)
                 new_transferee = Transferee(current_user.id, transferee_acc.userid)
                 add_db(new_transferee)
-
-                # Logging. 
-                logger = logging.getLogger('user_activity_log')
-                logger.info(f"src_ip {ip_source} -> {username} has added {transferee_acc.acc_number} as a transferee")   
-
                 return redirect(url_for('views.success'))
 
         # Return error if the transferee info does not exist based on the account number provided by the user.
@@ -894,11 +843,6 @@ def set_transfer_limit():
         send_email(current_user.email, subject, html)
         acc.acc_xfer_limit = Decimal(amount).quantize(TWO_PLACES)
         update_db()
-
-        # Logging. 
-        logger = logging.getLogger('user_activity_log')
-        logger.info(f"src_ip {ip_source} -> {username} has updated transfer limit to ${amount}")   
-
         return redirect(url_for('views.success'))
     return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data)
 
@@ -934,16 +878,30 @@ def topup_balance():
         new_transaction = Transaction(form.amount.data, user_acc, user_acc, description, False, 0)
         add_db(new_transaction)
 
-        # Logging. 
-        logger = logging.getLogger('user_activity_log')
-        logger.info(f"src_ip {ip_source} -> {username} has updated topped up {amount}")   
-
-
         return redirect(url_for('views.success'))
     return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data)
 
 
-@views.route("/personal-banking/message-center", methods=['GET', 'POST'])
+@views.route("/communication/compose", methods=['GET', 'POST'])
+@login_required
+# @check_email_verification
+def compose():
+    msg_data = load_nav_messages()
+    form = ComposeMessage()
+    if request.method == 'POST' and form.validate_on_submit():
+        user = User.query.filter_by(username=form.recipient.data).first()
+        if user:
+            error = "Message Sent!"
+            new_message = Message(current_user.username, form.message.data, user.id)
+            add_db_no_close(new_message)
+            return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
+        else:
+            error = "User does not exist"
+            return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
+    return render_template('compose.html', msg_data=msg_data, form=form)
+
+
+@views.route("/communication/message-center", methods=['GET', 'POST'])
 @login_required
 # @check_email_verification
 def message_center():
@@ -1072,11 +1030,6 @@ def change_pwd():
                                       f"You have performed a password change on "
                                       f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
                 add_db(new_message)
-
-                # Logging. 
-                logger = logging.getLogger('user_activity_log')
-                logger.info(f"src_ip {ip_source} -> {username} has changed their password")   
-
                 return redirect(url_for("views.acc_settings"))
             else:
                 error = "Incorrect OTP"
@@ -1113,11 +1066,6 @@ def change_username():
                                       f"You have performed a username change on "
                                       f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
                 add_db(new_message)
-
-                # Logging. 
-                logger = logging.getLogger('user_activity_log')
-                logger.info(f"src_ip {ip_source} -> {username} has updated their username")   
-
                 return redirect(url_for("views.acc_settings"))
             else:
                 error = "Incorrect OTP"
@@ -1137,10 +1085,6 @@ def change_otp():
             error = "Something went wrong"
             return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
         elif current_user.verify_totp(form.token.data):
-            # Logging. 
-            logger = logging.getLogger('user_activity_log')
-            logger.info(f"src_ip {ip_source} -> {username} has updated their OTP")   
-
             return redirect(url_for("views.auth_otp_reset"))
         else:
             return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
@@ -1273,11 +1217,13 @@ def recent_transactions():
 
 @views.route("/personal-banking/profile", methods=['GET', 'POST'])
 @login_required
+# @check_email_verification
 def profile():
     user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
     msg_data = load_nav_messages()
     return render_template('profile.html', title="Profile Page", data=user_data, msg_data=msg_data)
+
 
 @views.before_request
 def make_session_permanent():

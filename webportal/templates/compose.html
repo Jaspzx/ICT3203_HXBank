@@ -1,0 +1,46 @@
+{% extends "layouts/base.html" %}
+{% block title %} Message Composer {% endblock %}
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+
+{% block content %}
+<main id="login" class="h-100 pt-5">
+    <section class="container d-flex flex-column justify-content-start h-100">
+        <div class="row align-items-start">
+            <div class="col-lg-10 col-xl-12">
+                <form method="POST" action="/compose">
+                    {{ form.csrf_token }}
+                    <div class="form-title">
+                        <h1 class="title">Compose a New Message</h1>
+                        {% if compose_error %}
+                            <div class="alert alert-danger" role="alert">{{ compose_error }}</div>
+                        {% endif %}
+                        {% if form.recipient.errors %}
+                        {% for error in form.recipient.errors %}
+                            <div class="alert alert-danger" role="alert">{{ error }}</div>
+                        {% endfor %}
+                        {% endif %}
+                        {% if form.message.errors %}
+                        {% for error in form.message.errors %}
+                            <div class="alert alert-danger" role="alert">{{ error }}</div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ form.recipient.label }}
+                        {{ form.recipient(class="form-control", placeholder="Recipient Username") }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.message.label }}
+                        {{ form.message(class="form-control", placeholder="Enter Message Content") }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.submit(class="form-btn") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

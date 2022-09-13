@@ -3,47 +3,38 @@
 <main id="login" class="h-100 pt-5">
     <section class="container d-flex flex-column justify-content-start h-100">
         <div class="row align-items-start">
-            <div class="col-lg-10 col-xl-12">
-                <div class="card">
-                    <div class="card-header">Locked User Accounts</div>
-                    <div class="card-body">
-                        <div class="col-lg-10 col-xl-12">
-                            <table class="table" id="approve_transactions">
-                                <thead>
-                                    <tr>
-                                        <th>Username</th>
-                                        <th>Date Joined</th>
-                                        <th>Failed Login Attempts</th>
-                                        <th>Last Login</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for i in data %}
-                                    <tr>
-                                        <td>{{ i.username }}</td>
-                                        <td>{{ i.date_joined }}</td>
-                                        <td>{{ i.failed_login_attempts }}</td>
-                                        <td>{{ i.last_login }}</td>
-                                        <td>
-                                            <form method="POST" action="{{ url_for('views.user_management') }}">
-                                                {{ form.csrf_token }}
-                                                {{ form.userid(value=i.userid) }}
-                                                {{ form.unlock }}
-                                            </form>
-                                        </td>
-                                    </tr>                           
-                                    {% endfor %}
-                                </tbody>
-                            </table>                            
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <table class="table" id="approve_transactions">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Date Joined</th>
+                        <th>Failed Login Attempts</th>
+                        <th>Last Login</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in data %}
+                    <tr>
+                        <td>{{ i.username }}</td>
+                        <td>{{ i.date_joined }}</td>
+                        <td>{{ i.failed_login_attempts }}</td>
+                        <td>{{ i.last_login }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('views.user_management') }}">
+                                {{ form.csrf_token }}
+                                {{ form.userid(value=i.userid) }}
+                                {{ form.unlock }}
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </section>
 </main>
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
 <script>
     $(document).ready(function () {
         $('#approve_transactions').DataTable();

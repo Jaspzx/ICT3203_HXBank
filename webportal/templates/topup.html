@@ -9,7 +9,6 @@
                             {% for error in form.amount.errors %}
                                 <div class="alert alert-danger" role="alert">{{ error }}</div>
                             {% endfor %}
-                        </ul>
                     {% endif %}
                     <form method="POST" action="{{ url_for('views.topup_balance') }}">
                         {{ form.csrf_token }}
