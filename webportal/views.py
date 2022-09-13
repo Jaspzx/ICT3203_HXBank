@@ -895,7 +895,7 @@ def set_transfer_limit():
 
         # Logging. 
         logger = logging.getLogger('user_activity_log')
-        logger.info(f"src_ip {ip_source} -> {username} has updated transfer limit to {amount=Decimal(amount).quantize(TWO_PLACES)}")   
+        logger.info(f"src_ip {ip_source} -> {username} has updated transfer limit to ${amount}")   
 
         return redirect(url_for('views.success'))
     return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data)
@@ -934,7 +934,7 @@ def topup_balance():
 
         # Logging. 
         logger = logging.getLogger('user_activity_log')
-        logger.info(f"src_ip {ip_source} -> {username} has updated topped up {amount=Decimal(amount).quantize(TWO_PLACES)}")   
+        logger.info(f"src_ip {ip_source} -> {username} has updated topped up {amount}")   
 
 
         return redirect(url_for('views.success'))
@@ -1135,9 +1135,9 @@ def change_otp():
             error = "Something went wrong"
             return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
         elif current_user.verify_totp(form.token.data):
-                # Logging. 
-                logger = logging.getLogger('user_activity_log')
-                logger.info(f"src_ip {ip_source} -> {username} has updated their OTP")   
+            # Logging. 
+            logger = logging.getLogger('user_activity_log')
+            logger.info(f"src_ip {ip_source} -> {username} has updated their OTP")   
 
             return redirect(url_for("views.auth_otp_reset"))
         else:
