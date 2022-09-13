@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 # LOGGING
 FORMAT = "%(asctime)s {app} [%(thread)d] %(levelname)-5s %(name)s - %(message)s."
 formatted = FORMAT.format(app=__name__)
-log_dir = r'C:\\Users\\tux\Documents\\GitHub\\ICT3203_HXBank\\webportal\\log'
+log_dir = f'{os.getcwd()}\\webportal\\log'
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
