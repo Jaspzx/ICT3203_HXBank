@@ -423,8 +423,8 @@ def reset_pwd():
             add_db(new_message)
             return redirect(url_for("views.login"))
         else:
-            return render_template('change-pwd.html', form=form, reset_error=error)
-    return render_template('change-pwd.html', form=form)
+            return render_template('reset-pwd.html', form=form, reset_error=error)
+    return render_template('reset-pwd.html', form=form)
 
 
 @views.route('/personal-banking/dashboard', methods=['GET'])
@@ -922,15 +922,29 @@ def compose():
     form = ComposeMessage()
     admins = User.query.filter_by(is_admin=True).all()
     data = []
-    for admin in admins:
-        admin_data = Account.query.filter_by(userid=admin.id).first()
-        acc_num = admin_data.acc_number
-        admin_user_data = User.query.filter_by(id=admin.id).first()
-        first_name = admin_user_data.firstname
-        last_name = admin_user_data.lastname
-        user_data = f"{acc_num} - {first_name} {last_name}"
-        data.append(user_data)
-    form.recipient.choices = data
+    if not current_user.is_admin:
+        for admin in admins:
+            admin_data = Account.query.filter_by(userid=admin.id).first()
+            acc_num = admin_data.acc_number
+            admin_user_data = User.query.filter_by(id=admin.id).first()
+            first_name = admin_user_data.firstname
+            last_name = admin_user_data.lastname
+            user_data = f"{acc_num} - {first_name} {last_name}"
+            data.append(user_data)
+        form.recipient.choices = data
+    else:
+        msgs = db.session.query(Message).filter_by(userid=current_user.id).all()
+        if msgs:
+            for msg in msgs:
+                username = User.query.filter_by(username=msg.sender).first()
+                if username is not None:
+                    acc_num = Account.query.filter_by(userid=username.id).first().acc_number
+                    first_name = username.firstname
+                    last_name = username.lastname
+                    user_data = f"{acc_num} - {first_name} {last_name}"
+                    if user_data not in data:
+                        data.append(user_data)
+        form.recipient.choices = data
 
     if request.method == 'POST' and form.validate_on_submit():
         admin_acc_number = form.recipient.data.split(" ")[0]
