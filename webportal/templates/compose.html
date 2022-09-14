@@ -12,7 +12,7 @@
                 <form method="POST" action="/communication/compose">
                     {{ form.csrf_token }}
                     <div class="form-title">
-                        <h1 class="title">Compose a New Message</h1>
+                        <h1 class="title">Contact Support</h1>
                         {% if compose_error %}
                             <div class="alert alert-danger" role="alert">{{ compose_error }}</div>
                         {% endif %}
@@ -29,7 +29,7 @@
                     </div>
                     <div class="form-group">
                         {{ form.recipient.label }}
-                        {{ form.recipient(class="form-control", placeholder="Recipient Acc No.") }}
+                        {{ form.recipient(class="form-control", placeholder="Contact Support") }}
                     </div>
                     <div class="form-group">
                         {{ form.message.label }}
