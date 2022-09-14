@@ -1,0 +1,14 @@
+# To be added NGIX for digital ocean: https://realpython.com/dockerizing-flask-with-compose-and-machine-from-localhost-to-the-cloud/
+version: "3.9"
+
+services:
+  webportal:
+    build: .
+    ports:
+      - "8080:8080"
+    working_dir: /app
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    command: flask run --host=0.0.0.0 --port=8080
