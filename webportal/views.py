@@ -595,7 +595,7 @@ def transfer():
         update_db_no_close()
 
         # Logging.
-        logger = logging.getLogger('transaction_log')
+        logger = logging.getLogger('user_activity_log')
         logger.info(f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
         # Return approval required page.
@@ -694,7 +694,7 @@ def transfer_onetime():
         add_db_no_close(new_transaction)
 
         # Logging.
-        logger = logging.getLogger('transaction_log')
+        logger = logging.getLogger('user_activity_log')
         logger.info(f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
         # Update the balance for both transferrer and transferee.
@@ -780,12 +780,12 @@ def add_transferee():
                 subject = "HX-Bank - Add Recipient"
                 send_email(current_user.email, subject, html)
                 new_transferee = Transferee(current_user.id, transferee_acc.userid)
-                add_db(new_transferee)
-
+            
                 # Logging.
                 logger = logging.getLogger('user_activity_log')
                 logger.info(f"src_ip {ip_source} -> {current_user.username} has added {transferee_acc.acc_number} as a transferee")
 
+                add_db(new_transferee)
                 return redirect(url_for('views.success'))
 
         # Return error if the transferee info does not exist based on the account number provided by the user.
@@ -933,7 +933,7 @@ def topup_balance():
 
         # Logging.
         logger = logging.getLogger('user_activity_log')
-        logger.info(f"src_ip {ip_source} -> {current_user.username} has updated topped up {amount}")
+        logger.info(f"src_ip {ip_source} -> {current_user.username} has topped up {amount}")
 
         update_db()
         description = f"Self-service top up of ${Decimal(amount).quantize(TWO_PLACES)}"
@@ -958,12 +958,12 @@ def compose():
         if user:
             error = "Message Sent!"
             new_message = Message(current_user.username, form.message.data, user.id)
-            add_db_no_close(new_message)
-
+            
             # Logging.
             logger = logging.getLogger('user_activity_log')
             logger.info(f"src_ip {ip_source} -> {current_user.username} has sent a message to {user.username}")
 
+            add_db_no_close(new_message)
             return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
         else:
             error = "User does not exist"
