@@ -152,21 +152,9 @@ class ChangePasswordForm(FlaskForm):
     submit = SubmitField("Change")
 
 
-class ChangeUsernameForm(FlaskForm):
-    old_username = StringField("Old Username", validators=[InputRequired(), Length(min=3, max=20),
-                                                           Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$",
-                                                                  message="Invalid username")])
-    new_username = StringField("New Username", validators=[InputRequired(), Length(min=3, max=20),
-                                                           Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$",
-                                                                  message="Invalid username")])
-    token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp("^\\d{6,6}$")],
-                        render_kw={"placeholder": "OTP Token"})
-    submit = SubmitField("Change")
-
-
 class ComposeMessage(FlaskForm):
-    recipient = StringField("Recipient Username", validators=[InputRequired(), Length(min=3, max=20),
-                                                              Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$",
-                                                                     message="Invalid username")])
+    recipient = StringField("Recipient Account No", validators=[InputRequired(), Length(min=10, max=10),
+                                                                Regexp("^\\d{10,10}$",
+                                                                       message="Invalid account number")])
     message = StringField("Message Content", validators=[InputRequired(), Length(min=3, max=150)])  # need regex
     submit = SubmitField("Send")

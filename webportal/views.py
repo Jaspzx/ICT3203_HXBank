@@ -311,8 +311,6 @@ def reset_identify():
     selected = request.args.get('type')
     if selected == "pwd":
         session['type'] = "pwd"
-    elif selected == "username":
-        session['type'] = "username"
     elif selected == "otp":
         session['type'] = "otp"
     else:
@@ -395,9 +393,6 @@ def reset_authenticate():
             if session['type'] == "pwd":
                 del session['type']
                 return redirect(url_for("views.reset_pwd"))
-            elif session['type'] == "username":
-                del session['type']
-                return redirect(url_for("views.reset_username"))
             else:
                 return redirect(url_for('views.login'))
         else:
@@ -429,35 +424,6 @@ def reset_pwd():
         else:
             return render_template('change-pwd.html', form=form, reset_error=error)
     return render_template('change-pwd.html', form=form)
-
-
-@views.route('/reset-username', methods=['GET', 'POST'])
-def reset_username():
-    if 'nric' not in session:
-        return redirect(url_for('views.reset_identify'))
-    form = ResetUsernameForm(request.form)
-    error = "Reset Failed"
-    if request.method == 'POST' and form.validate_on_submit():
-        user = User.query.filter_by(nric=session['nric']).first()
-        if user:
-            username = User.query.filter_by(username=form.username.data).first()
-            if username:
-                return render_template('reset-username.html', form=form, reset_error="Username exists")
-            else:
-                del session['nric']
-                user.username = form.username.data
-                update_db_no_close()
-                html = render_template('/email_templates/reset.html', reset="username",
-                                       time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                subject = "HX-Bank - Username Reset"
-                send_email(user.email, subject, html)
-                new_message = Message("HX-Bank", f"You have performed a username change on "
-                                                 f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
-                add_db(new_message)
-            return redirect(url_for("views.login"))
-        else:
-            return render_template('reset-username.html', form=form, reset_error=error)
-    return render_template('reset-username.html', form=form)
 
 
 @views.route('/personal-banking/dashboard', methods=['GET'])
@@ -954,9 +920,13 @@ def compose():
     ip_source = ipaddress.IPv4Address(request.remote_addr)
     form = ComposeMessage()
     if request.method == 'POST' and form.validate_on_submit():
-        user = User.query.filter_by(username=form.recipient.data).first()
-        if user:
+        acc = Account.query.filter_by(acc_number=form.recipient.data).first()
+        if acc:
+            if current_user.id == acc.userid:
+                error = "An error has occurred"
+                return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
             error = "Message Sent!"
+            user = User.query.filter_by(id=acc.userid).first()
             new_message = Message(current_user.username, form.message.data, user.id)
             add_db_no_close(new_message)
 
@@ -1112,48 +1082,6 @@ def change_pwd():
                 error = "Incorrect OTP"
                 return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
     return render_template('change-pwd.html', form=form, msg_data=msg_data)
-
-
-@views.route('/account-management/change-username', methods=['GET', 'POST'])
-@login_required
-# @check_email_verification
-def change_username():
-    msg_data = load_nav_messages()
-    form = ChangeUsernameForm()
-    ip_source = ipaddress.IPv4Address(request.remote_addr)
-    if request.method == 'POST' and form.validate_on_submit():
-        user = User.query.filter_by(username=current_user.username).first()
-        if user:
-            if user.prev_token == form.token.data:
-                error = "Something went wrong"
-                return render_template('change-username.html', form=form, reset_error=error, msg_data=msg_data)
-            if user.verify_totp(form.token.data):
-                if form.old_username.data == form.new_username.data:
-                    error = "Username cannot be the same"
-                    return render_template('change-username.html', form=form, reset_error=error, msg_data=msg_data)
-                if form.old_username.data == user.username:
-                    error = "Something went wrong"
-                    return render_template('change-username.html', form=form, reset_error=error, msg_data=msg_data)
-                user.username = form.new_username.data
-                update_db_no_close()
-                html = render_template('/email_templates/reset.html', reset="username",
-                                       time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                subject = "HX-Bank - Change Username"
-                send_email(current_user.email, subject, html)
-
-                # Logging.
-                logger = logging.getLogger('user_activity_log')
-                logger.info(f"src_ip {ip_source} -> {current_user.username} has updated their username")
-
-                new_message = Message("HX-Bank",
-                                      f"You have performed a username change on "
-                                      f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", user.id)
-                add_db(new_message)
-                return redirect(url_for("views.acc_settings"))
-            else:
-                error = "Incorrect OTP"
-                return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
-    return render_template('change-username.html', form=form, msg_data=msg_data)
 
 
 @views.route('/account-management/change-otp', methods=['GET', 'POST'])
