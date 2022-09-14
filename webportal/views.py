@@ -4,7 +4,7 @@ from .utils.interact_db import *
 import pyqrcode
 import logging
 import ipaddress
-from flask import Blueprint, redirect, url_for, render_template, request, session, abort, jsonify
+from flask import Blueprint, redirect, url_for, render_template, request, session, abort, jsonify, escape
 from flask_login import login_required, login_user, logout_user
 from webportal import flask_bcrypt, login_manager
 from webportal.models.Transferee import *
@@ -23,6 +23,7 @@ def check_email_verification(func):
         if current_user.email_verified is False:
             return redirect(url_for('views.unverified_email'))
         return func(*args, **kwargs)
+
     return decorated_function
 
 
@@ -56,23 +57,23 @@ def register():
         return redirect(url_for('views.dashboard'))
     form = RegisterForm()
     if request.method == 'POST' and form.validate_on_submit():
-        username = form.username.data
+        username = escape(form.username.data)
         check = User.query.filter_by(username=username).first()
         if check is not None:
             return render_template('register.html', title="Register", form=form,
                                    register_error="Username already in use")
-        firstname = form.firstname.data
-        lastname = form.lastname.data
-        address = form.address.data
-        email = form.email.data
+        firstname = escape(form.firstname.data)
+        lastname = escape(form.lastname.data)
+        address = escape(form.address.data)
+        email = escape(form.email.data)
         check = User.query.filter_by(email=email).first()
         if check is not None:
             return render_template('register.html', title="Register", form=form, register_error="Email already in use")
-        mobile = form.mobile.data
+        mobile = escape(form.mobile.data)
         check = User.query.filter_by(mobile=mobile).first()
         if check is not None:
             return render_template('register.html', title="Register", form=form, register_error="Mobile already in use")
-        nric = form.nric.data.upper()
+        nric = escape(form.nric.data.upper())
         check = User.query.filter_by(nric=nric).first()
         if check is not None:
             return render_template('register.html', title="Register", form=form,
@@ -192,7 +193,7 @@ def login():
     form = LoginForm()
     error = "Login Failed"
     if request.method == 'POST' and form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = User.query.filter_by(username=escape(form.username.data)).first()
         if user:
             if flask_bcrypt.check_password_hash(user.password_hash, form.password.data):
                 if user.is_disabled:
@@ -246,10 +247,10 @@ def otp_input():
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(username=session['username']).first()
-        if user and user.prev_token == form.token.data:
+        if user and user.prev_token == escape(form.token.data):
             error = "Something went wrong"
             return render_template('otp-input.html', form=form, login_error=error)
-        elif user and user.verify_totp(form.token.data):
+        elif user and user.verify_totp(escape(form.token.data)):
             del session['username']
             login_user(user)
             if current_user.failed_login_attempts > 0:
@@ -258,7 +259,7 @@ def otp_input():
                 add_db_no_close(new_message)
             user.last_login = datetime.now()
             user.failed_login_attempts = 0
-            user.prev_token = form.token.data
+            user.prev_token = escape(form.token.data)
             update_db_no_close()
             new_message = Message("HX-Bank", f"You have logged in on "
                                              f"{current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}",
@@ -321,7 +322,7 @@ def reset_identify():
     form = ResetFormIdentify(request.form)
     if request.method == 'POST' and form.validate_on_submit():
         error = "Identification Failed"
-        user = User.query.filter_by(nric=form.nric.data.upper()).first()
+        user = User.query.filter_by(nric=escape(form.nric.data.upper())).first()
         if user:
             session['nric'] = user.nric
             session['dob'] = user.dob
@@ -387,10 +388,10 @@ def reset_authenticate():
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
         user = User.query.filter_by(nric=session['nric']).first()
-        if user and user.prev_token == form.token.data:
+        if user and user.prev_token == escape(form.token.data):
             error = "Something went wrong"
             return render_template('otp-input.html', form=form, authenticate_error=error)
-        elif user and user.verify_totp(form.token.data):
+        elif user and user.verify_totp(escape(form.token.data)):
             if session['type'] == "pwd":
                 del session['type']
                 return redirect(url_for("views.reset_pwd"))
@@ -501,16 +502,16 @@ def transfer():
     # Check if the form was submitted.
     if request.method == 'POST' and form.validate_on_submit():
         # Transaction description.
-        description = form.description.data
+        description = escape(form.description.data)
 
         # Amount to debit and credit from transferee and transferrer respectively.
-        amount = float(Decimal(form.amount.data).quantize(TWO_PLACES))
+        amount = float(Decimal(escape(form.amount.data)).quantize(TWO_PLACES))
         if amount < 0.1:
             error = "Invalid amount (Minimum $0.10)"
             return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
 
         # Get the transferee's account information.
-        transferee_acc_number = form.transferee_acc.data.split(" ")[0]
+        transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
 
         # Check that the amount to be transferred does not exceed the transfer limit.
@@ -563,7 +564,8 @@ def transfer():
 
         # Logging.
         logger = logging.getLogger('user_activity_log')
-        logger.info(f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
+        logger.info(
+            f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
         # Return approval required page.
         if require_approval:
@@ -575,7 +577,8 @@ def transfer():
             new_message = Message("HX-Bank",
                                   f"Your requested transfer of "
                                   f"${Decimal(amount).quantize(TWO_PLACES)} to "
-                                  f"{form.transferee_acc.data} is currently pending for approval.", transferrer_userid)
+                                  f"{escape(form.transferee_acc.data)} is currently pending for approval.",
+                                  transferrer_userid)
             add_db(new_message)
             return redirect(url_for('views.approval_required'))
 
@@ -586,7 +589,7 @@ def transfer():
         subject = "HX-Bank - Add Recipient"
         send_email(current_user.email, subject, html)
         new_message = Message("HX-Bank", f"Your have requested transfer of ${Decimal(amount).quantize(TWO_PLACES)}"
-                                         f" to {form.transferee_acc.data} is successful.", transferrer_userid)
+                                         f" to {escape(form.transferee_acc.data)} is successful.", transferrer_userid)
         add_db(new_message)
         return redirect(url_for('views.success'))
 
@@ -614,16 +617,16 @@ def transfer_onetime():
     # Check if the form was submitted.
     if request.method == 'POST' and form.validate_on_submit():
         # Transaction description.
-        description = form.description.data
+        description = escape(form.description.data)
 
         # Amount to debit and credit from transferee and transferrer respectively.
-        amount = float(Decimal(form.amount.data).quantize(TWO_PLACES))
+        amount = float(Decimal(escape(form.amount.data)).quantize(TWO_PLACES))
         if amount < 0.1:
             error = "Invalid amount (Minimum $0.10)"
             return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
 
         # Get the transferee's account information.
-        transferee_acc_number = form.transferee_acc.data.split(" ")[0]
+        transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
         transferee_acc = Account.query.filter_by(acc_number=transferee_acc_number).first()
 
         # Return error if transferee does not exist.  
@@ -662,7 +665,8 @@ def transfer_onetime():
 
         # Logging.
         logger = logging.getLogger('user_activity_log')
-        logger.info(f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
+        logger.info(
+            f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
         # Update the balance for both transferrer and transferee.
         transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
@@ -692,7 +696,7 @@ def transfer_onetime():
             send_email(current_user.email, subject, html)
             new_message = Message("HX-Bank",
                                   f"Your requested transfer of $"
-                                  f"{Decimal(amount).quantize(TWO_PLACES)} to {form.transferee_acc.data} "
+                                  f"{Decimal(amount).quantize(TWO_PLACES)} to {escape(form.transferee_acc.data)} "
                                   f"is currently pending for approval.", transferrer_userid)
             add_db(new_message)
             return redirect(url_for('views.approval_required'))
@@ -704,7 +708,7 @@ def transfer_onetime():
         subject = "HX-Bank - Add Recipient"
         send_email(current_user.email, subject, html)
         new_message = Message("HX-Bank", f"Your have requested transfer of ${Decimal(amount).quantize(TWO_PLACES)}"
-                                         f" to {form.transferee_acc.data} is successful.", transferrer_userid)
+                                         f" to {escape(form.transferee_acc.data)} is successful.", transferrer_userid)
         add_db(new_message)
         return redirect(url_for('views.success'))
 
@@ -724,7 +728,7 @@ def add_transferee():
     form = AddTransfereeForm()
     if request.method == 'POST' and form.validate_on_submit():
         # Get the transferee info based on the account number provided by the user.
-        transferee_acc = Account.query.filter_by(acc_number=form.transferee_acc.data).first()
+        transferee_acc = Account.query.filter_by(acc_number=escape(form.transferee_acc.data)).first()
 
         # Check that the transferee info does not exist already in the current user's transferee list.
         if transferee_acc:
@@ -747,10 +751,11 @@ def add_transferee():
                 subject = "HX-Bank - Add Recipient"
                 send_email(current_user.email, subject, html)
                 new_transferee = Transferee(current_user.id, transferee_acc.userid)
-            
+
                 # Logging.
                 logger = logging.getLogger('user_activity_log')
-                logger.info(f"src_ip {ip_source} -> {current_user.username} has added {transferee_acc.acc_number} as a transferee")
+                logger.info(
+                    f"src_ip {ip_source} -> {current_user.username} has added {transferee_acc.acc_number} as a transferee")
 
                 add_db(new_transferee)
                 return redirect(url_for('views.success'))
@@ -827,7 +832,7 @@ def view_transferee():
 
     # Check if the remove transferee form was submitted.
     if request.method == "POST" and form.validate_on_submit():
-        transferee_acc = form.transferee_acc.data.split(" ")[0]
+        transferee_acc = escape(form.transferee_acc.data.split(" ")[0])
         transferee_id = Account.query.filter_by(acc_number=transferee_acc).first().userid
         del_transferee = Transferee.query.filter_by(transferer_id=current_user.id, transferee_id=transferee_id).delete()
         update_db()
@@ -847,7 +852,7 @@ def set_transfer_limit():
     # Init the SetTransferLimitForm.
     form = SetTransferLimitForm()
     if request.method == 'POST' and form.validate_on_submit():
-        amount = float(Decimal(form.transfer_limit.data).quantize(TWO_PLACES))
+        amount = float(Decimal(escape(form.transfer_limit.data)).quantize(TWO_PLACES))
         if amount < 0.1:
             error = "Invalid value"
             return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data,
@@ -883,7 +888,7 @@ def topup_balance():
     form = TopUpForm()
     if request.method == 'POST' and form.validate_on_submit():
         user_acc = db.session.query(Account).join(User).filter(User.id == current_user.id).first().acc_number
-        amount = float(Decimal(form.amount.data).quantize(TWO_PLACES))
+        amount = float(Decimal(escape(form.amount.data)).quantize(TWO_PLACES))
         if amount < 1:
             error = "Invalid amount (Minimum $1)"
             return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data, topup_error=error)
@@ -906,7 +911,7 @@ def topup_balance():
         description = f"Self-service top up of ${Decimal(amount).quantize(TWO_PLACES)}"
 
         # Create transaction
-        new_transaction = Transaction(form.amount.data, user_acc, user_acc, description, False, 0)
+        new_transaction = Transaction(escape(form.amount.data), user_acc, user_acc, description, False, 0)
         add_db(new_transaction)
 
         return redirect(url_for('views.success'))
@@ -947,20 +952,21 @@ def compose():
         form.recipient.choices = data
 
     if request.method == 'POST' and form.validate_on_submit():
-        admin_acc_number = form.recipient.data.split(" ")[0]
-        admin_userid = Account.query.filter_by(acc_number=admin_acc_number).first().userid
-        if admin_userid:
-            if current_user.id == admin_userid:
+        acc_number = escape(form.recipient.data.split(" ")[0])
+        userid = Account.query.filter_by(acc_number=acc_number).first().userid
+        if userid:
+            target_user = User.query.filter_by(id=userid).first()
+            if current_user.id == userid:
                 error = "An error has occurred"
                 return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
             error = "Message Sent!"
-            user = User.query.filter_by(id=admin_userid).first()
-            if not user.is_admin:
+            user = User.query.filter_by(id=userid).first()
+            if not current_user.is_admin and not target_user.is_admin:
                 error = "Something went wrong"
                 return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
 
-            new_message = Message(current_user.username, form.message.data, user.id)
-            
+            new_message = Message(current_user.username, escape(form.message.data), user.id)
+
             # Logging.
             logger = logging.getLogger('user_activity_log')
             logger.info(f"src_ip {ip_source} -> {current_user.username} has sent a message to {user.username}")
@@ -980,7 +986,7 @@ def message_center():
     msg_data = load_nav_messages()
     form = SecureMessageForm()
     if request.method == 'POST' and form.validate_on_submit():
-        msg = db.session.query(Message).filter_by(id=form.msg.data).first()
+        msg = db.session.query(Message).filter_by(id=escape(form.msg.data)).first()
         if msg:
             check = db.session.query(Message).join(User).filter(msg.userid == current_user.id).first()
         else:
@@ -988,13 +994,13 @@ def message_center():
             return render_template('message-center.html', title="Secure Message Center", msg_data=msg_data, form=form,
                                    msg_error=error)
         if check:
-            if form.data["mark"]:
+            if escape(form.data["mark"]):
                 msg.read = True
                 update_db()
-            elif form.data["unmark"]:
+            elif escape(form.data["unmark"]):
                 msg.read = False
                 update_db()
-            elif form.data["delete"]:
+            elif escape(form.data["delete"]):
                 del_db(msg)
         else:
             error = "Something went wrong"
@@ -1015,13 +1021,13 @@ def transaction_management():
     # Check that the form was submitted.
     if request.method == "POST" and form.validate_on_submit():
         # Get the transaction id. 
-        transaction = Transaction.query.filter_by(id=form.transactionid.data).first()
+        transaction = Transaction.query.filter_by(id=escape(form.transactionid.data)).first()
 
         # Get the transferrer's account information.
         transferrer_acc = Account.query.filter_by(acc_number=transaction.transferrer_acc_number).first()
 
         # Update the balance for both transferrer and transferee if approved. 
-        if form.approve.data:
+        if escape(form.approve.data):
             transferee_acc = Account.query.filter_by(acc_number=transaction.transferee_acc_number).first()
             transferee_acc.acc_balance += transferrer_acc.money_on_hold
             transferrer_acc.acc_balance -= transferrer_acc.money_on_hold
@@ -1053,7 +1059,7 @@ def user_management():
         return redirect(url_for('views.dashboard'))
     form = UnlockUserForm()
     if request.method == "POST" and form.validate_on_submit():
-        user_acc = User.query.filter_by(id=form.userid.data).first()
+        user_acc = User.query.filter_by(id=escape(form.userid.data)).first()
         user_acc.is_disabled = False
         update_db()
         return redirect(url_for('views.user_management'))
@@ -1091,7 +1097,7 @@ def change_pwd():
                 error = "Something went wrong"
                 return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
             if flask_bcrypt.check_password_hash(user.password_hash, form.current_password.data) and user.verify_totp(
-                    form.token.data):
+                    escape(form.token.data)):
                 password = flask_bcrypt.generate_password_hash(form.password.data)
                 user.password_hash = password
                 update_db_no_close()
@@ -1125,10 +1131,10 @@ def change_otp():
     ip_source = ipaddress.IPv4Address(request.remote_addr)
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
-        if current_user.prev_token == form.token.data:
+        if current_user.prev_token == escape(form.token.data):
             error = "Something went wrong"
             return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
-        elif current_user.verify_totp(form.token.data):
+        elif current_user.verify_totp(escape(form.token.data)):
             # Logging.
             logger = logging.getLogger('user_activity_log')
             logger.info(f"src_ip {ip_source} -> {current_user.username} has updated their OTP")
