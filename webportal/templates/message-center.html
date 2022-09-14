@@ -16,7 +16,7 @@
                     <span class="border-top"></span>
                     {% if msg_data %}
                     {% for msg in msg_data %}
-                    <form method="POST" action="/personal-banking/message_center">
+                    <form method="POST" action="/communication/message-center">
                         {{ form.csrf_token }}
                         <div class="row pt-2">
                             <div class="col-lg-10 col-xl-10 {{ 'text-muted' if msg.read else 'text-dark' }}">
