@@ -207,10 +207,11 @@ def login():
                     logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")
 
                     user.is_disabled = True
-                update_db()
 
                 # Logging.
                 logger.warning(f"src_ip {ip_source} -> {user.username} user account failed to login")
+
+                update_db()
 
                 return render_template('login.html', title="Login", form=form, login_error=error)
         else:
@@ -919,14 +920,31 @@ def compose():
     msg_data = load_nav_messages()
     ip_source = ipaddress.IPv4Address(request.remote_addr)
     form = ComposeMessage()
+    admins = User.query.filter_by(is_admin=True).all()
+    data = []
+    for admin in admins:
+        admin_data = Account.query.filter_by(userid=admin.id).first()
+        acc_num = admin_data.acc_number
+        admin_user_data = User.query.filter_by(id=admin.id).first()
+        first_name = admin_user_data.firstname
+        last_name = admin_user_data.lastname
+        user_data = f"{acc_num} - {first_name} {last_name}"
+        data.append(user_data)
+    form.recipient.choices = data
+
     if request.method == 'POST' and form.validate_on_submit():
-        acc = Account.query.filter_by(acc_number=form.recipient.data).first()
-        if acc:
-            if current_user.id == acc.userid:
+        admin_acc_number = form.recipient.data.split(" ")[0]
+        admin_userid = Account.query.filter_by(acc_number=admin_acc_number).first().userid
+        if admin_userid:
+            if current_user.id == admin_userid:
                 error = "An error has occurred"
                 return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
             error = "Message Sent!"
-            user = User.query.filter_by(id=acc.userid).first()
+            user = User.query.filter_by(id=admin_userid).first()
+            if not user.is_admin:
+                error = "Something went wrong"
+                return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
+
             new_message = Message(current_user.username, form.message.data, user.id)
             
             # Logging.
@@ -936,7 +954,7 @@ def compose():
             add_db_no_close(new_message)
             return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
         else:
-            error = "User does not exist"
+            error = "Something went wrong"
             return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
     return render_template('compose.html', msg_data=msg_data, form=form)
 

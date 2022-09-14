@@ -153,8 +153,6 @@ class ChangePasswordForm(FlaskForm):
 
 
 class ComposeMessage(FlaskForm):
-    recipient = StringField("Recipient Account No", validators=[InputRequired(), Length(min=10, max=10),
-                                                                Regexp("^\\d{10,10}$",
-                                                                       message="Invalid account number")])
+    recipient = SelectField("Recipient", coerce=str, validators=[InputRequired()])
     message = StringField("Message Content", validators=[InputRequired(), Length(min=3, max=150)])  # need regex
     submit = SubmitField("Send")
