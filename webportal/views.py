@@ -237,6 +237,7 @@ def logout():
 @views.route('/otp-input', methods=['GET', 'POST'])
 def otp_input():
     ip_source = ipaddress.IPv4Address(request.remote_addr)
+    logger = logging.getLogger('auth_log')
     if 'username' not in session:
         return redirect(url_for('views.login'))
     if current_user.is_authenticated:
@@ -250,6 +251,11 @@ def otp_input():
         if user and user.prev_token == escape(form.token.data):
             error = "Something went wrong"
             return render_template('otp-input.html', form=form, login_error=error)
+        elif user.is_disabled:
+            del session['username']
+            form = LoginForm()
+            error = "Account has been locked out. Please contact customer support for assistance."
+            return render_template('login.html', title="Login", form=form, login_error=error)
         elif user and user.verify_totp(escape(form.token.data)):
             del session['username']
             login_user(user)
@@ -267,7 +273,6 @@ def otp_input():
 
             # Logging.
             log_message = f"src_ip {ip_source} -> {current_user.username} logged in on {current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}"
-            logger = logging.getLogger('auth_log')
             logger.info(log_message)
             add_db_no_close(new_message)
             if current_user.is_admin:
@@ -277,6 +282,14 @@ def otp_input():
             else:
                 return redirect(url_for('views.dashboard'))
         else:
+            user.failed_login_attempts += 1
+            if user.failed_login_attempts > 3:
+                # Logging.
+                logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")
+                user.is_disabled = True
+            # Logging.
+            logger.warning(f"src_ip {ip_source} -> {user.username} user account failed to login")
+            update_db()
             return render_template('otp-input.html', form=form, login_error=error)
     return render_template('otp-input.html', form=form)
 
@@ -463,11 +476,26 @@ def dashboard():
 def admin_dashboard():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
-    data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    form = ManageUserForm()
+    if request.method == "POST" and form.validate_on_submit():
+        user_acc = User.query.filter_by(id=escape(form.userid.data)).first()
+        if form.data["unlock"]:
+            user_acc.is_disabled = False
+            user_acc.failed_login_attempts = 0
+            update_db()
+        elif form.data["disable"]:
+            user_acc.is_disabled = True
+            update_db()
+        return redirect(url_for('views.admin_dashboard'))
+    user_acc = User.query.filter_by(is_admin=False).all()
+    data = []
+    for user in user_acc:
+        # maybe add more data?
+        data.append({"userid": user.id, "username": user.username,
+                     "last_login": user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "is_disabled": user.is_disabled})
     msg_data = load_nav_messages()
-    if not current_user.is_admin:
-        return render_template('dashboard.html', title="Dashboard", data=data, msg_data=msg_data)
-    return render_template('/admin/admin-dashboard.html', title="Admin Dashboard", data=data, msg_data=msg_data)
+    return render_template('/admin/admin-dashboard.html', title="Admin Dashboard", data=data, form=form,
+                           msg_data=msg_data)
 
 
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
@@ -994,13 +1022,13 @@ def message_center():
             return render_template('message-center.html', title="Secure Message Center", msg_data=msg_data, form=form,
                                    msg_error=error)
         if check:
-            if escape(form.data["mark"]):
+            if form.data["mark"]:
                 msg.read = True
                 update_db()
-            elif escape(form.data["unmark"]):
+            elif form.data["unmark"]:
                 msg.read = False
                 update_db()
-            elif escape(form.data["delete"]):
+            elif form.data["delete"]:
                 del_db(msg)
         else:
             error = "Something went wrong"
@@ -1049,27 +1077,6 @@ def transaction_management():
         data.append(item)
     msg_data = load_nav_messages()
     return render_template("/admin/transaction-management.html", data=data, form=form, msg_data=msg_data)
-
-
-@views.route("/admin/user_management", methods=["GET", "POST"])
-@login_required
-# @check_email_verification
-def user_management():
-    if not current_user.is_admin:
-        return redirect(url_for('views.dashboard'))
-    form = UnlockUserForm()
-    if request.method == "POST" and form.validate_on_submit():
-        user_acc = User.query.filter_by(id=escape(form.userid.data)).first()
-        user_acc.is_disabled = False
-        update_db()
-        return redirect(url_for('views.user_management'))
-    locked_acc = User.query.filter_by(is_disabled=True).all()
-    data = []
-    for user in locked_acc:
-        data.append({"userid": user.id, "username": user.username, "date_joined": user.date_joined,
-                     "failed_login_attempts": user.failed_login_attempts, "last_login": user.last_login})
-    msg_data = load_nav_messages()
-    return render_template("/admin/user-management.html", data=data, form=form, msg_data=msg_data)
 
 
 @views.route("/account_management/account-settings", methods=['GET', 'POST'])
@@ -1274,7 +1281,6 @@ def recent_transactions():
 # @check_email_verification
 def profile():
     user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
-    user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
     msg_data = load_nav_messages()
     return render_template('profile.html', title="Profile Page", data=user_data, msg_data=msg_data)
 
