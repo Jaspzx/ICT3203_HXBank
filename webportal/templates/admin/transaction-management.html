@@ -1,10 +1,18 @@
 {% extends "layouts/base.html" %}
+{% block title %} Transaction Management {% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}"/>
+{% endblock stylesheets %}
+
 {% block content %}
 <main id="login" class="h-100 pt-5">
     <section class="container d-flex flex-column justify-content-start h-100">
         <div class="row align-items-start">
             <div class="col-lg-10 col-xl-12">
-                <table class="table" id="approve_transactions">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <table class="table display nowrap" cellspacing="0" width="100%" id="approve_transactions">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -41,6 +49,10 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
@@ -48,7 +60,9 @@
 <script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
 <script>
     $(document).ready(function () {
-        $('#approve_transactions').DataTable();
+        $('#approve_transactions').DataTable({
+            responsive: true
+        });
     });
 </script>
 {% endblock content %}

@@ -1,5 +1,9 @@
 {% extends "layouts/base.html" %}
 {% block title %} Admin Dashboard  {% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}"/>
+{% endblock stylesheets %}
+
 {% block content %}
 <main id="login" class="h-100 pt-5">
     <section class="container d-flex flex-column justify-content-start h-100">
@@ -9,8 +13,10 @@
                     <tr>
                         <th>Username</th>
                         <th>Last Login</th>
+                        <th>ID</th>
+                        <th>Email</th>
                         <th>Status</th>
-                        <th>Action</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -18,6 +24,8 @@
                     <tr>
                         <td>{{ i.username }}</td>
                         <td>{{ i.last_login }}</td>
+                        <td>{{ i.nric }}</td>
+                        <td>{{ i.email }}</td>
                         <td>
                             {% if i.is_disabled == 0 %}
                                 Enabled

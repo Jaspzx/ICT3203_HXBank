@@ -1,7 +1,9 @@
 {% extends "layouts/base.html" %}
 {% block title %} Secure Message Center {% endblock %}
 <!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}"/>
+{% endblock stylesheets %}
 
 
 {% block content %}
