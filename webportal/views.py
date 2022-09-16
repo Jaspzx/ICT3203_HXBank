@@ -491,7 +491,7 @@ def admin_dashboard():
     data = []
     for user in user_acc:
         # maybe add more data?
-        data.append({"userid": user.id, "username": user.username,
+        data.append({"userid": user.id, "username": user.username, "nric": user.nric[-3:], "email": user.email,
                      "last_login": user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "is_disabled": user.is_disabled})
     msg_data = load_nav_messages()
     return render_template('/admin/admin-dashboard.html', title="Admin Dashboard", data=data, form=form,
