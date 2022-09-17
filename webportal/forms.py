@@ -127,8 +127,9 @@ class TopUpForm(FlaskForm):
     submit = SubmitField("Top Up")
 
 
-class UnlockUserForm(FlaskForm):
+class ManageUserForm(FlaskForm):
     userid = HiddenField()
+    disable = SubmitField("Disable")
     unlock = SubmitField("Unlock")
 
 
