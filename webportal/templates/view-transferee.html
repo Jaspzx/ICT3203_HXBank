@@ -1,5 +1,8 @@
 {% extends "layouts/base.html" %}
 {% block title %} Transfer Recipients {% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}"/>
+{% endblock stylesheets %}
 {% block content %}
     <div class="container">
         <div class="row">
@@ -48,10 +51,6 @@
                     target: "_all",
                     className: "dt-center"
                 }],
-                bInfo: false,
-                orderCellsTop: true,
-                paging: false,
-                bFilter: false,
                 responsive: true,
             });
         });
