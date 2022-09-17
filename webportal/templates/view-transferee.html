@@ -1,5 +1,8 @@
 {% extends "layouts/base.html" %}
 {% block title %} Transfer Recipients {% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}"/>
+{% endblock stylesheets %}
 {% block content %}
     <div class="container">
         <div class="row">
@@ -10,13 +13,12 @@
                         <div class="alert alert-danger" role="alert">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
-                <table class="table" id="transferee_table">
+                <table class="table table-striped table-bordered" id="transferee_table">
                     <thead>
                     <tr>
                         <th>Account Number</th>
                         <th>First Name</th>
                         <th>Last Name</th>
-                        <th></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -49,10 +51,6 @@
                     target: "_all",
                     className: "dt-center"
                 }],
-                bInfo: false,
-                orderCellsTop: true,
-                paging: false,
-                bFilter: false,
                 responsive: true,
             });
         });

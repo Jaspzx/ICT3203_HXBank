@@ -448,6 +448,8 @@ def dashboard():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
     user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    total_available_balance = user_data.acc_balance - user_data.money_on_hold
+    daily_xfer_remain = user_data.acc_xfer_limit - user_data.acc_xfer_daily
     user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
     transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
     transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
@@ -467,7 +469,8 @@ def dashboard():
                          "status": item.status, "debit": True})
     data = {x['date_transferred']: x for x in data}.values()
     msg_data = load_nav_messages()
-    return render_template('dashboard.html', title="Dashboard", data=user_data, msg_data=msg_data, recent_trans=data)
+    return render_template('dashboard.html', title="Dashboard", data=user_data, msg_data=msg_data, recent_trans=data,
+                           available_balance=total_available_balance, xfer_remain=daily_xfer_remain)
 
 
 @views.route("/admin/admin-dashboard", methods=['GET', 'POST'])
@@ -742,7 +745,7 @@ def transfer_onetime():
 
     # Render the HTML template.
     return render_template('transfer-onetime.html', title="Transfer (One-Time)", form=form, msg_data=msg_data,
-                           balance=transferrer_acc.acc_balance)
+                           balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES))
 
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
@@ -877,6 +880,9 @@ def set_transfer_limit():
     msg_data = load_nav_messages()
     ip_source = ipaddress.IPv4Address(request.remote_addr)
 
+    # Get account information from the login user.
+    user_acc = Account.query.filter_by(userid=current_user.id).first()
+
     # Init the SetTransferLimitForm.
     form = SetTransferLimitForm()
     if request.method == 'POST' and form.validate_on_submit():
@@ -884,7 +890,8 @@ def set_transfer_limit():
         if amount < 0.1:
             error = "Invalid value"
             return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data,
-                                   limit_error=error)
+                                   limit_error=error,
+                                   current_limit=Decimal(user_acc.acc_xfer_limit).quantize(TWO_PLACES))
         acc = Account.query.filter_by(userid=current_user.id).first()
         new_message = Message("HX-Bank", f"Your new transfer limit is ${Decimal(amount).quantize(TWO_PLACES)}",
                               current_user.id)
@@ -902,7 +909,8 @@ def set_transfer_limit():
         update_db()
 
         return redirect(url_for('views.success'))
-    return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data)
+    return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data
+                           , current_limit=Decimal(user_acc.acc_xfer_limit).quantize(TWO_PLACES))
 
 
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
