@@ -5,11 +5,15 @@
         <div class="row">
             <div class="col-md-12">
                 <h1 class="my-4 text-center">Set Transfer Limit</h1>
+                {% if limit_error %}
+                        <div class="alert alert-danger" role="alert">{{ limit_error }}</div>
+                {% endif %}
                 {% if form.transfer_limit.errors %}
                     {% for error in form.transfer_limit.errors %}
                         <div class="alert alert-danger" role="alert">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
+                <h2 class="my-4" style="text-size">Current Transfer Balance: {{ current_limit }}</h2>
                 <form method="POST" action="{{ url_for('views.set_transfer_limit') }}">
                     {{ form.csrf_token }}
                     <p>
