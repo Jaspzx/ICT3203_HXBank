@@ -24,6 +24,7 @@ class User(db.Model, UserMixin):
     email_token = db.Column(db.String(150))
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_disabled = db.Column(db.Boolean, default=False, nullable=False)
+    session_token = db.Column(db.String(40), index=True)
 
     def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret,
                  token):
@@ -52,3 +53,6 @@ class User(db.Model, UserMixin):
     def verify_totp(self, token):
         totp = pyotp.TOTP(self.otp_secret)
         return totp.verify(token)
+
+    def get_id(self):
+        return str(self.session_token)

@@ -60,7 +60,14 @@
                             {% endif %}
                             {% if form.password.errors %}
                             {% for error in form.password.errors %}
-                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                                <div class="alert alert-danger" role="alert">
+                                    {{ error }}
+                                    <small><br>
+                                    Minimum 8 Alphanumeric Characters<br>
+                                    At least one number and one upper and lower case alphabet<br>
+                                    At least one special character
+                                    </small>
+                                </div>
                             {% endfor %}
                             {% endif %}
                             {% if form.confirm_password.errors %}

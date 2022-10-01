@@ -1,3 +1,4 @@
+import secrets
 from decimal import Decimal
 from io import BytesIO
 from .utils.interact_db import *
@@ -28,8 +29,8 @@ def check_email_verification(func):
 
 
 @login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+def load_user(session_token):
+    return User.query.filter_by(session_token=session_token).first()
 
 
 @views.route('/', methods=['GET'])
@@ -258,6 +259,9 @@ def otp_input():
             return render_template('login.html', title="Login", form=form, login_error=error)
         elif user and user.verify_totp(escape(form.token.data)):
             del session['username']
+            session_token = secrets.token_urlsafe(20)
+            user.session_token = session_token
+            update_db_no_close()
             login_user(user)
             if current_user.failed_login_attempts > 0:
                 new_message = Message("HX-Bank", f"There were {current_user.failed_login_attempts} failed login "
