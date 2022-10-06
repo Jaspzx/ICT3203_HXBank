@@ -16,12 +16,11 @@
                         <div class="form-group">
                             {{ form.amount.label(class="mb-2") }}
                             <div class="input-group">
-                                <div class="input-group-addon mb-4">
-                                    <span class="material-icons form-control">attach_money</span>
-                                </div>
-                                {{ form.amount(class="form-control", size=1, placeholder="Enter Amount") }}
+                                <span class="input-group-text mb-4">$</span>
+                                {{ form.amount(class="form-control mb-4", size=1, placeholder="Enter Amount") }}
                             </div>
                             {{ form.submit(class="form-btn my-4") }}
+                        </div>
                     </form>
                 </div>
             </div>
