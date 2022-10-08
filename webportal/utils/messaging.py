@@ -19,8 +19,3 @@ def load_nav_messages() -> list:
         msg_dict["date_sent"] = msg.date_sent
         msg_data.append(msg_dict)
     return msg_data
-
-
-def welcome_msg(arg_amt) -> str:
-    welcome = f"Welcome! As a welcome gift, ${arg_amt} has been debited to your account!"
-    return welcome

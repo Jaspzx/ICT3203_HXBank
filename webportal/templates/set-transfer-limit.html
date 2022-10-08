@@ -20,10 +20,8 @@
                         <div class="form-group">
                             {{ form.transfer_limit.label(class="mb-2") }}
                             <div class="input-group">
-                                <div class="input-group-addon mb-4">
-                                    <span class="material-icons form-control">attach_money</span>
-                                </div>
-                                {{ form.transfer_limit(size=20, class="form-control", placeholder="Enter transfer limit") }}
+                                <span class="input-group-text mb-4">$</span>
+                                {{ form.transfer_limit(size=20, class="form-control mb-4", placeholder="Enter transfer limit") }}
                             </div>
                         </div>
                         {{ form.submit(class="form-btn") }}

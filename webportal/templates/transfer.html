@@ -1,53 +1,52 @@
 {% extends "layouts/base.html" %}
 {% block title %} Transfer {% endblock %}
 {% block content %}
-    <section class="container d-flex flex-column justify-content-start h-100 h-100 pt-5">
-            <div class="row justify-content-center">
-                <div class="col-lg-7 col-xl-6">
-                    <div class="form-container text-center align-self-center">
-                        <h1 class="my-4 text-center">Transfer</h1>
-                        {% if form.amount.errors %}
-                            {% for error in form.amount.errors %}
-                                <div class="alert alert-danger" role="alert">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                        {% if form.transferee_acc.errors %}
-                            {% for error in form.transferee_acc.errors %}
-                                <div class="alert alert-danger" role="alert">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                        {% if form.description.errors %}
-                            {% for error in form.description.errors %}
-                                <div class="alert alert-danger" role="alert">{{ error }}</div>
-                            {% endfor %}
-                        {% endif %}
-                        {% if xfer_error %}
-                            <div class="alert alert-danger" role="alert">{{ xfer_error }}</div>
-                        {% endif %}
+<section class="container d-flex flex-column justify-content-start h-100 h-100 pt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-xl-6">
+            <div class="form-container text-center align-self-center">
+                <h1 class="my-4 text-center">Transfer</h1>
+                {% if form.amount.errors %}
+                {% for error in form.amount.errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                {% endfor %}
+                {% endif %}
+                {% if form.transferee_acc.errors %}
+                {% for error in form.transferee_acc.errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                {% endfor %}
+                {% endif %}
+                {% if form.description.errors %}
+                {% for error in form.description.errors %}
+                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                {% endfor %}
+                {% endif %}
+                {% if xfer_error %}
+                <div class="alert alert-danger" role="alert">{{ xfer_error }}</div>
+                {% endif %}
 
-                        <h2 class="my-4" style="text-size">Remaining Balance: ${{ balance }}</h2>
-                        <form method="POST" action="{{ url_for('views.transfer') }}">
-                            {{ form.csrf_token }}
-                            <div class="form-group">
-                                {{ form.transferee_acc.label(class="mb-2") }}
-                                {{ form.transferee_acc(size=1, class="form-control mb-4") }}
-                            </div>
-                            <div class="form-group">
-                                {{ form.amount.label(class="mb-2") }}
-                                  <div class="input-group">
-                                   <div class="input-group-addon mb-4">
-                                     <span class="material-icons form-control">attach_money</span>
-                                   </div>
-                                {{ form.amount(size=1, class="form-control mb-4", placeholder="Enter amount") }}
-                            </div>
-                            <div class="form-group">
-                                {{ form.description.label(class="mb-2") }}
-                                {{ form.description(size=1, class="form-control", placeholder="Enter description") }}
-                            </div>
-                            {{ form.submit(class="form-btn my-4") }}
-                        </form>
+                <h2 class="my-4" style="text-size">Remaining Balance: ${{ balance }}</h2>
+                <form method="POST" action="{{ url_for('views.transfer') }}">
+                    {{ form.csrf_token }}
+                    <div class="form-group">
+                        {{ form.transferee_acc.label(class="mb-2") }}
+                        {{ form.transferee_acc(size=1, class="form-control mb-4") }}
                     </div>
-                </div>
+                    <div class="form-group">
+                        {{ form.amount.label(class="mb-2") }}
+                        <div class="input-group">
+                                <span class="input-group-text mb-4">$</span>
+                                {{ form.amount(size=1, class="form-control mb-4", placeholder="Enter amount") }}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        {{ form.description.label(class="mb-2") }}
+                        {{ form.description(size=1, class="form-control", placeholder="Enter description") }}
+                    </div>
+                    {{ form.submit(class="form-btn my-4") }}
+                </form>
             </div>
-        </section>
+        </div>
+    </div>
+</section>
 {% endblock content %}
