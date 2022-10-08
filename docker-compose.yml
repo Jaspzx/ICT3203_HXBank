@@ -5,10 +5,10 @@ services:
   webportal:
     build: .
     ports:
-      - "8080:8080"
+      - "5000:5000"
     working_dir: /app
     volumes:
       - ./:/app
     env_file:
       - .env
-    command: flask run --host=0.0.0.0 --port=8080
+    command: flask run --host=0.0.0.0 --port=5000
