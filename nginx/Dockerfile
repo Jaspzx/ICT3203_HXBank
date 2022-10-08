@@ -4,4 +4,4 @@ FROM nginx
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy the nginx.conf file to the /etc/nginx directory
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/conf.d/

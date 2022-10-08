@@ -4,7 +4,7 @@ version: "3.9"
 services:
 
   flask:
-    build: /webportal
+    build: .
     container_name: flask
     expose:
       - "5000"
