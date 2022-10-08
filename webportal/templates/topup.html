@@ -1,24 +1,30 @@
 {% extends "layouts/base.html" %}
 {% block title %} Topup {% endblock %}
 {% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1 class="my-4 text-center">Top Up</h1>
+    <section class="container d-flex flex-column justify-content-start h-100 h-100 pt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="form-container text-center align-self-center">
+                    <h1 class="my-4 text-center">Top Up</h1>
                     {% if form.amount.errors %}
-                            {% for error in form.amount.errors %}
-                                <div class="alert alert-danger" role="alert">{{ error }}</div>
-                            {% endfor %}
+                        {% for error in form.amount.errors %}
+                            <div class="alert alert-danger" role="alert">{{ error }}</div>
+                        {% endfor %}
                     {% endif %}
                     <form method="POST" action="{{ url_for('views.topup_balance') }}">
                         {{ form.csrf_token }}
-                        <p>
+                        <div class="form-group">
                             {{ form.amount.label(class="mb-2") }}
-                            {{ form.amount(class="form-control", size=1, placeholder="Enter Amount") }}
-                        </p>
-                        {{ form.submit(class="form-btn my-4")}}
+                            <div class="input-group">
+                                <div class="input-group-addon mb-4">
+                                    <span class="material-icons form-control">attach_money</span>
+                                </div>
+                                {{ form.amount(class="form-control", size=1, placeholder="Enter Amount") }}
+                            </div>
+                            {{ form.submit(class="form-btn my-4") }}
                     </form>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 {% endblock %}

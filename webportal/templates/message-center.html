@@ -1,64 +1,83 @@
 {% extends "layouts/base.html" %}
 {% block title %} Secure Message Center {% endblock %}
 <!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+    <link rel="stylesheet" type="text/css"
+          href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}"/>
+{% endblock stylesheets %}
 
 
 {% block content %}
-<main id="login" class="h-100 pt-5">
-    <section class="container d-flex flex-column justify-content-start h-100">
-        <div class="row justify-content-center">
-            <div class="form-container text-center align-self-center">
-                <div class="row">
-                    {% if msg_error %}
-                    <div class="alert alert-danger" role="alert">{{ msg_error }}</div>
-                    {% endif %}
-                    <span class="border-top"></span>
-                    {% if msg_data %}
-                    {% for msg in msg_data %}
-                    <form method="POST" action="/personal-banking/message_center">
-                        {{ form.csrf_token }}
-                        <div class="row pt-2">
-                            <div class="col-lg-10 col-xl-10 {{ 'text-muted' if msg.read else 'text-dark' }}">
-                                {% if not msg.read %}
-                                <span class="material-icons md-18 md-light align-middle">priority_high</span>
-                                {% endif %}
-                                From {{ msg.sender }}: {{ msg.message }}
-                                <br><small>Timestamp: {{ msg.date_sent.strftime('%Y-%m-%d %H:%M:%S') }}</small>
-                                {{ form.msg(value=msg.id) }}
-                            </div>
-                            <div class="col-lg-2 col-xl-2">
-                                <div class="row">
-                                    {% if not msg.read %}
-                                    <div class="col form-group">
-                                        <button type="submit" name="mark" value="True" class="form-btn">
-                                            <span class="material-icons md-18 md-light align-middle">mark_email_read</span>
-                                        </button>
-                                    </div>
-                                    {% else %}
-                                    <div class="col form-group">
-                                        <button type="submit" name="unmark" value="True" class="form-btn">
-                                            <span class="material-icons md-18 md-light align-middle">mark_as_unread</span>
-                                        </button>
-                                    </div>
-                                    {% endif %}
-                                    <div class="col form-group">
-                                        <button type="submit" name="delete" value="True" class="form-btn">
-                                            <span class="material-icons md-18 md-light align-middle">delete</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                    <span class="border-bottom pb-2"></span>
-                    {% endfor %}
-                    {% else %}
-                    <div class="col-lg-10 col-xl-10">You have no Messages!</div>
-                    {% endif %}
+    <main id="login" class="h-100 pt-5">
+        <section class="container d-flex flex-column justify-content-start h-100">
+            <div class="row justify-content-center">
+                <div class="form-container text-center align-self-center">
+                    <div class="row">
+                        {% if msg_error %}
+                            <div class="alert alert-danger" role="alert">{{ msg_error }}</div>
+                        {% endif %}
+                        <h1 class="my-4 text-center">Message Center</h1>
+                        <form method="POST" action="/communication/message-center">
+                            {{ form.csrf_token }}
+                            <table class="table" id="message_center">
+                                <thead>
+                                <tr>
+                                    <th>Message</th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for msg in msg_data %}
+                                    <tr>
+                                        <td>
+                                            <div class="{{ 'text-muted' if msg.read else 'text-dark' }}">
+                                                {% if not msg.read %}
+                                                    <span class="material-icons md-18 md-light align-middle">priority_high</span>
+                                                {% endif %}
+                                                From {{ msg.sender }}: {{ msg.message }}
+                                                <br>
+                                                <small>Timestamp: {{ msg.date_sent.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                                                {{ form.msg(value=msg.id) }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if not msg.read %}
+                                                <button type="submit" name="mark" value="True" class="form-btn">
+                                                    <span class="material-icons md-24 md-light align-middle">mark_email_read</span>
+                                                </button>
+                                            {% else %}
+                                                <button type="submit" name="unmark" value="True" class="form-btn">
+                                                    <span class="material-icons md-4 md-light align-middle">mark_as_unread</span>
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="submit" name="delete" value="True" class="form-btn">
+                                                <span class="material-icons md-4 md-light align-middle">delete</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
-</main>
-{% endblock %}
+        </section>
+    </main>
+    <script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+            $('#message_center').DataTable({
+                responsive: true,
+                order: [[0, 'desc']],
+                "columnDefs": [{
+                    target: "_all",
+                    className: "dt-center"
+                }],
+            });
+        });
+    </script>
+{% endblock content %}
