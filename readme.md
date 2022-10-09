@@ -14,3 +14,12 @@ pip install -r requirements.txt
 python main.py
 ```
 
+### Docker Commands
+To build and start the docker container. Run:
+```
+docker compose up -d
+```
+To stop and remove all the containers and images. Run:
+```
+docker compose down --rmi local
+```
