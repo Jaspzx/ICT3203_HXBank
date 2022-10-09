@@ -1,11 +1,14 @@
-# syntax=docker/dockerfile:1
-FROM python:3.10-slim-buster
+FROM python:3.10.7-alpine
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
+ADD . /app
+
+RUN apk add build-base linux-headers pcre-dev
+
+RUN command pip install uwsgi
+
 RUN pip3 install -r requirements.txt
 
-COPY . .
-
-CMD  [ "python3", "-m" , "flask", "run", "--host=0.0.0.0","--port=5000"]
+# Run the command to start uWSGI
+CMD ["uwsgi", "app.ini"]
