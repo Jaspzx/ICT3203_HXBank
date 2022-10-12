@@ -22,7 +22,7 @@ class RegisterForm(FlaskForm):
                                                      Regexp(
                                                          "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
                                                          message="Password complexity not met")])
-    confirm_password = PasswordField("Repeat Password")
+    confirm_password = PasswordField("Confirm Password")
     email = StringField("Email", validators=[InputRequired(), Length(min=5, max=50), Email()])
     nric = StringField("Identification No.", validators=[InputRequired(),
                                                          Length(min=9, max=9),
@@ -72,7 +72,7 @@ class ResetPasswordForm(FlaskForm):
                                                      Regexp(
                                                          "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
                                                          message="Password complexity not met")])
-    confirm_password = PasswordField("Repeat Password")
+    confirm_password = PasswordField("Confirm Password")
     submit = SubmitField("Reset")
 
 
@@ -147,7 +147,7 @@ class ChangePasswordForm(FlaskForm):
                                                          Regexp(
                                                              "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
                                                              message="Password complexity not met")])
-    confirm_password = PasswordField("Repeat Password")
+    confirm_password = PasswordField("Confirm Password")
     token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp("^\\d{6,6}$")],
                         render_kw={"placeholder": "OTP Token"})
     submit = SubmitField("Change")
