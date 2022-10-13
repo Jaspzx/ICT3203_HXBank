@@ -1,15 +1,12 @@
 {% extends "layouts/base.html" %}
 {% block title %}Register{% endblock %}
-{% block stylesheets %}{% endblock stylesheets %}
-
-
 {% block content %}
     <main id="register" class="h-100 pt-5">
         <section class="container d-flex flex-column justify-content-start h-100">
             <div class="row justify-content-center">
                 <div class="col-lg-7 col-xl-6">
                     <div class="form-container text-center align-self-center">
-                        <form method="POST" action="/register">
+                        <form method="POST" action="{{ url_for('views.register') }}" id="register-form">
                             {{ form.csrf_token }}
                             <div class="form-title">
                                 <h1 class="title">Register</h1>
@@ -135,11 +132,20 @@
                                 {{ form.accept_tos.label }} {{ form.accept_tos(size=20, class="form-check-input") }}
                             </p>
                             <!-- Submit Button-->
-                            {{ form.submit(class="form-btn") }}
+                            {{ form.recaptcha }}
+                            {{ form.submit(class="form-btn", id="recaptcha-submit") }}
                         </form>
                     </div>
                 </div>
             </div>
         </section>
     </main>
+{% endblock %}
+{% block javascripts %}
+<script src='https://www.google.com/recaptcha/api.js' async defer></script>
+<script>
+    function onSubmitCallback(token) {
+        document.getElementById("register-form").submit();
+    }
+</script>
 {% endblock %}

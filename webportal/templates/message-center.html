@@ -1,12 +1,9 @@
 {% extends "layouts/base.html" %}
 {% block title %} Secure Message Center {% endblock %}
-<!-- Specific CSS goes HERE -->
 {% block stylesheets %}
     <link rel="stylesheet" type="text/css"
           href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}"/>
-{% endblock stylesheets %}
-
-
+{% endblock %}
 {% block content %}
     <main id="login" class="h-100 pt-5">
         <section class="container d-flex flex-column justify-content-start h-100">
@@ -17,7 +14,7 @@
                             <div class="alert alert-danger" role="alert">{{ msg_error }}</div>
                         {% endif %}
                         <h1 class="my-4 text-center">Message Center</h1>
-                        <form method="POST" action="/communication/message-center">
+                        <form method="POST" action="{{ url_for('views.message_center') }}">
                             {{ form.csrf_token }}
                             <table class="table" id="message_center">
                                 <thead>
@@ -67,17 +64,19 @@
             </div>
         </section>
     </main>
-    <script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
-    <script>
-        $(document).ready(function () {
-            $('#message_center').DataTable({
-                responsive: true,
-                order: [[0, 'desc']],
-                "columnDefs": [{
-                    target: "_all",
-                    className: "dt-center"
-                }],
-            });
+{% endblock %}
+{% block javascripts %}
+<script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
+<script>
+    $(document).ready(function () {
+        $('#message_center').DataTable({
+            responsive: true,
+            order: [[0, 'desc']],
+            "columnDefs": [{
+                target: "_all",
+                className: "dt-center"
+            }],
         });
-    </script>
-{% endblock content %}
+    });
+</script>
+{% endblock %}

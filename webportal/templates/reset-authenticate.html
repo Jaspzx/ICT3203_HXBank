@@ -1,16 +1,12 @@
 {% extends "layouts/base.html" %}
 {% block title %} Authenticate Yourself {% endblock %}
-<!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
-
-
 {% block content %}
     <main id="login" class="h-100 pt-5">
         <section class="container d-flex flex-column justify-content-start h-100">
             <div class="row justify-content-center">
                 <div class="col-lg-7 col-xl-6">
                     <div class="form-container text-center align-self-center">
-                        <form method="POST" action="/reset-authenticate">
+                        <form method="POST" action="{{ url_for('views.reset_authenticate') }}" id="reset-authenticate">
                             {{ form.csrf_token }}
                             <div class="form-title">
                                 <h1 class="title">Authenticate Yourself</h1>
@@ -28,7 +24,8 @@
                                 {{ form.token(class="form-control", placeholder="Enter your OTP") }}
                             </div>
                             <div class="form-group">
-                                {{ form.submit(class="form-btn") }}
+                                {{ form.recaptcha }}
+                                {{ form.submit(class="form-btn", id="recaptcha-submit") }}
                             </div>
                             <small class="form-text text-muted sign-up-text">If you lost your OTP, contact our Customer Support</small>
                         </form>
@@ -37,4 +34,12 @@
             </div>
         </section>
     </main>
+{% endblock %}
+{% block javascripts %}
+<script src='https://www.google.com/recaptcha/api.js' async defer></script>
+<script>
+    function onSubmitCallback(token) {
+        document.getElementById("reset-authenticate").submit();
+    }
+</script>
 {% endblock %}

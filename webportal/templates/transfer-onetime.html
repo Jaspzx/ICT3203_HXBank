@@ -28,7 +28,7 @@
                         <div class="alert alert-danger" role="alert">{{ transferee_error }}</div>
                     {% endif %}
                     <h2 class="my-4" style="text-size">Remaining Balance: ${{ balance }}</h2>
-                    <form method="POST" action="{{ url_for('views.transfer_onetime') }}">
+                    <form method="POST" action="{{ url_for('views.transfer_onetime') }}" id="transfer-onetime">
                         {{ form.csrf_token }}
                         <div class="form-group">
                             {{ form.transferee_acc.label(class="mb-2") }}
@@ -44,11 +44,20 @@
                                 {{ form.description.label(class="mb-2") }}
                                 {{ form.description(size=1, class="form-control", placeholder="Enter description") }}
                             </div>
-                            {{ form.submit(class="form-btn my-4") }}
+                            {{ form.recaptcha }}
+                            {{ form.submit(class="form-btn my-4", id="recaptcha-submit") }}
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </section>
-{% endblock content %}
+{% endblock %}
+{% block javascripts %}
+<script src='https://www.google.com/recaptcha/api.js' async defer></script>
+<script>
+    function onSubmitCallback(token) {
+        document.getElementById("transfer-onetime").submit();
+    }
+</script>
+{% endblock %}

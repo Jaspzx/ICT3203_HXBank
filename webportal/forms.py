@@ -32,6 +32,7 @@ class RegisterForm(FlaskForm):
     mobile = StringField("Mobile", validators=[InputRequired(), Length(min=8, max=20),
                                                Regexp("\\d{8,}$")])
     accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
+    recaptcha = RecaptchaField()
     submit = SubmitField("Sign Up")
 
 
@@ -41,6 +42,7 @@ class LoginForm(FlaskForm):
                                                           message="Invalid username")])
     password = PasswordField("Password", validators=[InputRequired()],
                              render_kw={"placeholder": "Password"})
+    recaptcha = RecaptchaField()
     submit = SubmitField("Sign In")
 
 
@@ -49,6 +51,7 @@ class Token2FAForm(FlaskForm):
                                                  Length(min=6, max=6),
                                                  Regexp("^\\d{6,6}$")],
                         render_kw={"placeholder": "OTP Token"})
+    recaptcha = RecaptchaField()
     submit = SubmitField("Authenticate")
 
 
@@ -57,12 +60,14 @@ class ResetFormIdentify(FlaskForm):
                                                          Regexp("^[STFGstfg]\\d{7}[A-Za-z]$",
                                                                 message="Invalid Identification no.")])
     dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
+    recaptcha = RecaptchaField()
     submit = SubmitField("Next")
 
 
 class ResetFormAuthenticate(FlaskForm):
     token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp("^\\d{6,6}$")],
                         render_kw={"placeholder": "OTP Token"})
+    recaptcha = RecaptchaField()
     submit = SubmitField("Next")
 
 
@@ -73,12 +78,7 @@ class ResetPasswordForm(FlaskForm):
                                                          "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
                                                          message="Password complexity not met")])
     confirm_password = PasswordField("Confirm Password")
-    submit = SubmitField("Reset")
-
-
-class ResetUsernameForm(FlaskForm):
-    username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20),
-                                                   Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$", message="Invalid username")])
+    recaptcha = RecaptchaField()
     submit = SubmitField("Reset")
 
 
@@ -86,11 +86,13 @@ class AddTransfereeForm(FlaskForm):
     transferee_acc = StringField("Transferee Account No", validators=[InputRequired(), Length(min=10, max=10),
                                                                       Regexp("^\\d{10,10}$",
                                                                              message="Invalid account number")])
+    recaptcha = RecaptchaField()
     submit = SubmitField("Add")
 
 
 class SetTransferLimitForm(FlaskForm):
     transfer_limit = IntegerField("Set Transfer Limit", validators=[InputRequired()])
+    recaptcha = RecaptchaField()
     submit = SubmitField("Set")
 
 
@@ -98,6 +100,7 @@ class TransferMoneyForm(FlaskForm):
     transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
     amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
     description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
+    recaptcha = RecaptchaField()
     submit = SubmitField("Transfer")
 
 
@@ -107,6 +110,7 @@ class TransferMoneyOneTimeForm(FlaskForm):
                                                                              message="Invalid account number")])
     amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
     description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
+    recaptcha = RecaptchaField()
     submit = SubmitField("Transfer")
 
 
@@ -124,6 +128,7 @@ class SecureMessageForm(FlaskForm):
 
 class TopUpForm(FlaskForm):
     amount = FloatField("Amount to Top Up", validators=[InputRequired()])
+    recaptcha = RecaptchaField()
     submit = SubmitField("Top Up")
 
 
@@ -150,10 +155,12 @@ class ChangePasswordForm(FlaskForm):
     confirm_password = PasswordField("Confirm Password")
     token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp("^\\d{6,6}$")],
                         render_kw={"placeholder": "OTP Token"})
+    recaptcha = RecaptchaField()
     submit = SubmitField("Change")
 
 
 class ComposeMessage(FlaskForm):
     recipient = SelectField("Recipient", coerce=str, validators=[InputRequired()])
     message = StringField("Message Content", validators=[InputRequired(), Length(min=3, max=150)])  # need regex
+    recaptcha = RecaptchaField()
     submit = SubmitField("Send")

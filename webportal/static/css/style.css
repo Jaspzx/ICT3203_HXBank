@@ -955,3 +955,7 @@ body {
     /* Support for IE. */
     font-feature-settings: 'liga';
 }
+
+.g-recaptcha {
+    display: inline-block;
+}

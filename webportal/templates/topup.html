@@ -11,7 +11,7 @@
                             <div class="alert alert-danger" role="alert">{{ error }}</div>
                         {% endfor %}
                     {% endif %}
-                    <form method="POST" action="{{ url_for('views.topup_balance') }}">
+                    <form method="POST" action="{{ url_for('views.topup_balance') }}" id="top-up">
                         {{ form.csrf_token }}
                         <div class="form-group">
                             {{ form.amount.label(class="mb-2") }}
@@ -19,11 +19,20 @@
                                 <span class="input-group-text mb-4">$</span>
                                 {{ form.amount(class="form-control mb-4", size=1, placeholder="Enter Amount") }}
                             </div>
-                            {{ form.submit(class="form-btn my-4") }}
+                            {{ form.recaptcha }}
+                            {{ form.submit(class="form-btn my-4", id="recaptcha-submit") }}
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </section>
+{% endblock %}
+{% block javascripts %}
+<script src='https://www.google.com/recaptcha/api.js' async defer></script>
+<script>
+    function onSubmitCallback(token) {
+        document.getElementById("top-up").submit();
+    }
+</script>
 {% endblock %}

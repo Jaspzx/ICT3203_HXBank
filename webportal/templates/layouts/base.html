@@ -9,19 +9,17 @@
         type = "image/x-icon">
     <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+    <!-- Style CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
 </head>
-<!-- Style CSS -->
-<link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}"/>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
-
 <!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
-
+{% block stylesheets %}{% endblock %}
 <body class="">
 {% include 'includes/navigation.html' %}
-{% block content %}{% endblock content %}
+{% block content %}{% endblock %}
 <!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
-</body>
+{% block javascripts %}{% endblock %}
 {% include 'includes/footer.html' %}
+</body>
 </html>

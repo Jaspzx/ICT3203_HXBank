@@ -3,9 +3,8 @@
 {% block stylesheets %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}"/>
 {% endblock stylesheets %}
-
 {% block content %}
-<div class="container">
+    <div class="container">
         <div class="row">
             <div class="col-md-12">
                 <h1 class="my-4 text-center">Transaction History </h1>
@@ -45,7 +44,8 @@
             </div>
         </div>
     </div>
-</div>
+{% endblock %}
+{% block javascripts %}
 <script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
 <script>
     $(document).ready(function () {
@@ -54,5 +54,5 @@
             order: [[0, 'desc']],
         });
     });
-</script>                
-{% endblock content %}
+</script>
+{% endblock %}

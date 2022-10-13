@@ -15,7 +15,7 @@
                         {% endfor %}
                     {% endif %}
                     <h2 class="my-4" style="text-size">Current Transfer Limit: ${{ current_limit }}</h2>
-                    <form method="POST" action="{{ url_for('views.set_transfer_limit') }}">
+                    <form method="POST" action="{{ url_for('views.set_transfer_limit') }}" id="set-transfer-limit">
                         {{ form.csrf_token }}
                         <div class="form-group">
                             {{ form.transfer_limit.label(class="mb-2") }}
@@ -24,11 +24,19 @@
                                 {{ form.transfer_limit(size=20, class="form-control mb-4", placeholder="Enter transfer limit") }}
                             </div>
                         </div>
-                        {{ form.submit(class="form-btn") }}
+                        {{ form.recaptcha }}
+                        {{ form.submit(class="form-btn", id="recaptcha-submit") }}
                     </form>
                 </div>
             </div>
         </div>
     </section>
-
+{% endblock %}
+{% block javascripts %}
+<script src='https://www.google.com/recaptcha/api.js' async defer></script>
+<script>
+    function onSubmitCallback(token) {
+        document.getElementById("set-transfer-limit").submit();
+    }
+</script>
 {% endblock %}
