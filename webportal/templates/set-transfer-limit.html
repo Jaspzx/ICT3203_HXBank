@@ -25,7 +25,7 @@
                             </div>
                         </div>
                         {{ form.recaptcha }}
-                        {{ form.submit(class="form-btn", id="recaptcha-submit") }}
+                        {{ form.set_transfer_submit(class="form-btn", id="recaptcha-submit") }}
                     </form>
                 </div>
             </div>
@@ -33,7 +33,6 @@
     </section>
 {% endblock %}
 {% block javascripts %}
-<script src='https://www.google.com/recaptcha/api.js' async defer></script>
 <script>
     function onSubmitCallback(token) {
         document.getElementById("set-transfer-limit").submit();

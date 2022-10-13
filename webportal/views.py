@@ -1297,5 +1297,4 @@ def add_header(r):
     r.headers['X-Content-Type-Options'] = 'nosniff'
     r.headers['X-XSS-Protection'] = '1; mode=block'
     # r.headers['Content-Security-Policy'] = "default-src 'self'"
-    # r.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return r

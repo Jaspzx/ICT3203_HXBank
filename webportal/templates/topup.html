@@ -20,7 +20,7 @@
                                 {{ form.amount(class="form-control mb-4", size=1, placeholder="Enter Amount") }}
                             </div>
                             {{ form.recaptcha }}
-                            {{ form.submit(class="form-btn my-4", id="recaptcha-submit") }}
+                            {{ form.topup_submit(class="form-btn my-4", id="recaptcha-submit") }}
                         </div>
                     </form>
                 </div>
@@ -29,7 +29,6 @@
     </section>
 {% endblock %}
 {% block javascripts %}
-<script src='https://www.google.com/recaptcha/api.js' async defer></script>
 <script>
     function onSubmitCallback(token) {
         document.getElementById("top-up").submit();

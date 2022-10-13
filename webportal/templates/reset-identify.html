@@ -34,7 +34,7 @@
                             </div>
                             <div class="form-group">
                                 {{ form.recaptcha }}
-                                {{ form.submit(class="form-btn", id="recaptcha-submit") }}
+                                {{ form.reset_id_submit(class="form-btn", id="recaptcha-submit") }}
                             </div>
                         </form>
                     </div>
@@ -44,7 +44,6 @@
     </main>
 {% endblock %}
 {% block javascripts %}
-<script src='https://www.google.com/recaptcha/api.js' async defer></script>
 <script>
     function onSubmitCallback(token) {
         document.getElementById("reset-identify").submit();

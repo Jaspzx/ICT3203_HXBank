@@ -133,7 +133,7 @@
                             </p>
                             <!-- Submit Button-->
                             {{ form.recaptcha }}
-                            {{ form.submit(class="form-btn", id="recaptcha-submit") }}
+                            {{ form.register_submit(class="form-btn", id="recaptcha-submit") }}
                         </form>
                     </div>
                 </div>
@@ -142,7 +142,6 @@
     </main>
 {% endblock %}
 {% block javascripts %}
-<script src='https://www.google.com/recaptcha/api.js' async defer></script>
 <script>
     function onSubmitCallback(token) {
         document.getElementById("register-form").submit();

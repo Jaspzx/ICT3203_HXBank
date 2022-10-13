@@ -25,7 +25,7 @@
                             </div>
                             <div class="form-group">
                                 {{ form.recaptcha }}
-                                {{ form.submit(class="form-btn", id="recaptcha-submit") }}
+                                {{ form.reset_auth_submit(class="form-btn", id="recaptcha-submit") }}
                             </div>
                             <small class="form-text text-muted sign-up-text">If you lost your OTP, contact our Customer Support</small>
                         </form>
@@ -36,7 +36,6 @@
     </main>
 {% endblock %}
 {% block javascripts %}
-<script src='https://www.google.com/recaptcha/api.js' async defer></script>
 <script>
     function onSubmitCallback(token) {
         document.getElementById("reset-authenticate").submit();
