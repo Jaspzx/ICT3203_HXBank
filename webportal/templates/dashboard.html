@@ -1,8 +1,5 @@
 {% extends "layouts/base.html" %}
 {% block title %} Dashboard {% endblock %}
-<!-- Specific CSS goes HERE -->
-{% block stylesheets %}{% endblock stylesheets %}
-
 {% block content %}
     <main id="login" class="h-100 pt-5">
         <section class="container d-flex flex-column justify-content-start h-100">
@@ -90,6 +87,8 @@
             </div>
         </section>
     </main>
-    <script src="{{ url_for('static', filename='vendor/chartjs/chart.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ url_for('static', filename='vendor/chartjs/chart.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

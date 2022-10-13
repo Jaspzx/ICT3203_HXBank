@@ -449,6 +449,8 @@ def dashboard():
     user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     total_available_balance = user_data.acc_balance - user_data.money_on_hold
     daily_xfer_remain = user_data.acc_xfer_limit - user_data.acc_xfer_daily
+    if daily_xfer_remain < 0:
+        daily_xfer_remain = 0
     user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
     transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
     transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
@@ -1212,10 +1214,14 @@ def acc_overview():
         abort(403)
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     if data:
+        acc_balance_on_hold = Decimal(data.acc_balance - data.money_on_hold).quantize(TWO_PLACES)
+        acc_xfer_daily = Decimal(data.acc_xfer_limit - data.acc_xfer_daily).quantize(TWO_PLACES)
+        if acc_xfer_daily < 0:
+            acc_xfer_daily = 0
         return jsonify({'acc_balance': Decimal(data.acc_balance).quantize(TWO_PLACES),
-                        'acc_balance_on_hold': Decimal(data.money_on_hold).quantize(TWO_PLACES),
+                        'acc_balance_on_hold': acc_balance_on_hold,
                         'acc_xfer_limit': Decimal(data.acc_xfer_limit).quantize(TWO_PLACES),
-                        'acc_xfer_daily': Decimal(data.acc_xfer_daily).quantize(TWO_PLACES)}), 200
+                        'acc_xfer_daily': acc_xfer_daily}), 200
 
 
 @views.route("/api/barchart-graph", methods=['GET'])
@@ -1297,5 +1303,4 @@ def add_header(r):
     r.headers['X-Content-Type-Options'] = 'nosniff'
     r.headers['X-XSS-Protection'] = '1; mode=block'
     # r.headers['Content-Security-Policy'] = "default-src 'self'"
-    # r.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return r

@@ -84,7 +84,6 @@ LOGGING_CONFIG = {
 
 dictConfig(LOGGING_CONFIG)
 app = Flask(__name__)
-# LOGGING
 
 
 def create_webportal():
@@ -102,6 +101,9 @@ def create_webportal():
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
     app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
     app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS')
+    app.config['RECAPTCHA_PUBLIC_KEY'] = os.getenv('RECAPTCHA_PUBLIC_KEY')
+    app.config['RECAPTCHA_PRIVATE_KEY'] = os.getenv('RECAPTCHA_PRIVATE_KEY')
+    app.config['RECAPTCHA_DATA_ATTRS'] = {'bind': 'recaptcha-submit', 'callback': 'onSubmitCallback', 'size': 'invisible'}
 
     db.init_app(app)
     mail.init_app(app)

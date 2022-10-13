@@ -26,7 +26,7 @@
                 {% endif %}
 
                 <h2 class="my-4" style="text-size">Remaining Balance: ${{ balance }}</h2>
-                <form method="POST" action="{{ url_for('views.transfer') }}">
+                <form method="POST" action="{{ url_for('views.transfer') }}" id="transfer">
                     {{ form.csrf_token }}
                     <div class="form-group">
                         {{ form.transferee_acc.label(class="mb-2") }}
@@ -35,18 +35,26 @@
                     <div class="form-group">
                         {{ form.amount.label(class="mb-2") }}
                         <div class="input-group">
-                                <span class="input-group-text mb-4">$</span>
-                                {{ form.amount(size=1, class="form-control mb-4", placeholder="Enter amount") }}
+                            <span class="input-group-text mb-4">$</span>
+                            {{ form.amount(size=1, class="form-control mb-4", placeholder="Enter amount") }}
                         </div>
                     </div>
                     <div class="form-group">
                         {{ form.description.label(class="mb-2") }}
                         {{ form.description(size=1, class="form-control", placeholder="Enter description") }}
                     </div>
-                    {{ form.submit(class="form-btn my-4") }}
+                    {{ form.recaptcha }}
+                    {{ form.transfer_money_submit(class="form-btn my-4", id="recaptcha-submit") }}
                 </form>
             </div>
         </div>
     </div>
 </section>
-{% endblock content %}
+{% endblock %}
+{% block javascripts %}
+<script>
+    function onSubmitCallback(token) {
+        document.getElementById("transfer").submit();
+    }
+</script>
+{% endblock %}

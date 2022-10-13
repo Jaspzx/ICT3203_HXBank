@@ -1,5 +1,5 @@
 {% extends "layouts/base.html" %}
-{% block title %} Add Transferee  {% endblock %}
+{% block title %} Add Transferee {% endblock %}
 {% block content %}
     <section class="container d-flex flex-column justify-content-start h-100 h-100 pt-5">
         <div class="row justify-content-center">
@@ -14,16 +14,24 @@
                     {% if add_error %}
                         <div class="alert alert-danger" role="alert">{{ add_error }}</div>
                     {% endif %}
-                    <form method="POST" action="{{ url_for('views.add_transferee') }}">
+                    <form method="POST" action="{{ url_for('views.add_transferee') }}" id="add-transferee">
                         {{ form.csrf_token }}
                         <div class="form-group">
                             {{ form.transferee_acc.label(class="mb-2") }}
                             {{ form.transferee_acc(size=20, class="form-control", placeholder="Enter Account No") }}
                         </div>
-                        {{ form.submit(class="form-btn my-4") }}
+                        {{ form.recaptcha }}
+                        {{ form.add_transferee_submit(class="form-btn my-4", id="recaptcha-submit") }}
                     </form>
                 </div>
             </div>
         </div>
     </section>
+{% endblock %}
+{% block javascripts %}
+<script>
+    function onSubmitCallback(token) {
+        document.getElementById("add-transferee").submit();
+    }
+</script>
 {% endblock %}

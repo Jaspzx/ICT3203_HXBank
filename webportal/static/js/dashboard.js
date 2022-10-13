@@ -20,8 +20,8 @@ $(document).ready(function() {
         .done(function(data, textStatus, xhr){
             if (xhr.status === 200) {
                 acc_balance.textContent = "Total Balance: $" + data.acc_balance;
-                balance_on_hold.textContent = "Total Available Balance: $" + (data.acc_balance - data.acc_balance_on_hold);
-                acc_remain.textContent = "Daily Transfer Remaining: $" + (data.acc_xfer_limit - data.acc_xfer_daily);
+                balance_on_hold.textContent = "Total Available Balance: $" + data.acc_balance_on_hold;
+                acc_remain.textContent = "Daily Transfer Remaining: $" + data.acc_xfer_daily;
                 acc_limit.textContent = "Daily Transfer Limit: $" + data.acc_xfer_limit;
             }
         })
