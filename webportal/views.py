@@ -83,9 +83,13 @@ def register():
             return render_template('register.html', title="Register", form=form,
                                    register_error="Identification No. already in use")
         dob = form.dob.data
+        age = date.today().year - dob.year
         if dob > date.today():
             return render_template('register.html', title="Register", form=form,
                                    register_error="Invalid date")
+        elif age < 16:
+            return render_template('register.html', title="Register", form=form,
+                                    register_error="You have to be at least 16 years old.")
         password = flask_bcrypt.generate_password_hash(form.password.data)
         token = emc.generate_token(email)
         new_user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None, token)
