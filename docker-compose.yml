@@ -18,22 +18,22 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "8443:8443"
     restart: always
     volumes:
-      - './certbot/www/:/var/www/certbot/:ro'
-      - './certbot/conf/:/etc/nginx/ssl/:ro'
-  
+      - ./certbot/www/:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+
   certbot:
     image: certbot/certbot
     container_name: certbot
     volumes:
-      - './certbot/www/:/var/www/certbot/:rw'
-      - './certbot/conf/:/etc/letsencrypt/:rw'
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
 
-  jenkins-docker:
-    container_name: jenkins-docker
+  jenkins:
+    container_name: jenkins
     privileged: true
-    network_mode: jenkins
     environment:
       - DOCKER_TLS_CERTDIR=/certs
     volumes:
@@ -43,11 +43,10 @@ services:
       - '2376:2376'
     image: 'docker:dind'
 
-  myjenkins-blueocean:
+  jenkins-blueocean:
     build: ./jenkins
     container_name: jenkins-blueocean
     restart: on-failure
-    network_mode: jenkins
     environment:
       - 'DOCKER_HOST=tcp://docker:2376'
       - 'DOCKER_CERT_PATH=/certs/client'
@@ -58,7 +57,8 @@ services:
     volumes:
       - 'jenkins-data:/var/jenkins_home'
       - 'jenkins-docker-certs:/certs/client:ro'
-
+      - ./certbot/www/:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
 networks:
   default:
     name: HXBank_bridge
