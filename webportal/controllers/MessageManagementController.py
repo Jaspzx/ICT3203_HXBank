@@ -60,3 +60,17 @@ class MessageManagementController:
     def send_password_change(self, arg_user) -> None:
         self.message = f"You have performed a password change on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         self.create_message(arg_user)
+
+    @staticmethod
+    def mark_message(msg):
+        msg.read = True
+        update_db()
+
+    @staticmethod
+    def unmark_message(msg):
+        msg.read = False
+        update_db()
+
+    @staticmethod
+    def del_messasge(msg):
+        del_db(msg)
