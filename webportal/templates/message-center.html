@@ -13,51 +13,51 @@
                             <div class="alert alert-danger" role="alert">{{ msg_error }}</div>
                         {% endif %}
                         <h1 class="my-4 text-center">Message Center</h1>
-                        <form method="POST" action="{{ url_for('views.message_center') }}">
-                            {{ form.csrf_token }}
-                            <table class="table" id="message_center">
-                                <thead>
+                        <table class="table" id="message_center">
+                            <thead>
+                            <tr>
+                                <th>Message</th>
+                                <th></th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for msg in msg_data %}
                                 <tr>
-                                    <th>Message</th>
-                                    <th></th>
-                                    <th></th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {% for msg in msg_data %}
-                                    <tr>
-                                        <td>
-                                            <div class="{{ 'text-muted' if msg.read else 'text-dark' }}">
-                                                {% if not msg.read %}
-                                                    <span class="material-icons md-18 md-light align-middle">priority_high</span>
-                                                {% endif %}
-                                                From {{ msg.sender }}: {{ msg.message }}
-                                                <br>
-                                                <small>Timestamp: {{ msg.date_sent.strftime('%Y-%m-%d %H:%M:%S') }}</small>
-                                                {{ form.msg(value=msg.id) }}
-                                            </div>
-                                        </td>
-                                        <td>
+                                    <td>
+                                        <div class="{{ 'text-muted' if msg.read else 'text-dark' }}">
                                             {% if not msg.read %}
-                                                <button type="submit" name="mark" value="True" class="form-btn">
-                                                    <span class="material-icons md-24 md-light align-middle">mark_email_read</span>
-                                                </button>
-                                            {% else %}
-                                                <button type="submit" name="unmark" value="True" class="form-btn">
-                                                    <span class="material-icons md-4 md-light align-middle">mark_as_unread</span>
-                                                </button>
+                                                <span class="material-icons md-18 md-light align-middle">priority_high</span>
                                             {% endif %}
-                                        </td>
-                                        <td>
-                                            <button type="submit" name="delete" value="True" class="form-btn">
-                                                <span class="material-icons md-4 md-light align-middle">delete</span>
+                                            From {{ msg.sender }}: {{ msg.message }}
+                                            <br>
+                                            <small>Timestamp: {{ msg.date_sent.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                                        </div>
+                                    </td>
+                                    <form method="POST" action="{{ url_for('views.message_center') }}">
+                                    {{ form.csrf_token }}
+                                    {{ form.msg(value=msg.id) }}
+                                    <td>
+                                        {% if not msg.read %}
+                                            <button type="submit" name="mark" value="True" class="form-btn">
+                                                <span class="material-icons md-24 md-light align-middle">mark_email_read</span>
                                             </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </form>
+                                        {% else %}
+                                            <button type="submit" name="unmark" value="True" class="form-btn">
+                                                <span class="material-icons md-4 md-light align-middle">mark_as_unread</span>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="submit" name="delete" value="True" class="form-btn">
+                                            <span class="material-icons md-4 md-light align-middle">delete</span>
+                                        </button>
+                                    </td>
+                                    </form>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
