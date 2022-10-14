@@ -27,6 +27,7 @@ def check_email_verification(func):
         if current_user.email_verified is False:
             return redirect(url_for('views.unverified_email'))
         return func(*args, **kwargs)
+
     return decorated_function
 
 
@@ -61,7 +62,7 @@ def register():
         # Return the admin view. 
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
-        
+
         # Return the user view. 
         return redirect(url_for('views.dashboard'))
 
@@ -94,23 +95,23 @@ def register():
         # Get the user activity logger. 
         logger = logging.getLogger('user_activity_log')
 
-        # Create the user account. 
-        token = emc.generate_token(email)
-        amc.add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, None, token)
+        # Create the user account.
+        amc.add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, None, None)
 
         # Log the user's activity.
         logger.info(f"src_ip {ip_source} -> {username} user account created")
         user = User.query.filter_by(username=username).first()
-        
+        token = emc.generate_token(email, user)
+
         # Create a bank acc for the newly created user.
         random_gen = SystemRandom()
         welcome_amt = random_gen.randrange(1000, 10000)
-        acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])       
+        acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
         bamc.add_bank_account(user.id, welcome_amt, acc_number)
-        
+
         # Send welcome message.
         mmc.send_welcome_msg(welcome_amt, user)
-    
+
         # Logging.
         logger.info(f"src_ip {ip_source} -> Bank acc {acc_number} created and linked to {username}")
 
@@ -135,7 +136,7 @@ def confirm_email(token):
         email = emc.confirm_token(token)
 
         # Verify email token.
-        if verify_token(email, token):
+        if emc.verify_token(email, token):
             return redirect(url_for('views.login'))
         else:
             abort(404)
@@ -152,7 +153,7 @@ def otp_setup():
     # Redirect to user's dashboard if user is authenticated. 
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
-    
+
     # Double check that the user exists. 
     user = User.query.filter_by(username=session['username']).first()
     if user is None:
@@ -175,16 +176,16 @@ def qrcode():
     # Abort if the username is invalid. 
     if 'username' not in session:
         abort(404)
-    
+
     # Redirect to user's dashboard if authenticated. 
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
-    
+
     # Dobule check that the user is valid. 
     user = User.query.filter_by(username=session['username']).first()
     if user is None:
         abort(404)
-    
+
     # Generate the pyotp secret. 
     amc.generate_pyotp(user)
 
@@ -222,7 +223,7 @@ def login():
         # Redirect to admin dashboard if user is admin.
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
-        
+
         # Redirect to the user's dashboard. 
         return redirect(url_for('views.dashboard'))
 
@@ -238,7 +239,7 @@ def login():
         password = form.password.data
 
         # Authenticate the user.
-        if user: 
+        if user:
             auth = amc.authenticate(user, password)
 
             # Authentication is successful. 
@@ -250,14 +251,14 @@ def login():
             elif auth == 2:
                 error = "Account has been locked out. Please contact customer support for assistance."
                 return render_template('login.html', title="Login", form=form, login_error=error)
-            
+
             # User failed to authenticate. 
-            elif auth == 3: 
+            elif auth == 3:
                 logger.warning(f"src_ip {ip_source} -> {user.username} user account failed to login")
-                
+
             # User account has been locked. 
             else:
-                logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")                
+                logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")
                 return render_template('login.html', title="Login", form=form, login_error=error)
         else:
             return render_template('login.html', title="Login", form=form, login_error=error)
@@ -290,7 +291,6 @@ def otp_input():
 
     # Get the auth logger. 
     logger = logging.getLogger('auth_log')
-
 
     if 'username' not in session:
         return redirect(url_for('views.login'))
@@ -348,7 +348,7 @@ def unverified_email():
         # Redirect to admin dashboard if user has admin privileges.
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
-        
+
         # Redirect to user dashboard if user has normal privileges. 
         else:
             return redirect(url_for('views.dashboard'))
@@ -367,7 +367,7 @@ def resend_verification():
         # Redirect to user dashboard if user has normal privileges. 
         else:
             return redirect(url_for('views.dashboard'))
-    
+
     # Initiate the controller. 
     emc = EmailManagementController()
     token = emc.generate_token(current_user.email)
@@ -391,7 +391,7 @@ def reset_identify():
         if selected is None:
             if 'type' not in session:
                 return redirect(url_for('views.login'))
-    
+
     # Initiate the form to identify the user. 
     form = ResetFormIdentify(request.form)
     if request.method == 'POST' and form.validate_on_submit():
@@ -430,10 +430,10 @@ def reset_email_auth():
     email = session['email']
     del session['email']
     emc = EmailManagementController()
-    
+
     # Generate email token. 
     user = User.query.filter_by(username=session['username']).first()
-    generate_token(email, user)
+    token = emc.generate_token(email, user)
 
     # Email the reset OTP page. 
     confirm_url = url_for('views.confirm_otp', token=token, _external=True)
@@ -517,7 +517,7 @@ def dashboard():
     # Redirect to admin dashboard if user has admin privileges.
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
-    
+
     # Get the user's bank account details. 
     user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     total_available_balance = user_data.acc_balance - user_data.money_on_hold
@@ -558,7 +558,7 @@ def admin_dashboard():
     # Redirect users to the normal dashboard if they do not have admin privileges. 
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
-    
+
     # Initiate the controller. 
     amc = AccountManagementController()
 
@@ -571,14 +571,14 @@ def admin_dashboard():
 
         # Unlock the account. 
         if form.data["unlock"]:
-            amc.unlock_account(user)
+            amc.unlock_account(user_acc)
 
         # Disable the account. 
         elif form.data["disable"]:
-            amc.disable_account(user)
+            amc.disable_account(user_acc)
 
         return redirect(url_for('views.admin_dashboard'))
-    
+
     # Get all of the user's data. 
     user_acc = User.query.filter_by(is_admin=False).all()
     data = []
@@ -637,14 +637,14 @@ def transfer():
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=acc_balance)
 
-        # Get the transferee's account information.
-        transferee_acc = Account.query.filter_by(acc_number=transferee_acc_number).first()
-
         # Create a transaction.
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
+        transferee_user = User.query.filter_by(id=transferee_userid).first()
         transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
-        require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc, transferee_acc, description)
+        require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
+                                                                                                 transferee_acc,
+                                                                                                 description)
 
         # Logging.
         logger = logging.getLogger('user_activity_log')
@@ -669,7 +669,6 @@ def transfer():
                                        acc_num=transferee_acc.acc_number,
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
-        transferee_user = User.query.filter_by(id=transferee_userid).first()
         mmc.send_success_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
                                   transferee_user)
         return redirect(url_for('views.success'))
@@ -796,6 +795,7 @@ def transfer_onetime():
     return render_template('transfer-onetime.html', title="Transfer (One-Time)", form=form, msg_data=msg_data,
                            balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES))
 
+
 # GOOD
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
@@ -827,16 +827,16 @@ def add_transferee():
         add_error = bamc.add_transferee_checks(current_user.id, transferee_acc)
         if add_error is not None:
             return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error,
-                                msg_data=msg_data)           
+                                   msg_data=msg_data)
 
-        # Add transferee.
+            # Add transferee.
         bamc.add_transferee(current_user.id, transferee_acc)
 
         # Create message and send email. 
         mmc.send_add_acc_no(transferee_acc.acc_number, current_user)
         emc.send_email(current_user.email, "HX-Bank - Add Recipient",
-                        render_template('/email_templates/recipient.html', recipient=transferee_acc.acc_number,
-                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                       render_template('/email_templates/recipient.html', recipient=transferee_acc.acc_number,
+                                       time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         # Log to user activity log.
         logger = logging.getLogger('user_activity_log')
@@ -903,7 +903,7 @@ def set_transfer_limit():
     # Redirect users with admin privileges. 
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
-    
+
     # Load messages. 
     msg_data = load_nav_messages()
 
@@ -925,11 +925,12 @@ def set_transfer_limit():
         # 
         amount = float(Decimal(escape(form.transfer_limit.data)).quantize(TWO_PLACES))
 
-        # Set the transfer limit. 
-        if bamc.set_transfer_limit(current_user.id, amount) is not None:
+        # Set the transfer limit.
+        set_status = bamc.set_transfer_limit(current_user.id, amount)
+        if set_status is not None:
             return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data,
-                        limit_error=error,
-                        current_limit=Decimal(user_acc.acc_xfer_limit).quantize(TWO_PLACES))
+                                   limit_error=set_status,
+                                   current_limit=Decimal(user_acc.acc_xfer_limit).quantize(TWO_PLACES))
 
         #
         mmc.send_transfer_limit(Decimal(amount).quantize(TWO_PLACES), current_user)
@@ -944,8 +945,8 @@ def set_transfer_limit():
 
         return redirect(url_for('views.success'))
 
-    return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data
-                           , current_limit=Decimal(user_acc.acc_xfer_limit).quantize(TWO_PLACES))
+    return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data,
+                           current_limit=Decimal(user_acc.acc_xfer_limit).quantize(TWO_PLACES))
 
 
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
@@ -1063,7 +1064,7 @@ def compose():
 def message_center():
     # Initiate the controller.
     mmc = MessageManagementController()
-    
+
     # Load the messages. 
     msg_data = load_nav_messages()
 
@@ -1080,15 +1081,15 @@ def message_center():
         if check:
             # Mark message. 
             if form.data["mark"]:
-                mark_message(msg)
+                mmc.mark_message(msg)
 
             # Unmark message. 
             elif form.data["unmark"]:
-                unmark_message(msg)
+                mmc.unmark_message(msg)
 
             # Delete message. 
             elif form.data["delete"]:
-                del_messasge(msg)
+                mmc.del_messasge(msg)
         else:
             error = "Something went wrong"
             return render_template('message-center.html', title="Secure Message Center", msg_data=msg_data, form=form,
@@ -1173,7 +1174,7 @@ def change_pwd():
 
                 # Change password.
                 password = flask_bcrypt.generate_password_hash(form.password.data)
-                amc.change_pw(user, passowrd)
+                amc.change_pw(user, password)
 
                 # Send reset password link. 
                 emc.send_email(current_user.email, "HX-Bank - Password Change",

@@ -9,10 +9,9 @@
         <div class="col-md-12 text-center">
             <span class="success-icons">check_circle</span>
         </div>
-        <button class="btn btn-primary btn-lg btn-block my-4"
-                onclick="location.href='{{ url_for('views.dashboard') }}'">
+        <a class="btn btn-primary btn-lg btn-block my-4" href="{{ url_for('views.dashboard') }}">
             Go to Home
-        </button>
+        </a>
     </div>
 </div>
 {% endblock %}

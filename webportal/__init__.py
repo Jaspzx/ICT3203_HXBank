@@ -122,6 +122,10 @@ def create_webportal():
                 'https://www.google.com/recaptcha/',
                 'https://www.gstatic.com/recaptcha/'
             ],
+            'img-src': [
+                '\'self\'',
+                'data:'
+            ],
             'frame-src': [
                 '\'self\'',
                 'https://www.google.com/recaptcha/',
