@@ -370,7 +370,7 @@ def resend_verification():
 
     # Initiate the controller. 
     emc = EmailManagementController()
-    token = emc.generate_token(current_user.email)
+    token = emc.generate_token(current_user.email, current_user)
     current_user.token = token
     confirm_url = url_for('views.confirm_email', token=token, _external=True)
     emc.send_email(current_user.email, "HX-Bank - Email Verification",
@@ -632,8 +632,7 @@ def transfer():
         transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
 
         # Perform checks. 
-        error, acc_balance = basm.transfer_money_checks(amount, transferer_acc)
-
+        error, acc_balance = basm.transfer_money_checks(amount, transferee_acc_number, transferer_acc)
         if error is not None:
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=acc_balance)
@@ -683,17 +682,9 @@ def transfer():
 @login_required
 # @check_email_verification
 def transfer_onetime():
-    # Initiate controllers.
-    basm = BankAccountManagementController()
-
-    # Redirect users to the admin dashboard if they have admin privileges.
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
-
-    # Load the messages.
     msg_data = load_nav_messages()
-
-    # Get the source ip address.
     ip_source = ipaddress.IPv4Address(request.remote_addr)
 
     # Init the TransferMoneyForm
@@ -701,39 +692,83 @@ def transfer_onetime():
 
     # Get the transferrer's account information.
     transferrer_userid = current_user.id
-    transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+    transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
 
     # Check if the form was submitted.
     if request.method == 'POST' and form.validate_on_submit():
-        # Initalise the controllers.
         mmc = MessageManagementController()
         emc = EmailManagementController()
-        bacm = BankAccountManagementController()
-
-        # Sanitise data.
+        # Transaction description.
         description = escape(form.description.data)
-        amount = float(Decimal(escape(form.amount.data)).quantize(TWO_PLACES))
-        transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
 
-        # Perform checks.
-        error, acc_balance = basm.transfer_money_checks(amount, transferer_acc)
-        if error is not None:
-            return render_template('transfer-onetime.html', title="Transfer-Onetime", form=form, xfer_error=error, msg_data=msg_data,
-                                   balance=acc_balance)
+        # Amount to debit and credit from transferee and transferrer respectively.
+        amount = float(Decimal(escape(form.amount.data)).quantize(TWO_PLACES))
+        if amount < 0.1:
+            error = "Invalid amount (Minimum $0.10)"
+            return render_template('transfer.html', title="Transfer", form=form, msg_data=msg_data, xfer_error=error)
+
+        # Get the transferee's account information.
+        transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
+        transferee_acc = Account.query.filter_by(acc_number=transferee_acc_number).first()
+
+        # Return error if transferee does not exist.  
+        if transferee_acc is None:
+            error = "Transferee does not exist"
+            return render_template('transfer-onetime.html', title="Transfer (onetime)", form=form, msg_data=msg_data,
+                                   balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES),
+                                   transferee_error=error)
+
+        transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
+        transferee_user = Account.query.filter_by(acc_number=transferee_acc_number).first()
+
+        # Check that the amount to be transferred does not exceed the transfer limit.
+        day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
+
+        if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
+            error = "Amount to be transferred exceeds daily transfer limit"
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
+                                   balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES))
+        if transferrer_acc.acc_balance < amount:
+            error = "Insufficient funds"
+            return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
+                                   balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES))
 
         # Create a transaction.
-        transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
-        transferee_user = User.query.filter_by(id=transferee_userid).first()
-        transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
-        transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
-        require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
-                                                                                                 transferee_acc,
-                                                                                                 description)
+        transferer_acc_number = Account.query.filter_by(userid=transferrer_userid).first().acc_number
+        require_approval = False
+        status = 0
+
+        if amount >= 10000:
+            require_approval = True
+            status = 1
+
+        new_transaction = Transaction(Decimal(amount).quantize(TWO_PLACES), transferer_acc_number,
+                                      transferee_acc_number, description, require_approval, status)
+        add_db_no_close(new_transaction)
 
         # Logging.
         logger = logging.getLogger('user_activity_log')
         logger.info(
             f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
+
+        # Update the balance for both transferrer and transferee.
+        transferrer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+        transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
+        if require_approval:
+            money_on_hold = Decimal(transferrer_acc.money_on_hold + amount).quantize(TWO_PLACES)
+            transferrer_acc.money_on_hold = money_on_hold
+        else:
+            transferrer_acc_balance = Decimal(transferrer_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_balance = transferrer_acc_balance
+            transferee_acc_balance = Decimal(transferee_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferee_acc.acc_balance = transferee_acc_balance
+            if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
+                transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
+                transferrer_acc.acc_xfer_daily = 0
+            transferrer_acc_xfer_daily = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
+            transferrer_acc.acc_xfer_daily = transferrer_acc_xfer_daily
+
+        update_db_no_close()
 
         # Return approval required page.
         if require_approval:
@@ -752,16 +787,16 @@ def transfer_onetime():
                                        amount=Decimal(amount).quantize(TWO_PLACES),
                                        acc_num=transferee_acc.acc_number,
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-
         mmc.send_success_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
                                   transferee_user)
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
-    return render_template('transfer-onetime.html', title="Transfer-Onetime", form=form, msg_data=msg_data,
-                           balance=Decimal(transferer_acc.acc_balance).quantize(TWO_PLACES))
+    return render_template('transfer-onetime.html', title="Transfer (One-Time)", form=form, msg_data=msg_data,
+                           balance=Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES))
 
 
+# GOOD
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
 # @check_email_verification
@@ -794,7 +829,7 @@ def add_transferee():
             return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error,
                                    msg_data=msg_data)
 
-        # Add transferee.
+            # Add transferee.
         bamc.add_transferee(current_user.id, transferee_acc)
 
         # Create message and send email. 
@@ -1167,10 +1202,12 @@ def change_otp():
     ip_source = ipaddress.IPv4Address(request.remote_addr)
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
+        print("posted")
         if current_user.prev_token == escape(form.token.data):
             error = "Something went wrong"
             return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
         elif current_user.verify_totp(escape(form.token.data)):
+            print("success")
             # Logging.
             logger = logging.getLogger('user_activity_log')
             logger.info(f"src_ip {ip_source} -> {current_user.username} has updated their OTP")
