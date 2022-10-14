@@ -632,7 +632,8 @@ def transfer():
         transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
 
         # Perform checks. 
-        error, acc_balance = basm.transfer_money_checks(amount, transferee_acc_number, transferer_acc)
+        error, acc_balance = basm.transfer_money_checks(amount, transferer_acc)
+
         if error is not None:
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=acc_balance)
@@ -715,7 +716,7 @@ def transfer_onetime():
         transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
 
         # Perform checks.
-        error, acc_balance = basm.transfer_money_checks(amount, transferee_acc_number, transferer_acc)
+        error, acc_balance = basm.transfer_money_checks(amount, transferer_acc)
         if error is not None:
             return render_template('transfer-onetime.html', title="Transfer-Onetime", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=acc_balance)
@@ -793,7 +794,7 @@ def add_transferee():
             return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error,
                                    msg_data=msg_data)
 
-            # Add transferee.
+        # Add transferee.
         bamc.add_transferee(current_user.id, transferee_acc)
 
         # Create message and send email. 

@@ -31,15 +31,11 @@ class BankAccountManagementController:
         return data
 
     @staticmethod
-    def transfer_money_checks(amount, transferee_acc_number, transferrer_acc):
+    def transfer_money_checks(amount, transferrer_acc):
         # Amount to debit and credit from transferee and transferrer respectively.
         if amount < 0.1:
             error = "Invalid amount (Minimum $0.10)"
             return error, None
-
-        # Get the transferee's account information.
-        # transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
-        # transferee_user = Account.query.filter_by(acc_number=transferee_acc_number).first()
 
         # Check that the amount to be transferred does not exceed the transfer limit.
         day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
