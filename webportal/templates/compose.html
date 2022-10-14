@@ -42,7 +42,7 @@
     </section>
 {% endblock %}
 {% block javascripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
     function onSubmitCallback(token) {
         document.getElementById("compose").submit();
     }

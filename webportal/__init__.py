@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
+from flask_talisman import Talisman
 from logging.config import dictConfig
 import os
 import socket
@@ -14,6 +15,7 @@ flask_bcrypt = Bcrypt()
 login_manager = LoginManager()
 csrf = CSRFProtect()
 mail = Mail()
+talisman = Talisman()
 DB_NAME = "database.db"
 
 from webportal.models.User import *
@@ -110,6 +112,24 @@ def create_webportal():
     flask_bcrypt.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)
+    talisman.init_app(
+        app,
+        content_security_policy={
+            'default-src': '\'self\'',
+            'style-src': '\'self\'',
+            'script-src': [
+                '\'self\'',
+                'https://www.google.com/recaptcha/',
+                'https://www.gstatic.com/recaptcha/'
+            ],
+            'frame-src': [
+                '\'self\'',
+                'https://www.google.com/recaptcha/',
+                'https://www.gstatic.com/recaptcha/'
+            ]
+        },
+        content_security_policy_nonce_in=['script-src', 'style-src']
+    )
     login_manager.session_protection = "strong"
     login_manager.login_view = 'views.login'
     with app.app_context():

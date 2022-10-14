@@ -10,7 +10,7 @@
                             <h1 class="title">Scan QR Code in your authenticator app</h1>
                         </div>
                         <div class="form-group">
-                            <img id="qrcode" src="{{ url_for('views.qrcode') }}" alt="QR Code" />
+                            <img id="qrcode" src="{{ url_for('views.qrcode') }}" alt="QR Code" nonce="{{ csp_nonce() }}"/>
                         </div>
                         <button onclick="location.href='/login'" class="form-btn">I am done. Take me to login.</button>
                 </div>

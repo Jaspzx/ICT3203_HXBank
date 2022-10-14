@@ -1,8 +1,7 @@
 {% extends "layouts/base.html" %}
 {% block title %} Secure Message Center {% endblock %}
 {% block stylesheets %}
-    <link rel="stylesheet" type="text/css"
-          href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}" nonce="{{ csp_nonce() }}"/>
 {% endblock %}
 {% block content %}
     <main id="login" class="h-100 pt-5">
@@ -66,8 +65,8 @@
     </main>
 {% endblock %}
 {% block javascripts %}
-<script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
-<script>
+<script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}" nonce="{{ csp_nonce() }}"></script>
+<script nonce="{{ csp_nonce() }}">
     $(document).ready(function () {
         $('#message_center').DataTable({
             responsive: true,

@@ -1,19 +1,18 @@
 {% extends "layouts/base.html" %}
 {% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1 class="my-4 text-center" >Approval Required</h1>
-                <p class="information">Due to rising of fraud cases, approval is required for transaction above $10,000</p>
-            </div>
-            <div class="col-md-12">
-                <p class="information">The transaction will be approved within a working day.</p>
-                <p class="information">Thank you for your patience.</p>
-            </div>
-                <btn class="btn btn-primary btn-lg btn-block my-4" onclick="location.href='{{ url_for('views.dashboard') }}'">
-                    Go to Home
-                </btn>
-            </div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="my-4 text-center">Approval Required</h1>
+            <p class="information">Due to rising of fraud cases, approval is required for transaction above $10,000</p>
         </div>
+        <div class="col-md-12">
+            <p class="information">The transaction will be approved within a working day.</p>
+            <p class="information">Thank you for your patience.</p>
+        </div>
+        <btn class="btn btn-primary btn-lg btn-block my-4" onclick="location.href='{{ url_for('views.dashboard') }}'">
+            Go to Home
+        </btn>
     </div>
+</div>
 {% endblock %}

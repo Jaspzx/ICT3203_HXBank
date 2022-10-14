@@ -34,8 +34,10 @@
         </div>
     </section>
 </main>
-<script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}"></script>
-<script>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}" nonce="{{ csp_nonce() }}"></script>
+<script nonce="{{ csp_nonce() }}">
     $(document).ready(function () {
         $('#approve_transactions').DataTable();
     });

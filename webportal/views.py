@@ -314,10 +314,10 @@ def resend_verification():
     emc = EmailManagementController()
     token = emc.generate_token(current_user.email)
     current_user.token = token
-    update_db()
     confirm_url = url_for('views.confirm_email', token=token, _external=True)
     emc.send_email(current_user.email, "HX-Bank - Email Verification",
                    render_template('/email_templates/activate.html', confirm_url=confirm_url))
+    update_db()
     return redirect(url_for('views.unverified_email'))
 
 
@@ -1299,8 +1299,5 @@ def add_header(r):
     r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     r.headers["Pragma"] = "no-cache"
     r.headers["Expires"] = "0"
-    r.headers['X-Frame-Options'] = 'SAMEORIGIN'
     r.headers['X-Content-Type-Options'] = 'nosniff'
-    r.headers['X-XSS-Protection'] = '1; mode=block'
-    # r.headers['Content-Security-Policy'] = "default-src 'self'"
     return r
