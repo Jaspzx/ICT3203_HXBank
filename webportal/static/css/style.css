@@ -244,7 +244,7 @@ button.navbar-toggler {
 }
 
 .benefits__content h3 {
-    font-size: 3.2em;
+    font-size: 2em;
 }
 
 .benefits .col-lg-6:nth-child(2) {
@@ -294,7 +294,7 @@ button.navbar-toggler {
 }
 
 .mobile-banking__content h3 {
-    font-size: 3.2em;
+    font-size: 2em;
 }
 
 .mobile-banking .col-lg-6:nth-child(1) {
@@ -334,6 +334,10 @@ button.navbar-toggler {
 
 .funding .content {
     margin-bottom: 3em;
+}
+
+.funding .content h3 {
+    font-size: 2em;
 }
 
 .funding .image-container {
