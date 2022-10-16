@@ -27,6 +27,7 @@
                         <div class="form-group">
                             {{ form.recaptcha }}
                             {{ form.otp_submit(class="form-btn", id="recaptcha-submit") }}
+                            </br></br>
                             <small class="form-text text-muted sign-up-text">Setup 2FA again? <a
                                         href="{{ url_for('views.reset_identify', type='otp') }}" title="OTP Setup">Click Here</a></small>
                         </div>
