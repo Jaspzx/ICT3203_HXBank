@@ -10,9 +10,9 @@
             <p class="information">The transaction will be approved within a working day.</p>
             <p class="information">Thank you for your patience.</p>
         </div>
-        <btn class="btn btn-primary btn-lg btn-block my-4" onclick="location.href='{{ url_for('views.dashboard') }}'">
-            Go to Home
-        </btn>
+        <a class="btn deco-btn btn-primary btn-lg btn-block my-4" href="{{ url_for('views.dashboard') }}">
+                Go to Home
+        </a>
     </div>
 </div>
 {% endblock %}

@@ -181,7 +181,7 @@ def qrcode():
     if current_user.is_authenticated:
         return redirect(url_for('views.dashboard'))
 
-    # Dobule check that the user is valid. 
+    # Double check that the user is valid.
     user = User.query.filter_by(username=session['username']).first()
     if user is None:
         abort(404)
@@ -191,6 +191,9 @@ def qrcode():
 
     # 
     if user.prev_token is not None:
+        if 'flag' not in session:
+            return redirect(url_for("views.login"))
+        del session['flag']
         emc.send_email(user.email, "HX-Bank - OTP Reset",
                        render_template('/email_templates/reset.html', reset="OTP",
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -405,6 +408,7 @@ def reset_identify():
 
             # Reset the username.
             if "username" in session and session['type'] == "otp":
+                session['flag'] = 1
                 session['email'] = user.email
                 user_username = User.query.filter_by(username=session['username']).first()
                 if user_username.nric == session['nric'] and user_username.dob == session['dob'] \
@@ -1175,7 +1179,7 @@ def change_otp():
             # Logging.
             logger = logging.getLogger('user_activity_log')
             logger.info(f"src_ip {ip_source} -> {current_user.username} has updated their OTP")
-
+            session['flag'] = 1
             return redirect(url_for("views.auth_otp_reset"))
         else:
             return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
@@ -1186,6 +1190,9 @@ def change_otp():
 @login_required
 # @check_email_verification
 def auth_otp_reset():
+    if 'flag' not in session:
+        return redirect(url_for("views.acc_settings"))
+    del session['flag']
     msg_data = load_nav_messages()
     return render_template('change-otp.html', msg_data=msg_data), 200, {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -1197,8 +1204,8 @@ def auth_otp_reset():
 @login_required
 # @check_email_verification
 def auth_qrcode():
-    current_user.otp_secret = pyotp.random_base32()
-    update_db_no_close()
+    amc = AccountManagementController()
+    amc.generate_pyotp(current_user)
     mmc = MessageManagementController()
     emc = EmailManagementController()
     if current_user.prev_token is not None:

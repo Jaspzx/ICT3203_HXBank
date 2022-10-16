@@ -512,6 +512,21 @@ input.form-control {
     background-color: #5B73A8;
 }
 
+.deco-btn {
+    border-radius: 10px;
+    background-color: var(--secondary-color);
+    color: #ffffff;
+    box-shadow: none;
+    font-size: 21px;
+    font-weight: 500;
+    border: none;
+    transition: all 0.15s ease-in-out 0s;
+}
+
+.deco-btn:hover {
+    background-color: #5B73A8;
+}
+
 .sign-up-text {
     font-size: 1rem;
     font-weight: 300;

@@ -12,9 +12,7 @@
                     <div class="form-group">
                         <img id="qrcode" src="{{ url_for('views.auth_qrcode') }}" alt="QR Code" nonce="{{ csp_nonce() }}"/>
                     </div>
-                    <button onclick="location.href='/account_management/account-settings'" class="form-btn">I am done.
-                        Take me back.
-                    </button>
+                    <a href="{{ url_for('views.login') }}" class="btn deco-btn btn-primary btn-lg btn-block my-4">I am done.</a>
                 </div>
             </div>
         </div>
