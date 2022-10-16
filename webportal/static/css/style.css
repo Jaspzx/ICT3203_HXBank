@@ -65,7 +65,8 @@ p, .lead {
       flex-direction: column;
       justify-content: space-around;
       position: absolute;
-      top:0;
+      top: 10px;
+      bottom: 10px;
       right:0;
 }
 ul {
@@ -669,6 +670,10 @@ body {
 
 .list-group {
     margin-bottom: 5em;
+}
+
+.vmbtn {
+    width: 125px;
 }
 
 /* Process Register */
