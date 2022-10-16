@@ -45,7 +45,7 @@ footer {
 h1 {
     font-family: 'Roboto', sans-serif;
     line-height: 1.2;
-    font-size: 4rem;
+    font-size: 3rem;
     color: var(--secondary-color);
 }
 
@@ -940,11 +940,16 @@ body {
     font-feature-settings: 'liga';
 }
 
+.success-container {
+    margin-top: 100px;
+    justify-content: center;
+}
+
 .success-icons {
     font-family: 'Material Icons';
     font-weight: normal;
     font-style: normal;
-    font-size: 300px;  /* Preferred icon size */
+    font-size: 100px;  /* Preferred icon size */
     display: inline-block;
     line-height: 1;
     text-transform: none;
@@ -963,6 +968,17 @@ body {
 
     /* Support for IE. */
     font-feature-settings: 'liga';
+}
+
+.success-container .btn {
+    width: 200px;
+    background-color: #5B73A8;
+}
+
+/* Transfer Table */
+.transfer-table {
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .g-recaptcha {
