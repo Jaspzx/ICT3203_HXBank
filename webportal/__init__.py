@@ -114,6 +114,7 @@ def create_webportal():
     login_manager.init_app(app)
     talisman.init_app(
         app,
+        strict_transport_security=False,
         content_security_policy={
             'default-src': '\'self\'',
             'style-src': '\'self\'',
@@ -130,7 +131,8 @@ def create_webportal():
                 '\'self\'',
                 'https://www.google.com/recaptcha/',
                 'https://www.gstatic.com/recaptcha/'
-            ]
+            ],
+            'object-src': '\'self\'',
         },
         content_security_policy_nonce_in=['script-src', 'style-src']
     )
