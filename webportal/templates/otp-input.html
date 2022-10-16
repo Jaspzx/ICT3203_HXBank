@@ -10,7 +10,7 @@
                         {{ form.csrf_token }}
                         <div class="form-title">
                             <h1 class="title">Enter OTP Code</h1>
-                            </p>To verify your identity</p>
+                            <p>To verify your identity</p>
                             {% if login_error %}
                                 <div class="alert alert-danger" role="alert">{{ login_error }}</div>
                             {% endif %}
@@ -39,7 +39,7 @@
 </main>
 {% endblock %}
 {% block javascripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
     function onSubmitCallback(token) {
         document.getElementById("otp-input").submit();
     }

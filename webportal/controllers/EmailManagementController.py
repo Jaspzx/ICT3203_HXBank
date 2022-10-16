@@ -1,6 +1,8 @@
 from flask_mail import Message as Mail_Message
 from webportal import app, mail
 from itsdangerous import URLSafeTimedSerializer
+from webportal.utils.interact_db import *
+from webportal.models.Transferee import User
 
 
 class EmailManagementController:
@@ -19,9 +21,17 @@ class EmailManagementController:
             pass
 
     @staticmethod
-    def generate_token(arg_email):
+    def generate_token(arg_email, user):
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-        return serializer.dumps(arg_email, salt=app.config['SECURITY_PASSWORD_SALT'])
+        token = serializer.dumps(arg_email, salt=app.config['SECURITY_PASSWORD_SALT'])
+        user.email_token = token
+        update_db_no_close()
+        return token
+
+    @staticmethod
+    def nullify_token(user):
+        user.email_token = None
+        update_db()
 
     @staticmethod
     def confirm_token(arg_token, expiration=3600):
@@ -31,3 +41,20 @@ class EmailManagementController:
         except:
             return False
         return email
+
+    @staticmethod
+    def verify_token(user_email, token):
+        user = User.query.filter_by(email=user_email).first()
+
+        # Abort if not match.
+        if user.email_token != token:
+            return False
+
+        # Redirect if matches. 
+        elif user.email_verified:
+            return True
+        else:
+            user.email_verified = True
+            user.email_token = None
+            update_db()
+            return True
