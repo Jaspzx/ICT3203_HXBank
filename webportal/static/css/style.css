@@ -330,7 +330,7 @@ button.navbar-toggler {
 
 .funding {
     padding: 7em 0;
-    background-color: var(--white-background);
+    background-color: #f7f8fa;
 }
 
 .funding .content {
@@ -341,11 +341,9 @@ button.navbar-toggler {
     font-size: 2em;
 }
 
-.funding .image-container {
-    margin-top: 3em;
-
+.funding .col-lg-6:nth-child(2) {
+    padding: 3em;
 }
-
 
 .btn__funding {
     display: inline-block;
@@ -368,6 +366,18 @@ button.navbar-toggler {
 
 .funding .content span {
     color: #212529;
+}
+
+.funding .image-container {
+    padding: 2em;
+    background-color: transparent;
+    transform: rotate(15deg);
+    margin: 0 auto;
+}
+
+.funding .image-container img {
+    background-color: transparent;
+    animation: float 5s ease-in-out infinite;
 }
 
 

@@ -114,7 +114,6 @@ def create_webportal():
     login_manager.init_app(app)
     talisman.init_app(
         app,
-        strict_transport_security=False,
         content_security_policy={
             'default-src': '\'self\'',
             'style-src': '\'self\'',
