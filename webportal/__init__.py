@@ -109,6 +109,8 @@ def create_webportal():
     app.config['RECAPTCHA_PRIVATE_KEY'] = os.getenv('RECAPTCHA_PRIVATE_KEY')
     app.config['RECAPTCHA_DATA_ATTRS'] = {'bind': 'recaptcha-submit', 'callback': 'onSubmitCallback', 'size': 'invisible'}
     app.config['FSC_EXPANSION_COUNT'] = 2048
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+    
     db.init_app(app)
     encryptor.init_app(app)
     mail.init_app(app)
