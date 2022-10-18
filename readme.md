@@ -1,5 +1,8 @@
 # HX Bank
 
+## To Access the web portal
+[HX Bank](https://hxbank.tk)
+
 ## Installation
 1. Clone the repository
 2. Open terminal in the cloned repository and run the script below
