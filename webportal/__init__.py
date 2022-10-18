@@ -6,6 +6,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
 from flask_talisman import Talisman
 from logging.config import dictConfig
+from flask_simple_crypt import SimpleCrypt
 import os
 import socket
 
@@ -17,6 +18,7 @@ csrf = CSRFProtect()
 mail = Mail()
 talisman = Talisman()
 DB_NAME = "database.db"
+encryptor = SimpleCrypt()
 
 from webportal.models.User import *
 from webportal.models.Account import *
@@ -106,8 +108,9 @@ def create_webportal():
     app.config['RECAPTCHA_PUBLIC_KEY'] = os.getenv('RECAPTCHA_PUBLIC_KEY')
     app.config['RECAPTCHA_PRIVATE_KEY'] = os.getenv('RECAPTCHA_PRIVATE_KEY')
     app.config['RECAPTCHA_DATA_ATTRS'] = {'bind': 'recaptcha-submit', 'callback': 'onSubmitCallback', 'size': 'invisible'}
-
+    app.config['FSC_EXPANSION_COUNT'] = 2048
     db.init_app(app)
+    encryptor.init_app(app)
     mail.init_app(app)
     flask_bcrypt.init_app(app)
     csrf.init_app(app)

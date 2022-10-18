@@ -92,7 +92,7 @@ def register():
         if check:
             return render_template('register.html', title="Register", form=form, register_error=register_error)
 
-        # Get the user activity logger. 
+        # Get the user activity logger.
         logger = logging.getLogger('user_activity_log')
 
         # Create the user account.
@@ -100,7 +100,9 @@ def register():
 
         # Log the user's activity.
         logger.info(f"src_ip {ip_source} -> {username} user account created")
-        user = User.query.filter_by(username=username).first()
+
+        # Retrieve user.
+        user = amc.decrypt_by_username(username)
         token = emc.generate_token(email, user)
 
         # Create a bank acc for the newly created user.
@@ -401,7 +403,8 @@ def reset_identify():
         error = "Identification Failed"
 
         # Check that the user exists.
-        user = User.query.filter_by(nric=escape(form.nric.data.upper())).first()
+        user = decrypt_by_nric(nric=escape(form.nric.data.upper()))
+
         if user:
             session['nric'] = user.nric
             session['dob'] = user.dob
@@ -452,7 +455,7 @@ def confirm_otp(token):
     emc = EmailManagementController()
     try:
         email = emc.confirm_token(token)
-        user = User.query.filter_by(email=email).first()
+        user = decrypt_by_email(email)
         if user.email_token != token:
             abort(404)
         else:
@@ -471,7 +474,7 @@ def reset_authenticate():
     form = ResetFormAuthenticate(request.form)
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
-        user = User.query.filter_by(nric=session['nric']).first()
+        user = decrypt_by_nric(session['nric'])
         if user and user.prev_token == escape(form.token.data):
             error = "Something went wrong"
             return render_template('otp-input.html', form=form, authenticate_error=error)
@@ -495,7 +498,7 @@ def reset_pwd():
     if request.method == 'POST' and form.validate_on_submit():
         mmc = MessageManagementController()
         emc = EmailManagementController()
-        user = User.query.filter_by(nric=session['nric']).first()
+        user = decrypt_by_nric(session['nric'])
         if user:
             del session['nric']
 
@@ -518,6 +521,9 @@ def reset_pwd():
 @login_required
 # @check_email_verification
 def dashboard():
+    # Initiate the controllers.
+    amc = AccountManagementController()
+
     # Redirect to admin dashboard if user has admin privileges.
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
@@ -547,11 +553,16 @@ def dashboard():
                          "status": item.status, "debit": True})
     data = {x['date_transferred']: x for x in data}.values()
 
+    # Get user data.
+    user = amc.decrypt_by_username(username=current_user.username)
+    firstname, lastname = user.firstname, user.lastname
+
     # Load the messages.
     msg_data = load_nav_messages()
 
     # Redirect to the dashboard.
-    return render_template('dashboard.html', title="Dashboard", data=user_data, msg_data=msg_data, recent_trans=data,
+    return render_template('dashboard.html', title="Dashboard", firstname=firstname, lastname=lastname,
+                           data=user_data, msg_data=msg_data, recent_trans=data,
                            available_balance=total_available_balance, xfer_remain=daily_xfer_remain)
 
 
@@ -1320,9 +1331,19 @@ def recent_transactions():
 @login_required
 # @check_email_verification
 def profile():
-    user_data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
+    # Initiate the controller.
+    amc = AccountManagementController()
+
+    # Retrieve the user data.
+    user = amc.decrypt_by_username(username=current_user.username)
+
+    # Retrieve the user's bank acc data.
+    acc_info = Account.query.filter_by(userid=current_user.id).first()
+
+    # Load messages.
     msg_data = load_nav_messages()
-    return render_template('profile.html', title="Profile Page", data=user_data, msg_data=msg_data)
+
+    return render_template('profile.html', title="Profile Page", user=user, msg_data=msg_data, acc_info=acc_info)
 
 
 @views.before_request

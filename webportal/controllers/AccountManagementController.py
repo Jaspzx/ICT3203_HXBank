@@ -1,11 +1,11 @@
 import secrets
 import pyotp
-from webportal import flask_bcrypt
+import copy
+from webportal import flask_bcrypt, encryptor
 from webportal.utils.interact_db import *
 from datetime import datetime, timedelta, date
 from datetime import datetime
 from webportal.models.Transferee import User
-from webportal import flask_bcrypt
 
 
 class AccountManagementController:
@@ -51,8 +51,54 @@ class AccountManagementController:
 
     @staticmethod
     def add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, otp_secret, token):
-        new_user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None, token)
+        enc_firstname = encryptor.encrypt(firstname)
+        enc_lastname = encryptor.encrypt(lastname)
+        enc_address = encryptor.encrypt(address)
+        enc_email = encryptor.encrypt(email)
+        enc_mobile = encryptor.encrypt(mobile)
+        enc_nric = encryptor.encrypt(nric)
+        enc_dob = encryptor.encrypt(str(dob))
+        new_user = User(username, enc_firstname, enc_lastname, enc_address, enc_email, enc_mobile, enc_nric, enc_dob, password, None, token)
         add_db_no_close(new_user)
+
+    @staticmethod
+    def decrypt_by_username(username):
+        user = User.query.filter_by(username=username).first()
+        user_copy = copy.deepcopy(user)
+        user_copy.firstname = encryptor.decrypt(user.firstname).decode()
+        user_copy.lastname = encryptor.decrypt(user.lastname).decode()
+        user_copy.address = encryptor.decrypt(user.address).decode()
+        user_copy.email = encryptor.decrypt(user.email).decode()
+        user_copy.mobile = encryptor.decrypt(user.mobile).decode()
+        user_copy.nric = encryptor.decrypt(user.nric).decode()
+        user_copy.dob = encryptor.decrypt(user.dob).decode()
+        return user_copy
+
+    @staticmethod
+    def decrypt_by_nric(nric):
+        user = User.query.filter_by(nric=nric).first()
+        user_copy = copy.deepcopy(user)
+        user_copy.firstname = encryptor.decrypt(user.firstname).decode()
+        user_copy.lastname = encryptor.decrypt(user.lastname).decode()
+        user_copy.address = encryptor.decrypt(user.address).decode()
+        user_copy.email = encryptor.decrypt(user.email).decode()
+        user_copy.mobile = encryptor.decrypt(user.mobile).decode()
+        user_copy.nric = encryptor.decrypt(user.nric).decode()
+        user_copy.dob = encryptor.decrypt(user.dob).decode()
+        return user_copy
+
+    @staticmethod
+    def decrypt_by_email(email):
+        user = User.query.filter_by(email=email).first()
+        user_copy = copy.deepcopy(user)
+        user_copy.firstname = encryptor.decrypt(user.firstname).decode()
+        user_copy.lastname = encryptor.decrypt(user.lastname).decode()
+        user_copy.address = encryptor.decrypt(user.address).decode()
+        user_copy.email = encryptor.decrypt(user.email).decode()
+        user_copy.mobile = encryptor.decrypt(user.mobile).decode()
+        user_copy.nric = encryptor.decrypt(user.nric).decode()
+        user_copy.dob = encryptor.decrypt(user.dob).decode()
+        return user_copy
 
     @staticmethod
     def authenticate(user, password):
