@@ -27,7 +27,6 @@ def check_email_verification(func):
         if current_user.email_verified is False:
             return redirect(url_for('views.unverified_email'))
         return func(*args, **kwargs)
-
     return decorated_function
 
 
@@ -106,10 +105,7 @@ def register():
         token = emc.generate_token(email, user)
 
         # Create a bank acc for the newly created user.
-        random_gen = SystemRandom()
-        welcome_amt = random_gen.randrange(1000, 10000)
-        acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
-        bamc.add_bank_account(user.id, welcome_amt, acc_number)
+        acc_number, welcome_amt = bamc.add_bank_account(user.id)
 
         # Send welcome message.
         mmc.send_welcome_msg(welcome_amt, user)
@@ -135,9 +131,8 @@ def confirm_email(token):
 
     # Check that the verification code provided by user matches. 
     try:
-        email = emc.confirm_token(token)
-
         # Verify email token.
+        email = emc.confirm_token(token)
         if emc.verify_token(email, token):
             return redirect(url_for('views.login'))
         else:
@@ -297,36 +292,56 @@ def otp_input():
     # Get the auth logger. 
     logger = logging.getLogger('auth_log')
 
+    # Redirect the user if they are not in a session.
     if 'username' not in session:
         return redirect(url_for('views.login'))
+
+    # Redirect users to the appropriate page based on their roles if they are authenticated.
     if current_user.is_authenticated:
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
         return redirect(url_for('views.dashboard'))
+
+    # Initiatise the 2FA form.
     form = Token2FAForm(request.form)
     error = "Invalid Token"
+
+    # If the 2FA form is submitted.
     if request.method == 'POST' and form.validate_on_submit():
+        # Initialise the controllers.
         amc = AccountManagementController()
         user = User.query.filter_by(username=session['username']).first()
+
+        # OTP failed.
         if user and user.prev_token == escape(form.token.data):
             error = "Something went wrong"
             return render_template('otp-input.html', form=form, login_error=error)
+
+        # Check if user account is disabled.
         elif user.is_disabled:
             del session['username']
             form = LoginForm()
             error = "Account has been locked out. Please contact customer support for assistance."
             return render_template('login.html', title="Login", form=form, login_error=error)
+
+        # OTP is successful.
         elif user and user.verify_totp(escape(form.token.data)):
             del session['username']
             amc.login_success(user, escape(form.token.data))
             login_user(user)
+
+            # Notify the user if there are any failed authentication attempts.
             if current_user.failed_login_attempts > 0:
                 mmc.send_incorrect_attempts(current_user)
+
+            # Notify the user of the last login timestamp.
             mmc.send_last_login(current_user)
 
             # Logging.
             log_message = f"src_ip {ip_source} -> {current_user.username} logged in on {current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}"
             logger.info(log_message)
+
+            # Redirect users based on their roles.
             if current_user.is_admin:
                 return redirect(url_for('views.admin_dashboard'))
             if current_user.email_verified is False:
@@ -334,12 +349,16 @@ def otp_input():
             else:
                 return redirect(url_for('views.dashboard'))
         else:
+            # Initialise login fail logging and procedures.
             amc.login_fail(user)
+
+            # Lock the user account if failed attempts > 3.
             if user.failed_login_attempts > 3:
-                # Logging.
                 logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")
-            # Logging.
+
+            # Log failed login attempt.
             logger.warning(f"src_ip {ip_source} -> {user.username} user account failed to login")
+
             return render_template('otp-input.html', form=form, login_error=error)
     return render_template('otp-input.html', form=form)
 
@@ -375,9 +394,13 @@ def resend_verification():
 
     # Initiate the controller. 
     emc = EmailManagementController()
+
+    # Prepare the email verification token.
     token = emc.generate_token(current_user.email, current_user)
     current_user.token = token
     confirm_url = url_for('views.confirm_email', token=token, _external=True)
+
+    # Send the email verification code to the user's email/
     emc.send_email(current_user.email, "HX-Bank - Email Verification",
                    render_template('/email_templates/activate.html', confirm_url=confirm_url))
     update_db()
@@ -404,7 +427,6 @@ def reset_identify():
 
         # Check that the user exists.
         user = decrypt_by_nric(nric=escape(form.nric.data.upper()))
-
         if user:
             session['nric'] = user.nric
             session['dob'] = user.dob
@@ -414,6 +436,8 @@ def reset_identify():
                 session['flag'] = 1
                 session['email'] = user.email
                 user_username = User.query.filter_by(username=session['username']).first()
+
+                # Check that the nric and dob provided has a match in the database.
                 if user_username.nric == session['nric'] and user_username.dob == session['dob'] \
                         and user_username.email == session['email']:
                     del session['nric']
@@ -436,6 +460,8 @@ def reset_identify():
 def reset_email_auth():
     email = session['email']
     del session['email']
+
+    # Initialise the controller.
     emc = EmailManagementController()
 
     # Generate email token.
@@ -453,6 +479,8 @@ def reset_email_auth():
 def confirm_otp(token):
     # Initiate the controller.
     emc = EmailManagementController()
+
+    # Check that the token matches.
     try:
         email = emc.confirm_token(token)
         user = decrypt_by_email(email)
@@ -613,6 +641,7 @@ def admin_dashboard():
 def transfer():
     # Initiate controllers.
     basm = BankAccountManagementController()
+    amc = AccountManagementController()
 
     # Redirect users to the admin dashboard if they have admin privileges.
     if current_user.is_admin:
@@ -624,11 +653,20 @@ def transfer():
     # Get the source ip address.
     ip_source = ipaddress.IPv4Address(request.remote_addr)
 
-    # Init the TransferMoneyForm
+    # Init the TransferMoneyForm.
     form = TransferMoneyForm()
 
     # Dynamically populate the TransferMoneyForm.
-    form.transferee_acc.choices = basm.populate_transfer_money_form(current_user.id)
+    transferee_data = Transferee.query.filter_by(transferer_id=current_user.id).all()
+    data = []
+    for transferee in transferee_data:
+        acc_num = Account.query.filter_by(userid=transferee.transferee_id).first().acc_number
+        transferee_user = amc.decrypt_by_id(transferee.transferee_id)
+        firstname = transferee_user.firstname
+        lastname = transferee_user.lastname
+        user_data = f"{acc_num} - {firstname} {lastname}"
+        data.append(user_data)
+    form.transferee_acc.choices = data
 
     # Get the transferrer's account information.
     transferrer_userid = current_user.id
@@ -648,7 +686,6 @@ def transfer():
 
         # Perform checks.
         error, acc_balance = basm.transfer_money_checks(amount, transferer_acc)
-
         if error is not None:
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=acc_balance)
@@ -684,7 +721,6 @@ def transfer():
                                        amount=Decimal(amount).quantize(TWO_PLACES),
                                        acc_num=transferee_acc.acc_number,
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-
         mmc.send_success_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
                                   transferee_user)
         return redirect(url_for('views.success'))
@@ -913,7 +949,7 @@ def set_transfer_limit():
                                    limit_error=set_status,
                                    current_limit=Decimal(user_acc.acc_xfer_limit).quantize(TWO_PLACES))
 
-        #
+        # Send a notification to the user.
         mmc.send_transfer_limit(Decimal(amount).quantize(TWO_PLACES), current_user)
         emc.send_email(current_user.email, "HX-Bank - New Transfer Limit",
                        render_template('/email_templates/transfer-limit.html',

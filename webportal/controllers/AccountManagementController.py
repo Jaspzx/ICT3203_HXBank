@@ -1,11 +1,11 @@
 import secrets
 import pyotp
 import copy
-from webportal import flask_bcrypt, encryptor
 from webportal.utils.interact_db import *
 from datetime import datetime, timedelta, date
 from datetime import datetime
 from webportal.models.Transferee import User
+from webportal import flask_bcrypt, encryptor
 
 
 class AccountManagementController:
@@ -90,6 +90,19 @@ class AccountManagementController:
     @staticmethod
     def decrypt_by_email(email):
         user = User.query.filter_by(email=email).first()
+        user_copy = copy.deepcopy(user)
+        user_copy.firstname = encryptor.decrypt(user.firstname).decode()
+        user_copy.lastname = encryptor.decrypt(user.lastname).decode()
+        user_copy.address = encryptor.decrypt(user.address).decode()
+        user_copy.email = encryptor.decrypt(user.email).decode()
+        user_copy.mobile = encryptor.decrypt(user.mobile).decode()
+        user_copy.nric = encryptor.decrypt(user.nric).decode()
+        user_copy.dob = encryptor.decrypt(user.dob).decode()
+        return user_copy
+
+    @staticmethod
+    def decrypt_by_id(id):
+        user = User.query.filter_by(id=id).first()
         user_copy = copy.deepcopy(user)
         user_copy.firstname = encryptor.decrypt(user.firstname).decode()
         user_copy.lastname = encryptor.decrypt(user.lastname).decode()

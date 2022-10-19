@@ -12,23 +12,17 @@ TWO_PLACES = Decimal(10) ** -2
 
 class BankAccountManagementController:
     @staticmethod
-    def add_bank_account(user_id, welcome_amt, acc_number):
-        new_account = Account(acc_number, user_id, welcome_amt)
-        add_db_no_close(new_account)
-
-    @staticmethod
-    def populate_transfer_money_form(user_id):
-        transferee_data = Transferee.query.filter_by(transferer_id=user_id).all()
-        data = []
-        for transferee in transferee_data:
-            transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
-            acc_num = transferee_acc_data.acc_number
-            transferee_user_data = User.query.filter_by(id=transferee.transferee_id).first()
-            first_name = transferee_user_data.firstname
-            last_name = transferee_user_data.lastname
-            user_data = f"{acc_num} - {first_name} {last_name}"
-            data.append(user_data)
-        return data
+    def add_bank_account(user_id):
+        random_gen = SystemRandom()
+        welcome_amt = random_gen.randrange(1000, 10000)
+        while True:
+            acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
+            exist = Account.query.filter_by(acc_number=acc_number).first()
+            if exist is None:
+                new_account = Account(acc_number, user_id, welcome_amt)
+                add_db_no_close(new_account)
+                break
+        return acc_number, welcome_amt
 
     @staticmethod
     def transfer_money_checks(amount, transferrer_acc):

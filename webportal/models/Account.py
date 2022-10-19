@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, date
-from webportal import db
 from random import SystemRandom
 from webportal.models.Transaction import *
 from ..utils.messaging import *
