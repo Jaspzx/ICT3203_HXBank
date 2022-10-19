@@ -1008,10 +1008,16 @@ body {
 
 /* Session Timeout Notification */
 #timeout-notification {
-    padding: 50px 20px;
+    padding: 35px 20px;
     display: none;
     background-color: #ffbfbf80;
     text-align: center;
+    position: absolute;
+    top: 90px;
+    right: 10px;
+    border-radius: 15px;
+    height: 100px;
+    width: 300px;
 }
 
 .g-recaptcha {
