@@ -1006,6 +1006,14 @@ body {
     margin-right: auto;
 }
 
+/* Session Timeout Notification */
+#timeout-notification {
+    padding: 50px 20px;
+    display: none;
+    background-color: #ffbfbf80;
+    text-align: center;
+}
+
 .g-recaptcha {
     display: inline-block;
 }

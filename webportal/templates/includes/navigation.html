@@ -98,8 +98,25 @@
                         <a class="dropdown-item" href="{{ url_for('views.logout') }}">Logout</a>
                     </div>
                 </li>
+                <script>
+                    function showNoti(){
+                        window.location.replace("/logout");
+                        localStorage.setItem("showdiv", "show");
+                    };
+                    setInterval(showNoti, 60000);
+                </script>
                 {% endif %}
             </ul>
         </div>
     </div>
 </nav>
+<div id="timeout-notification">
+    Sorry, your session has timed out.
+</div>
+<script>
+    const showdiv = localStorage.getItem("showdiv");
+    if(showdiv == "show") {
+        document.getElementById("timeout-notification").style.display = "block";
+        localStorage.clear()
+    }
+</script>
