@@ -9,7 +9,6 @@ from flask_talisman import Talisman
 from logging.config import dictConfig
 from .flask_simple_crypt import SimpleCrypt
 from flask_bcrypt import Bcrypt
-from flask_seeder import FlaskSeeder
 
 app = Flask(__name__)
 db = SQLAlchemy()
@@ -20,7 +19,6 @@ mail = Mail()
 talisman = Talisman()
 DB_NAME = "database.db"
 encryptor = SimpleCrypt()
-
 
 from webportal.models.User import *
 from webportal.models.Account import *
@@ -142,12 +140,28 @@ def create_webportal():
         },
         content_security_policy_nonce_in=['script-src', 'style-src']
     )
-    seeder = FlaskSeeder()
-    seeder.init_app(app, db)
     login_manager.session_protection = "strong"
     login_manager.login_view = 'views.login'
+
     with app.app_context():
         db.create_all()
+        try:
+            username = "super_user"
+            firstname = encryptor.encrypt("John")
+            lastname = encryptor.encrypt("Koh")
+            address = encryptor.encrypt("None")
+            email = encryptor.encrypt("ryangoh1281@gmail.com")
+            nric = encryptor.encrypt("S1345678G")
+            mobile = encryptor.encrypt("98761234")
+            dob = encryptor.encrypt("11-11-1111")
+            password = flask_bcrypt.generate_password_hash(os.getenv('SUPER_USER_PASSWORD'))
+            user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None, None, True)
+            db.session.add(user)
+            db.session.commit()
+            db.session.close()
+        except:
+            pass
+
     from .views import views
     app.register_blueprint(views, url_prefix='/')
     return app

@@ -6,7 +6,7 @@ import pyotp
 
 class User(db.Model, UserMixin):
     id = db.Column(db.INT, primary_key=True)
-    username = db.Column(db.String(50), nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False)
     firstname = db.Column(db.String(200), nullable=False)
     lastname = db.Column(db.String(200), nullable=False)
     address = db.Column(db.String(200), nullable=False)
@@ -19,7 +19,7 @@ class User(db.Model, UserMixin):
     prev_token = db.Column(db.String(6))
     date_joined = db.Column(db.DateTime(), nullable=False)
     failed_login_attempts = db.Column(db.INT, nullable=False)
-    last_login = db.Column(db.DateTime(timezone=True), nullable=False)
+    last_login = db.Column(db.DateTime(timezone=True))
     email_verified = db.Column(db.Boolean, default=False, nullable=False)
     email_token = db.Column(db.String(150))
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
@@ -27,7 +27,7 @@ class User(db.Model, UserMixin):
     session_token = db.Column(db.String(40), index=True)
 
     def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret,
-                 token):
+                 token, is_admin):
         self.username = username
         self.firstname = firstname
         self.lastname = lastname
@@ -46,6 +46,7 @@ class User(db.Model, UserMixin):
         self.last_login = datetime.now()
         self.email_token = token
         self.is_disabled = False
+        self.is_admin = is_admin
 
     def get_totp_uri(self):
         return f'otpauth://totp/HX-Bank:{self.username}?secret={self.otp_secret}&issuer=HX-Bank'

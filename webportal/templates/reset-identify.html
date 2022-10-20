@@ -25,6 +25,11 @@
                                 {% endif %}
                             </div>
                             <div class="form-group">
+                                {{ form.username.label }}
+                                {{ form.username(class="form-control", placeholder="Enter your Username.") }}
+                            </div>
+
+                            <div class="form-group">
                                 {{ form.nric.label }}
                                 {{ form.nric(class="form-control", placeholder="Enter your Identification No.") }}
                             </div>

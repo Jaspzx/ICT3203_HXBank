@@ -6,7 +6,7 @@ from io import BytesIO
 from .utils.interact_db import *
 from flask import Blueprint, redirect, url_for, render_template, request, session, abort, jsonify, escape
 from flask_login import login_required, login_user, logout_user
-from webportal import flask_bcrypt, login_manager
+from webportal import flask_bcrypt, login_manager, encryptor
 from webportal.models.Transferee import *
 from .forms import *
 from .utils.messaging import *
@@ -95,7 +95,7 @@ def register():
         logger = logging.getLogger('user_activity_log')
 
         # Create the user account.
-        amc.add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, None, None)
+        amc.add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, None, None, 0)
 
         # Log the user's activity.
         logger.info(f"src_ip {ip_source} -> {username} user account created")
@@ -134,6 +134,9 @@ def confirm_email(token):
         # Verify email token.
         email = emc.confirm_token(token)
         if emc.verify_token(email, token):
+            if 'username' in session:
+                pass
+
             return redirect(url_for('views.login'))
         else:
             abort(404)
@@ -285,6 +288,7 @@ def logout():
 def otp_input():
     # Initiate the controller. 
     mmc = MessageManagementController()
+    amc = AccountManagementController()
 
     # Get the source ip address.
     ip_source = ipaddress.IPv4Address(request.remote_addr)
@@ -409,6 +413,9 @@ def resend_verification():
 
 @views.route('/reset-identify', methods=['GET', 'POST'])
 def reset_identify():
+    # Initiate the controllers.
+    amc = AccountManagementController()
+
     # Get the info that the user would want to reset.
     selected = request.args.get('type')
     if selected == "pwd":
@@ -426,27 +433,28 @@ def reset_identify():
         error = "Identification Failed"
 
         # Check that the user exists.
-        user = decrypt_by_nric(nric=escape(form.nric.data.upper()))
+        user = amc.decrypt_by_username(username=escape(form.username.data))
+
+        # Perform checks to ensure that the nric and dob.
         if user:
             session['nric'] = user.nric
             session['dob'] = user.dob
 
-            # Reset the username.
+            # Reset OTP.
             if "username" in session and session['type'] == "otp":
                 session['flag'] = 1
                 session['email'] = user.email
-                user_username = User.query.filter_by(username=session['username']).first()
 
                 # Check that the nric and dob provided has a match in the database.
-                if user_username.nric == session['nric'] and user_username.dob == session['dob'] \
-                        and user_username.email == session['email']:
+                if user.nric == session['nric'] and user.dob == session['dob'] \
+                        and user.email == session['email']:
                     del session['nric']
                     del session['dob']
                     return redirect(url_for("views.reset_email_auth"))
                 else:
                     return redirect(url_for("views.login"))
             else:
-                if form.dob.data == session['dob']:
+                if str(form.dob.data) == session['dob']:
                     del session['dob']
                     return redirect(url_for("views.reset_authenticate"))
                 else:
@@ -472,7 +480,7 @@ def reset_email_auth():
     confirm_url = url_for('views.confirm_otp', token=token, _external=True)
     emc.send_email(email, "HX-Bank - OTP Reset", render_template('/email_templates/otp.html', confirm_url=confirm_url,
                                                                  time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-    return redirect(url_for('views.login'))
+    return redirect(url_for('views.reset_success'))
 
 
 @views.route('/confirm_otp/<token>')
@@ -495,6 +503,9 @@ def confirm_otp(token):
 
 @views.route('/reset-authenticate', methods=['GET', 'POST'])
 def reset_authenticate():
+    # Initiate the controller.
+    amc = AccountManagementController()
+
     if 'nric' not in session:
         return redirect(url_for('views.reset_identify'))
     if 'type' not in session:
@@ -502,7 +513,7 @@ def reset_authenticate():
     form = ResetFormAuthenticate(request.form)
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
-        user = decrypt_by_nric(session['nric'])
+        user = amc.decrypt_by_username(session['username'])
         if user and user.prev_token == escape(form.token.data):
             error = "Something went wrong"
             return render_template('otp-input.html', form=form, authenticate_error=error)
@@ -519,6 +530,9 @@ def reset_authenticate():
 
 @views.route('/reset-pwd', methods=['GET', 'POST'])
 def reset_pwd():
+    # Initiate the controller.
+    amc = AccountManagementController()
+
     if 'nric' not in session:
         return redirect(url_for('views.reset_identify'))
     form = ResetPasswordForm(request.form)
@@ -526,20 +540,21 @@ def reset_pwd():
     if request.method == 'POST' and form.validate_on_submit():
         mmc = MessageManagementController()
         emc = EmailManagementController()
-        user = decrypt_by_nric(session['nric'])
+        user = amc.decrypt_by_username(session['username'])
+        session['nric'] = user.nric
         if user:
             del session['nric']
 
             # Reset the user password.
             mmc.send_password_reset(user)
             password = flask_bcrypt.generate_password_hash(form.password.data)
-            reset_pwd(user, password)
+            amc.reset_pwd(user, password)
 
             # Send the password reset link.
             emc.send_email(user.email, "HX-Bank - Password Reset",
                            render_template('/email_templates/reset.html', reset="password",
                                            time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-            return redirect(url_for("views.login"))
+            return redirect(url_for("views.reset_success"))
         else:
             return render_template('reset-pwd.html', form=form, reset_error=error)
     return render_template('reset-pwd.html', form=form)
@@ -605,7 +620,7 @@ def admin_dashboard():
     # Initiate the controller.
     amc = AccountManagementController()
 
-    # Initiate the manager user form.
+    # Initiate the forms
     form = ManageUserForm()
 
     # Unlock or disable account depending on the admin's actions.
@@ -620,14 +635,20 @@ def admin_dashboard():
         elif form.data["disable"]:
             amc.disable_account(user_acc)
 
+        # Delete the account.
+        elif form.data["delete"]:
+            amc.delete_account(user_acc)
+
         return redirect(url_for('views.admin_dashboard'))
 
     # Get all of the user's data.
-    user_acc = User.query.filter_by(is_admin=False).all()
+    user_acc = User.query.all()
     data = []
     for user in user_acc:
-        data.append({"userid": user.id, "username": user.username, "nric": user.nric[-3:], "email": user.email,
-                     "last_login": user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "is_disabled": user.is_disabled})
+        dec_user = amc.decrypt_by_username(user.username)
+        data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:], "email": dec_user.email,
+                     "last_login": dec_user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "role": dec_user.is_admin,
+                     "is_disabled": dec_user.is_disabled})
     msg_data = load_nav_messages()
 
     # Redirect to the admin dashboard.
@@ -1270,11 +1291,23 @@ def auth_qrcode():
         'Expires': '0'}
 
 
+@views.route("/reset_successful")
+def reset_success():
+    return render_template('reset-successful.html', title="Reset Successful")
+
+
 @views.route("/success")
 @login_required
 # @check_email_verification
 def success():
     return render_template('success.html', title="Success")
+
+
+@views.route("/enrolment-successful")
+@login_required
+# @check_email_verification
+def enrolment_success():
+    return render_template('/admin/enrolment-successful.html', title="Success")
 
 
 @views.route("/approval-required")
@@ -1380,6 +1413,72 @@ def profile():
     msg_data = load_nav_messages()
 
     return render_template('profile.html', title="Profile Page", user=user, msg_data=msg_data, acc_info=acc_info)
+
+
+@views.route("/admin/enrol-admin", methods=['GET', 'POST'])
+@login_required
+# @check_email_verification
+def enrol_admin():
+    # Check if the current user is admin.
+    if current_user.is_admin:
+        # Get the source ip address.
+        ip_source = ipaddress.IPv4Address(request.remote_addr)
+
+        # Populate the register from.
+        form = RegisterForm()
+        if request.method == 'POST' and form.validate_on_submit():
+            # Initiate the controllers.
+            mmc = MessageManagementController()
+            emc = EmailManagementController()
+            amc = AccountManagementController()
+
+            # Sanitise user information.
+            username = escape(form.username.data)
+            firstname = escape(form.firstname.data)
+            lastname = escape(form.lastname.data)
+            address = escape(form.address.data)
+            email = escape(form.email.data)
+            mobile = escape(form.mobile.data)
+            nric = escape(form.nric.data.upper())
+            dob = form.dob.data
+            age = date.today().year - dob.year
+            password = flask_bcrypt.generate_password_hash(form.password.data)
+
+            # Verify user information.
+            check, register_error = amc.verify_details(username, email, mobile, nric, dob, age)
+            if check:
+                return render_template('/admin/enrol-admin.html', title="Register", form=form, register_error=register_error)
+
+            # Get the user activity logger.
+            logger = logging.getLogger('user_activity_log')
+
+            # Create the user account.
+            amc.add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, None, None, 1)
+
+            # Log the user's activity.
+            logger.info(f"src_ip {ip_source} -> {username} admin account created")
+
+            # Retrieve user.
+            user = amc.decrypt_by_username(username)
+
+            # Generate email token.
+            token = emc.generate_token(email, user)
+
+            # Create the user's session and redirect to verify email.
+            confirm_url = url_for('views.confirm_email', token=token, _external=True)
+            emc.send_email(email, "HX-Bank - Email Verification",
+                           render_template('/email_templates/activate.html', confirm_url=confirm_url))
+
+            # Log out the user.
+            logout_user()
+            session.clear()
+            session['username'] = username
+
+            # Return OTP setup page.
+            return redirect(url_for("views.otp_setup"))
+        return render_template('/admin/enrol-admin.html', title="Register Admin", form=form)
+
+    return redirect(url_for('views.login'))
 
 
 @views.before_request

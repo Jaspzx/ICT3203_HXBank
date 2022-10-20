@@ -50,7 +50,7 @@ class AccountManagementController:
         return False, None
 
     @staticmethod
-    def add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, otp_secret, token):
+    def add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, otp_secret, token, perms):
         enc_firstname = encryptor.encrypt(firstname)
         enc_lastname = encryptor.encrypt(lastname)
         enc_address = encryptor.encrypt(address)
@@ -58,38 +58,19 @@ class AccountManagementController:
         enc_mobile = encryptor.encrypt(mobile)
         enc_nric = encryptor.encrypt(nric)
         enc_dob = encryptor.encrypt(str(dob))
-        new_user = User(username, enc_firstname, enc_lastname, enc_address, enc_email, enc_mobile, enc_nric, enc_dob, password, None, token)
+        if perms == 1:
+            new_user = User(username, enc_firstname, enc_lastname, enc_address, enc_email, enc_mobile, enc_nric,
+                            enc_dob, password, None, token, True)
+        else:
+            new_user = User(username, enc_firstname, enc_lastname, enc_address, enc_email, enc_mobile, enc_nric,
+                            enc_dob, password, None, token, False)
         add_db_no_close(new_user)
 
     @staticmethod
     def decrypt_by_username(username):
         user = User.query.filter_by(username=username).first()
-        user_copy = copy.deepcopy(user)
-        user_copy.firstname = encryptor.decrypt(user.firstname).decode()
-        user_copy.lastname = encryptor.decrypt(user.lastname).decode()
-        user_copy.address = encryptor.decrypt(user.address).decode()
-        user_copy.email = encryptor.decrypt(user.email).decode()
-        user_copy.mobile = encryptor.decrypt(user.mobile).decode()
-        user_copy.nric = encryptor.decrypt(user.nric).decode()
-        user_copy.dob = encryptor.decrypt(user.dob).decode()
-        return user_copy
-
-    @staticmethod
-    def decrypt_by_nric(nric):
-        user = User.query.filter_by(nric=nric).first()
-        user_copy = copy.deepcopy(user)
-        user_copy.firstname = encryptor.decrypt(user.firstname).decode()
-        user_copy.lastname = encryptor.decrypt(user.lastname).decode()
-        user_copy.address = encryptor.decrypt(user.address).decode()
-        user_copy.email = encryptor.decrypt(user.email).decode()
-        user_copy.mobile = encryptor.decrypt(user.mobile).decode()
-        user_copy.nric = encryptor.decrypt(user.nric).decode()
-        user_copy.dob = encryptor.decrypt(user.dob).decode()
-        return user_copy
-
-    @staticmethod
-    def decrypt_by_email(email):
-        user = User.query.filter_by(email=email).first()
+        if user is None:
+            return None
         user_copy = copy.deepcopy(user)
         user_copy.firstname = encryptor.decrypt(user.firstname).decode()
         user_copy.lastname = encryptor.decrypt(user.lastname).decode()
@@ -167,3 +148,7 @@ class AccountManagementController:
     def disable_account(user):
         user.is_disabled = True
         update_db()
+
+    @staticmethod
+    def delete_account(user):
+        del_db(user)

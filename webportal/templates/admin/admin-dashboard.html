@@ -11,10 +11,12 @@
                 <thead>
                     <tr>
                         <th>Username</th>
+                        <th>Role</th>
                         <th>Last Login</th>
-                        <th>ID</th>
+                        <th>IC</th>
                         <th>Email</th>
                         <th>Status</th>
+                        <th></th>
                         <th></th>
                     </tr>
                 </thead>
@@ -22,27 +24,38 @@
                     {% for i in data %}
                     <tr>
                         <td>{{ i.username }}</td>
+                        <td>
+                            {% if i.role == True %}
+                                Admin
+                            {% elif i.role == False %}
+                                User
+                            {% endif %}
+                        </td>
                         <td>{{ i.last_login }}</td>
-                        <td>{{ i.nric }}</td>
+                        <td>******{{ i.nric }}</td>
                         <td>{{ i.email }}</td>
                         <td>
                             {% if i.is_disabled == 0 %}
                                 Enabled
-                            {% elif i.is_disabled == 1%}
+                            {% elif i.is_disabled == 1 %}
                                 Disabled
                             {% endif %}
                         </td>
-                        <td>
-                            <form method="POST" action="{{ url_for('views.admin_dashboard') }}">
-                            {{ form.csrf_token }}
-                            {{ form.userid(value=i.userid) }}
-                            {% if i.is_disabled %}
-                            {{ form.unlock }}
-                            {% else %}
-                            {{ form.disable }}
-                            {% endif %}
-                            </form>
-                        </td>
+                        <form method="POST" action="{{ url_for('views.admin_dashboard') }}">
+                            <td>
+                                {{ form.csrf_token }}
+                                {{ form.userid(value=i.userid) }}
+                                {% if i.is_disabled %}
+                                    {{ form.unlock }}
+                                {% else %}
+                                    {{ form.disable }}
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ form.delete }}
+                            </td>
+                        </form>
                     </tr>
                     {% endfor %}
                 </tbody>
