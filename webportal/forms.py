@@ -30,7 +30,7 @@ class RegisterForm(FlaskForm):
                                                                 message="Invalid Identification no.")])
     dob = DateField("Date of Birth", validators=[InputRequired()], format='%Y-%m-%d')
     mobile = StringField("Mobile", validators=[InputRequired(), Length(min=8, max=20),
-                                               Regexp("\\d{8,}$")])
+                                               Regexp("\\d{8,}$", message="Invalid mobile"),])
     accept_tos = BooleanField("I accept the Terms & Conditions", validators=[InputRequired()])
     recaptcha = RecaptchaField()
     register_submit = SubmitField("Sign Up")
