@@ -1481,9 +1481,6 @@ def enrol_admin():
     return redirect(url_for('views.login'))
 
 
-
-
-
 @views.before_request
 def make_session_permanent():
     session.permanent = True
