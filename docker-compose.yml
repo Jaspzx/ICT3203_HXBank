@@ -11,6 +11,10 @@ services:
     working_dir: /app
     env_file:
       - .env
+    volumes:
+      - type: bind
+        source: ./db/database.db
+        target: /app/webportal/database.db
 
   nginx:
     build: ./nginx
