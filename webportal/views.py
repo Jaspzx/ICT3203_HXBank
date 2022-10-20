@@ -1465,10 +1465,14 @@ def enrol_admin():
             token = emc.generate_token(email, user)
 
             # Create the user's session and redirect to verify email.
-            session['username'] = username
             confirm_url = url_for('views.confirm_email', token=token, _external=True)
             emc.send_email(email, "HX-Bank - Email Verification",
                            render_template('/email_templates/activate.html', confirm_url=confirm_url))
+
+            # Log out the user.
+            logout_user()
+            session.clear()
+            session['username'] = username
 
             # Return OTP setup page.
             return redirect(url_for("views.otp_setup"))
