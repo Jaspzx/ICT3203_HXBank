@@ -101,7 +101,6 @@ class AccountManagementController:
 
             # Check if the user's account is disabled.
             if user.is_disabled:
-                error = "Account has been locked out. Please contact customer support for assistance."
                 return 2
 
             # Redirect to input OTP page is user's account is not disabled. 
@@ -109,16 +108,18 @@ class AccountManagementController:
 
         # Invalid attempt detected.
         else:
-            # Increase failed login attempts. 
+            # Increase failed login attempts.
             user.failed_login_attempts += 1
 
             # Disable if login attempts is greater than 3. 
             if user.failed_login_attempts > 3:
                 user.is_disabled = True
+                user.failed_login_attempts = 0
+                update_db_no_close()
                 return 4
 
                 # Update the db.
-            update_db()
+            update_db_no_close()
 
             return 3
 

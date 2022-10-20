@@ -258,10 +258,12 @@ def login():
             # User failed to authenticate. 
             elif auth == 3:
                 logger.warning(f"src_ip {ip_source} -> {user.username} user account failed to login")
+                return render_template('login.html', title="Login", form=form, login_error=error)
 
             # User account has been locked. 
             else:
                 logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")
+                error = "Account has been locked out. Please contact customer support for assistance."
                 return render_template('login.html', title="Login", form=form, login_error=error)
         else:
             return render_template('login.html', title="Login", form=form, login_error=error)
