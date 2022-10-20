@@ -10,11 +10,6 @@ class MessageManagementController:
         new_message = Message("HX-Bank", self.message, arg_user.id)
         add_db_no_close(new_message)
 
-    def user_created_message(self, arg_msg, arg_fuser, arg_tuser) -> None:
-        self.message = arg_msg
-        new_message = Message(arg_fuser, self.message, arg_tuser.id)
-        add_db_no_close(new_message)
-
     def send_welcome_msg(self, arg_amt, arg_user) -> None:
         self.message = f"Welcome! As a welcome gift, ${arg_amt} has been debited to your account!"
         self.create_message(arg_user)

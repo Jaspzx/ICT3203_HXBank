@@ -26,7 +26,6 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_disabled = db.Column(db.Boolean, default=False, nullable=False)
     session_token = db.Column(db.String(40), index=True)
-    identifier = db.Column(db.String(40), index=True)
 
     def __init__(self, username, firstname, lastname, address, email, mobile, nric, dob, password_hash, otp_secret,
                  token, is_admin):
@@ -49,7 +48,6 @@ class User(db.Model, UserMixin):
         self.email_token = token
         self.is_disabled = False
         self.is_admin = is_admin
-        self.identifier = str(uuid.uuid4())
 
     def get_totp_uri(self):
         return f'otpauth://totp/HX-Bank:{self.username}?secret={self.otp_secret}&issuer=HX-Bank'

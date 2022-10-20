@@ -1037,68 +1037,6 @@ def topup_balance():
     return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data)
 
 
-@views.route("/communication/compose", methods=['GET', 'POST'])
-@login_required
-# @check_email_verification
-def compose():
-    msg_data = load_nav_messages()
-    ip_source = ipaddress.IPv4Address(request.remote_addr)
-    mmc = MessageManagementController()
-    amc = AccountManagementController()
-    form = ComposeMessage()
-    admins = User.query.filter_by(is_admin=True).all()
-    data = []
-    if not current_user.is_admin:
-        for admin in admins:
-            admin_data = amc.decrypt_by_id(User.query.filter_by(id=admin.id).first().id)
-            acc_num = admin_data.identifier
-            first_name = admin_data.firstname
-            last_name = admin_data.lastname
-            user_data = f"{acc_num} - {first_name} {last_name}"
-            data.append(user_data)
-        form.recipient.choices = data
-    else:
-        msgs = db.session.query(Message).filter_by(userid=current_user.id).all()
-        if msgs:
-            for msg in msgs:
-                if msg.sender != "HX-Bank":
-                    username = amc.decrypt_by_id(User.query.filter_by(username=msg.sender).first().id)
-                    if username is not None:
-                        acc_num = User.query.filter_by(id=username.id).first().identifier
-                        first_name = username.firstname
-                        last_name = username.lastname
-                        user_data = f"{acc_num} - {first_name} {last_name}"
-                        if user_data not in data:
-                            data.append(user_data)
-        form.recipient.choices = data
-
-    if request.method == 'POST' and form.validate_on_submit():
-        identifier = escape(form.recipient.data.split(" ")[0])
-        userid = User.query.filter_by(identifier=identifier).first().id
-        if userid:
-            target_user = User.query.filter_by(id=userid).first()
-            if current_user.id == userid:
-                error = "An error has occurred"
-                return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
-            error = "Message Sent!"
-            user = User.query.filter_by(id=userid).first()
-            if not current_user.is_admin and not target_user.is_admin:
-                error = "Something went wrong"
-                return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
-
-            mmc.user_created_message(escape(form.message.data), current_user.username, user)
-
-            # Logging.
-            logger = logging.getLogger('user_activity_log')
-            logger.info(f"src_ip {ip_source} -> {current_user.username} has sent a message to {user.username}")
-
-            return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
-        else:
-            error = "Something went wrong"
-            return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
-    return render_template('compose.html', msg_data=msg_data, form=form)
-
-
 @views.route("/communication/message-center", methods=['GET', 'POST'])
 @login_required
 # @check_email_verification
