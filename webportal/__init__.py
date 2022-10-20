@@ -7,10 +7,9 @@ from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
 from flask_talisman import Talisman
 from logging.config import dictConfig
-from flask_simple_crypt import SimpleCrypt
+from .flask_simple_crypt import SimpleCrypt
 from flask_bcrypt import Bcrypt
 from flask_seeder import FlaskSeeder
-
 
 app = Flask(__name__)
 db = SQLAlchemy()
