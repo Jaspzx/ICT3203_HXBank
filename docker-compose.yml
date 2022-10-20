@@ -12,7 +12,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./instance/database.db:/app/webportal/instance/database.db
+      - ../instance/:/app/instance/
 
   nginx:
     build: ./nginx
