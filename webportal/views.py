@@ -1042,16 +1042,16 @@ def compose():
     msg_data = load_nav_messages()
     ip_source = ipaddress.IPv4Address(request.remote_addr)
     mmc = MessageManagementController()
+    amc = AccountManagementController()
     form = ComposeMessage()
     admins = User.query.filter_by(is_admin=True).all()
     data = []
     if not current_user.is_admin:
         for admin in admins:
-            admin_data = Account.query.filter_by(userid=admin.id).first()
-            acc_num = admin_data.acc_number
-            admin_user_data = User.query.filter_by(id=admin.id).first()
-            first_name = admin_user_data.firstname
-            last_name = admin_user_data.lastname
+            admin_data = amc.decrypt_by_id(User.query.filter_by(id=admin.id).first().id)
+            acc_num = admin_data.identifier
+            first_name = admin_data.firstname
+            last_name = admin_data.lastname
             user_data = f"{acc_num} - {first_name} {last_name}"
             data.append(user_data)
         form.recipient.choices = data
@@ -1059,19 +1059,20 @@ def compose():
         msgs = db.session.query(Message).filter_by(userid=current_user.id).all()
         if msgs:
             for msg in msgs:
-                username = User.query.filter_by(username=msg.sender).first()
-                if username is not None:
-                    acc_num = Account.query.filter_by(userid=username.id).first().acc_number
-                    first_name = username.firstname
-                    last_name = username.lastname
-                    user_data = f"{acc_num} - {first_name} {last_name}"
-                    if user_data not in data:
-                        data.append(user_data)
+                if msg.sender != "HX-Bank":
+                    username = amc.decrypt_by_id(User.query.filter_by(username=msg.sender).first().id)
+                    if username is not None:
+                        acc_num = User.query.filter_by(id=username.id).first().identifier
+                        first_name = username.firstname
+                        last_name = username.lastname
+                        user_data = f"{acc_num} - {first_name} {last_name}"
+                        if user_data not in data:
+                            data.append(user_data)
         form.recipient.choices = data
 
     if request.method == 'POST' and form.validate_on_submit():
-        acc_number = escape(form.recipient.data.split(" ")[0])
-        userid = Account.query.filter_by(acc_number=acc_number).first().userid
+        identifier = escape(form.recipient.data.split(" ")[0])
+        userid = User.query.filter_by(identifier=identifier).first().id
         if userid:
             target_user = User.query.filter_by(id=userid).first()
             if current_user.id == userid:
