@@ -7,7 +7,6 @@
                 <thead>
                     <tr>
                         <th>Username</th>
-                        <th>Date Joined</th>
                         <th>Failed Login Attempts</th>
                         <th>Last Login</th>
                         <th>Action</th>
@@ -19,7 +18,7 @@
                         <td>{{ i.username }}</td>
                         <td>{{ i.date_joined }}</td>
                         <td>{{ i.failed_login_attempts }}</td>
-                        <td>{{ i.last_login }}</td>
+                        <td>{{ i.is_disabled }}</td>
                         <td>
                             <form method="POST" action="{{ url_for('views.user_management') }}">
                                 {{ form.csrf_token }}

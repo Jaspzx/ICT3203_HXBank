@@ -56,6 +56,9 @@ class Token2FAForm(FlaskForm):
 
 
 class ResetFormIdentify(FlaskForm):
+    username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20),
+                                                   Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$",
+                                                          message="Invalid username")])
     nric = StringField("Identification No.", validators=[InputRequired(), Length(min=9, max=9),
                                                          Regexp("^[STFGstfg]\\d{7}[A-Za-z]$",
                                                                 message="Invalid Identification no.")])
@@ -136,6 +139,7 @@ class ManageUserForm(FlaskForm):
     userid = HiddenField()
     disable = SubmitField("Disable")
     unlock = SubmitField("Unlock")
+    delete = SubmitField("Delete")
 
 
 class ApproveTransactionForm(FlaskForm):

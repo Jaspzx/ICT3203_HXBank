@@ -1,0 +1,18 @@
+{% extends "layouts/base.html" %}
+{% block title %} Reset Success {% endblock %}
+{% block content %}
+    <div class="container">
+        <div class="success-container row">
+            <div class="col-md-8">
+                <h1 class="my-4 text-center">Reset Completed Successfully</h1>
+            </div>
+            <div class="col-md-12 text-center">
+                <span class="success-icons">check_circle</span>
+            </div>
+            <a class="btn deco-btn btn-primary btn-lg btn-block my-4" href="{{ url_for('views.login') }}">
+                Go to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
