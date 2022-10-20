@@ -10,7 +10,6 @@ from logging.config import dictConfig
 from .flask_simple_crypt import SimpleCrypt
 from flask_bcrypt import Bcrypt
 
-
 app = Flask(__name__)
 db = SQLAlchemy()
 flask_bcrypt = Bcrypt()
