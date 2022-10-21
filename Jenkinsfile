@@ -4,8 +4,6 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-						sh 'docker container rm --force ict3203_hxbank-flask'
-						sh 'docker image rm --force ict3203_hxbank-flask'
 						sh 'docker build -t ict3203_hxbank-flask .'
 					}
 				echo 'Build phase success'
