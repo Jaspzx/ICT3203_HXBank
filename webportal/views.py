@@ -716,7 +716,6 @@ def transfer():
 
         # Create a transaction.
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
-        transferee_user = User.query.filter_by(id=transferee_userid).first()
         transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
@@ -801,7 +800,6 @@ def transfer_onetime():
 
         # Create a transaction.
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
-        transferee_user = User.query.filter_by(id=transferee_userid).first()
         transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
@@ -822,7 +820,7 @@ def transfer_onetime():
                                            acc_num=transferee_acc.acc_number,
                                            time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             mmc.send_pending_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
-                                      transferee_user)
+                                      current_user)
             return redirect(url_for('views.approval_required'))
 
         # Return success page.
@@ -833,7 +831,7 @@ def transfer_onetime():
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         mmc.send_success_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
-                                  transferee_user)
+                                  current_user)
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
