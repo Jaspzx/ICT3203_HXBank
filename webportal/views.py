@@ -729,8 +729,9 @@ def transfer():
             f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
         # Return approval required page.
+        dec_user = amc.decrypt_by_id(current_user.id)
         if require_approval:
-            emc.send_email(current_user.email, "HX-Bank - Transfer",
+            emc.send_email(dec_user.email, "HX-Bank - Transfer",
                            render_template('/email_templates/transfer-pending.html',
                                            amount=Decimal(amount).quantize(TWO_PLACES),
                                            acc_num=transferee_acc.acc_number,
@@ -740,7 +741,7 @@ def transfer():
             return redirect(url_for('views.approval_required'))
 
         # Return success page.
-        emc.send_email(current_user.email, "HX-Bank - Transfer",
+        emc.send_email(dec_user.email, "HX-Bank - Transfer",
                        render_template('/email_templates/transfer-success.html',
                                        amount=Decimal(amount).quantize(TWO_PLACES),
                                        acc_num=transferee_acc.acc_number,
@@ -812,8 +813,9 @@ def transfer_onetime():
             f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
         # Return approval required page.
+        dec_user = amc.decrypt_by_id(current_user.id)
         if require_approval:
-            emc.send_email(current_user.email, "HX-Bank - Transfer",
+            emc.send_email(dec_user.email, "HX-Bank - Transfer",
                            render_template('/email_templates/transfer-pending.html',
                                            amount=Decimal(amount).quantize(TWO_PLACES),
                                            acc_num=transferee_acc.acc_number,
@@ -823,7 +825,7 @@ def transfer_onetime():
             return redirect(url_for('views.approval_required'))
 
         # Return success page.
-        emc.send_email(current_user.email, "HX-Bank - Transfer",
+        emc.send_email(dec_user.email, "HX-Bank - Transfer",
                        render_template('/email_templates/transfer-success.html',
                                        amount=Decimal(amount).quantize(TWO_PLACES),
                                        acc_num=transferee_acc.acc_number,
@@ -860,6 +862,7 @@ def add_transferee():
         mmc = MessageManagementController()
         emc = EmailManagementController()
         bamc = BankAccountManagementController()
+        amc = AccountManagementController()
 
         # Sanitise data.
         transferee_acc = Account.query.filter_by(acc_number=escape(form.transferee_acc.data)).first()
@@ -874,8 +877,9 @@ def add_transferee():
         bamc.add_transferee(current_user.id, transferee_acc)
 
         # Create message and send email.
+        dec_user = amc.decrypt_by_id(current_user.id)
         mmc.send_add_acc_no(transferee_acc.acc_number, current_user)
-        emc.send_email(current_user.email, "HX-Bank - Add Recipient",
+        emc.send_email(dec_user.email, "HX-Bank - Add Recipient",
                        render_template('/email_templates/recipient.html', recipient=transferee_acc.acc_number,
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
@@ -962,6 +966,7 @@ def set_transfer_limit():
         mmc = MessageManagementController()
         emc = EmailManagementController()
         bamc = BankAccountManagementController()
+        amc = AccountManagementController()
 
         #
         amount = float(Decimal(escape(form.transfer_limit.data)).quantize(TWO_PLACES))
@@ -975,7 +980,8 @@ def set_transfer_limit():
 
         # Send a notification to the user.
         mmc.send_transfer_limit(Decimal(amount).quantize(TWO_PLACES), current_user)
-        emc.send_email(current_user.email, "HX-Bank - New Transfer Limit",
+        dec_user = amc.decrypt_by_id(current_user.id)
+        emc.send_email(dec_user.email, "HX-Bank - New Transfer Limit",
                        render_template('/email_templates/transfer-limit.html',
                                        amount=Decimal(amount).quantize(TWO_PLACES),
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -1012,6 +1018,7 @@ def topup_balance():
         mmc = MessageManagementController()
         emc = EmailManagementController()
         bamc = BankAccountManagementController()
+        amc = AccountManagementController()
 
         # Sanitise data.
         amount = float(Decimal(escape(form.amount.data)).quantize(TWO_PLACES))
@@ -1026,7 +1033,8 @@ def topup_balance():
 
         # Send the email.
         mmc.send_top_up(Decimal(amount).quantize(TWO_PLACES), current_user)
-        emc.send_email(current_user.email, "HX-Bank - Top Up",
+        dec_user = amc.decrypt_by_id(current_user.id)
+        emc.send_email(dec_user.email, "HX-Bank - Top Up",
                        render_template('/email_templates/top-up.html', amount=Decimal(amount).quantize(TWO_PLACES),
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
@@ -1157,7 +1165,8 @@ def change_pwd():
                 amc.change_pw(user, password)
 
                 # Send reset password link.
-                emc.send_email(current_user.email, "HX-Bank - Password Change",
+                dec_user = amc.decrypt_by_id(current_user.id)
+                emc.send_email(dec_user.email, "HX-Bank - Password Change",
                                render_template('/email_templates/reset.html', reset="password",
                                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 mmc.send_password_change(user)
@@ -1218,8 +1227,9 @@ def auth_qrcode():
     amc.generate_pyotp(current_user)
     mmc = MessageManagementController()
     emc = EmailManagementController()
+    dec_user = amc.decrypt_by_id(current_user.id)
     if current_user.prev_token is not None:
-        emc.send_email(current_user.email, "HX-Bank - OTP Reset",
+        emc.send_email(dec_user.email, "HX-Bank - OTP Reset",
                        render_template('/email_templates/reset.html', reset="OTP",
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         mmc.send_otp_reset(current_user)
