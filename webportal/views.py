@@ -737,7 +737,7 @@ def transfer():
                                            acc_num=transferee_acc.acc_number,
                                            time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             mmc.send_pending_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
-                                      transferee_user)
+                                      current_user)
             return redirect(url_for('views.approval_required'))
 
         # Return success page.
@@ -747,7 +747,7 @@ def transfer():
                                        acc_num=transferee_acc.acc_number,
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         mmc.send_success_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
-                                  transferee_user)
+                                  current_user)
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
@@ -1252,7 +1252,8 @@ def reset_success():
 @login_required
 # @check_email_verification
 def success():
-    return render_template('success.html', title="Success")
+    msg_data = load_nav_messages()
+    return render_template('success.html', title="Success", msg_data=msg_data)
 
 
 @views.route("/enrolment-successful")
