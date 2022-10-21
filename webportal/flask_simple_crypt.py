@@ -21,6 +21,8 @@ from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random.random import getrandbits
 from Crypto.Util import Counter
 
+
+
 __version__ = "0.2.9"
 __author__ = "Carlos"
 __license__ = "MIT"
@@ -55,7 +57,7 @@ class SimpleCrypt(object):
     def encrypt(self, data):
         data = self._str_to_bytes(data)
         self._assert_encrypt_length(data)
-        salt = bytes(self._random_bytes(self.SALT_LEN // 8))
+        salt = b'@\xa6\xd0\xb6\x0f\xa1\xe5\xbc*\xe4\xa1\xa8&\xb1\xc8j<o\xa3\x1a\xef\xf4\\\x91\x95\xdbYQ\xa2it\xba'
         hmac_key, cipher_key = self._expand_keys(self.FSC_KEY, salt, self.EXPANSION_COUNT)
         counter = Counter.new(self.HALF_BLOCK, prefix=salt[:self.HALF_BLOCK // 8])
         cipher = AES.new(cipher_key, AES.MODE_CTR, counter=counter)

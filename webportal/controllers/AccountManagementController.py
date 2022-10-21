@@ -26,20 +26,24 @@ class AccountManagementController:
 
     @staticmethod
     def verify_details(username, email, mobile, nric, dob, age):
+        enc_email = encryptor.encrypt(email)
+        enc_mobile = encryptor.encrypt(mobile)
+        enc_nric = encryptor.encrypt(nric)
+
         # Check if the username exist. 
         if User.query.filter_by(username=username).first() is not None:
             return True, "Username already in use."
 
         # Check if the email exist. 
-        if User.query.filter_by(email=email).first() is not None:
+        if User.query.filter_by(email=enc_email).first() is not None:
             return True, "Email already in use."
 
         # Check if the mobile number exist. 
-        if User.query.filter_by(mobile=mobile).first() is not None:
+        if User.query.filter_by(mobile=enc_mobile).first() is not None:
             return True, "Mobile number already in use."
 
         # Check if nric exist. 
-        if User.query.filter_by(nric=nric).first() is not None:
+        if User.query.filter_by(nric=enc_nric).first() is not None:
             return True, "Identification No. already in use."
 
         # Check if date and age are valid. 

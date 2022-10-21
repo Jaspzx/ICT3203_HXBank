@@ -5,6 +5,8 @@ from random import SystemRandom
 from webportal.models.Transferee import *
 from webportal.models.Account import *
 from webportal.models.User import *
+from .AccountManagementController import *
+
 
 # Global variables.
 TWO_PLACES = Decimal(10) ** -2
@@ -139,7 +141,11 @@ class BankAccountManagementController:
         for transferee in transferee_data:
             transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
             acc_num = transferee_acc_data.acc_number
-            transferee_user_data = User.query.filter_by(id=transferee.transferee_id).first()
+
+            # Initalise the controller.
+            amc = AccountManagementController()
+            transferee_user_data = amc.decrypt_by_id(transferee.transferee_id)
+
             first_name = transferee_user_data.firstname
             last_name = transferee_user_data.lastname
             user_data = {"acc_num": acc_num, "first_name": first_name, "last_name": last_name}
