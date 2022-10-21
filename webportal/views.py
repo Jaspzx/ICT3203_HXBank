@@ -785,6 +785,7 @@ def transfer_onetime():
         mmc = MessageManagementController()
         emc = EmailManagementController()
         bacm = BankAccountManagementController()
+        amc = AccountManagementController()
 
         # Sanitise data.
         description = escape(form.description.data)
