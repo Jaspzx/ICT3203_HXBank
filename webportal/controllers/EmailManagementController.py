@@ -21,9 +21,9 @@ class EmailManagementController:
             pass
 
     @staticmethod
-    def generate_token(arg_email, user):
+    def generate_token(arg_username, user):
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-        token = serializer.dumps(arg_email, salt=app.config['SECURITY_PASSWORD_SALT'])
+        token = serializer.dumps(arg_username, salt=app.config['SECURITY_PASSWORD_SALT'])
         user.email_token = token
         update_db_no_close()
         return token
@@ -37,14 +37,14 @@ class EmailManagementController:
     def confirm_token(arg_token, expiration=3600):
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
         try:
-            email = serializer.loads(arg_token, salt=app.config['SECURITY_PASSWORD_SALT'], max_age=expiration)
+            username = serializer.loads(arg_token, salt=app.config['SECURITY_PASSWORD_SALT'], max_age=expiration)
         except:
             return False
-        return email
+        return username
 
     @staticmethod
-    def verify_token(user_email, token):
-        user = User.query.filter_by(email=user_email).first()
+    def verify_token(username, token):
+        user = User.query.filter_by(username=username).first()
 
         # Abort if not match.
         if user.email_token != token:
