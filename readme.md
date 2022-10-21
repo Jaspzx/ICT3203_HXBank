@@ -15,7 +15,6 @@ pip install -r requirements.txt
 3. Run the program
 ```
 
-flask seed run
 python main.py
 ```
 

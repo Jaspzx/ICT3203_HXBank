@@ -102,7 +102,7 @@ def register():
 
         # Retrieve user.
         user = amc.decrypt_by_username(username)
-        token = emc.generate_token(email, user)
+        token = emc.generate_token(user.username, user)
 
         # Create a bank acc for the newly created user.
         acc_number, welcome_amt = bamc.add_bank_account(user.id)
@@ -400,14 +400,15 @@ def resend_verification():
 
     # Initiate the controller. 
     emc = EmailManagementController()
+    amc = AccountManagementController()
+    dec_user = amc.decrypt_by_id(current_user.id)
 
     # Prepare the email verification token.
-    token = emc.generate_token(current_user.email, current_user)
-    current_user.token = token
+    token = emc.generate_token(current_user.username, current_user)
     confirm_url = url_for('views.confirm_email', token=token, _external=True)
 
     # Send the email verification code to the user's email/
-    emc.send_email(current_user.email, "HX-Bank - Email Verification",
+    emc.send_email(dec_user.email, "HX-Bank - Email Verification",
                    render_template('/email_templates/activate.html', confirm_url=confirm_url))
     update_db()
     return redirect(url_for('views.unverified_email'))
@@ -476,7 +477,7 @@ def reset_email_auth():
 
     # Generate email token.
     user = User.query.filter_by(username=session['username']).first()
-    token = emc.generate_token(email, user)
+    token = emc.generate_token(user.username, user)
 
     # Email the reset OTP page.
     confirm_url = url_for('views.confirm_otp', token=token, _external=True)
@@ -492,8 +493,8 @@ def confirm_otp(token):
 
     # Check that the token matches.
     try:
-        email = emc.confirm_token(token)
-        user = decrypt_by_email(email)
+        username = emc.confirm_token(token)
+        user = User.query.filter_by(username=username).first()
         if user.email_token != token:
             abort(404)
         else:
@@ -1403,7 +1404,7 @@ def enrol_admin():
             user = amc.decrypt_by_username(username)
 
             # Generate email token.
-            token = emc.generate_token(email, user)
+            token = emc.generate_token(user.username, user)
 
             # Create the user's session and redirect to verify email.
             confirm_url = url_for('views.confirm_email', token=token, _external=True)
