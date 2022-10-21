@@ -16,6 +16,7 @@
                         <table class="table" id="message_center">
                             <thead>
                             <tr>
+                                <th>Timestamp</th>
                                 <th>Message</th>
                                 <th></th>
                                 <th></th>
@@ -24,14 +25,17 @@
                             <tbody>
                             {% for msg in msg_data %}
                                 <tr>
-                                    <td>
+                                    <td width="20%">
+                                        <div class="{{ 'text-muted' if msg.read else 'text-dark' }}">
+                                            <small>{{ msg.date_sent.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                                        </div>
+                                    </td>
+                                    <td width="70%">
                                         <div class="{{ 'text-muted' if msg.read else 'text-dark' }}">
                                             {% if not msg.read %}
                                                 <span class="material-icons md-18 md-light align-middle">priority_high</span>
                                             {% endif %}
                                             From {{ msg.sender }}: {{ msg.message }}
-                                            <br>
-                                            <small>Timestamp: {{ msg.date_sent.strftime('%Y-%m-%d %H:%M:%S') }}</small>
                                         </div>
                                     </td>
                                     <form method="POST" action="{{ url_for('views.message_center') }}">
