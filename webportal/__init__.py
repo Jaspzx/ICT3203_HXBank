@@ -148,9 +148,9 @@ def create_webportal():
         try:
             username = "super_user"
             firstname = encryptor.encrypt("John")
-            lastname = encryptor.encrypt("Koh")
+            lastname = encryptor.encrypt("Doe")
             address = encryptor.encrypt("None")
-            email = encryptor.encrypt("ryangoh1281@gmail.com")
+            email = encryptor.encrypt(os.getenv('SUPER_USER_EMAIL'))
             nric = encryptor.encrypt("S1345678G")
             mobile = encryptor.encrypt("98761234")
             dob = encryptor.encrypt("11-11-1111")
