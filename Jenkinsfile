@@ -25,7 +25,7 @@ pipeline {
 		stage ('Deploy') {
             steps {
                 script{
-                    sh 'docker container run -dp 5000:75000  --env-file .env --name ict3203_hxbank-flask ict3203_hxbank-flask'
+                    sh 'docker container run -dp 5000:5000  --env-file .env --name ict3203_hxbank-flask ict3203_hxbank-flask'
                 }
             }
         }
