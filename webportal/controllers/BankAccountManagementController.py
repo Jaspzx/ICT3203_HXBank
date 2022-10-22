@@ -27,24 +27,30 @@ class BankAccountManagementController:
         return acc_number, welcome_amt
 
     @staticmethod
-    def transfer_money_checks(amount, transferrer_acc):
+    def transfer_money_checks(amount, transferrer_acc, transferee_acc):
+        # Check that the transferee exists.
+        transferee_user = Account.query.filter_by(acc_number=transferee_acc).first()
+        if transferee_user is None:
+            error = "Invalid account number"
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES), None
+
         # Amount to debit and credit from transferee and transferrer respectively.
         if amount < 0.1:
             error = "Invalid amount (Minimum $0.10)"
-            return error, None
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES), None
 
         # Check that the amount to be transferred does not exceed the transfer limit.
         day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
         if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
             error = "Amount to be transferred exceeds daily transfer limit"
-            return error, transferrer_acc.acc_balance
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES), None
 
         # Check that the bank account has sufficient funds for a transfer. 
         if transferrer_acc.acc_balance - transferrer_acc.money_on_hold < amount:
             error = "Insufficient funds"
-            return error, transferrer_acc.acc_balance
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES), None
 
-        return None, transferrer_acc.acc_balance
+        return None, transferrer_acc.acc_balance, transferee_user
 
     @staticmethod
     def create_transaction(amount, transferer_acc, transferee_acc, description):
@@ -83,6 +89,9 @@ class BankAccountManagementController:
 
     @staticmethod
     def add_transferee_checks(transferer_id, transferee_acc):
+        # Check that the transferee account exist.
+        transferee_acc = Account.query.filter_by(acc_number=transferee_acc).first()
+
         # Check that the transferee info does not exist already in the current user's transferee list.
         if transferee_acc:
             validate_if_exist = Transferee.query.filter_by(transferer_id=transferer_id,
@@ -90,14 +99,22 @@ class BankAccountManagementController:
 
             # Return error if it exists.
             if validate_if_exist:
-                add_error = "Transferee already exists!"
+                add_error = "Transferee already exists"
                 return add_error
 
             else:
-                return None
+                # Check that the transferee acc is not the same as the transferer acc.
+                transferer_acc = Account.query.filter_by(userid=transferer_id).first().acc_number
+
+                if transferer_acc == transferee_acc.acc_number:
+                    add_error = "Unable to add own account to transferee list"
+                    return add_error
+                else:
+                    return None
+
         # Return error if the transferee info does not exist based on the account number provided by the user.
         else:
-            add_error = "Invalid account!"
+            add_error = "Invalid account"
             return add_error
 
     @staticmethod

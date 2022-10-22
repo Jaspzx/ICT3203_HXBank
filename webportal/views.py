@@ -758,9 +758,9 @@ def transfer():
                                    balance=acc_balance)
 
         # Create a transaction.
-        transferee_userid = transferee_user.id
+        transferee_userid = transferee_user.acc_number
         transferer_acc = Account.query.filter_by(userid=current_user.id).first()
-        transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
+        transferee_acc = Account.query.filter_by(acc_number=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
                                                                                                  transferee_acc,
                                                                                                  description)
@@ -842,9 +842,9 @@ def transfer_onetime():
                                    balance=acc_balance)
 
         # Create a transaction.
-        transferee_userid = transferee_user.id
+        transferee_userid = transferee_user.acc_number
         transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
-        transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
+        transferee_acc = Account.query.filter_by(acc_number=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
                                                                                                  transferee_acc,
                                                                                                  description)
@@ -907,7 +907,7 @@ def add_transferee():
         amc = AccountManagementController()
 
         # Sanitise data.
-        transferee_acc = Account.query.filter_by(acc_number=escape(form.transferee_acc.data)).first()
+        transferee_acc = escape(form.transferee_acc.data)
 
         # Add transferee checks.
         add_error = bamc.add_transferee_checks(current_user.id, transferee_acc)
