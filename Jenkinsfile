@@ -5,7 +5,7 @@ pipeline {
 			steps {
 					script{
 					    sh 'docker container rm -f ict3203_hxbank-flask'
-                        sh 'docker image rm -f hxbankwebsite'
+                        sh 'docker image rm -f ict3203_hxbank-flask'
                         sh 'docker build -t ict3203_hxbank-flask .'
 					}
 				echo 'Build phase success'
@@ -25,7 +25,7 @@ pipeline {
 		stage ('Deploy') {
             steps {
                 script{
-                    sh 'docker run -d -e VIRTUAL_HOST=hxbank.tk  -e VIRTUAL_PORT=5000 --name ict3203_hxbank-flask --env-file .env'
+                    sh 'docker container run -d -e VIRTUAL_HOST=hxbank.tk  -e VIRTUAL_PORT=5000 --name ict3203_hxbank-flask --env-file .env'
                 }
             }
         }
