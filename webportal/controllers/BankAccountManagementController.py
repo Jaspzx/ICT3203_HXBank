@@ -89,6 +89,9 @@ class BankAccountManagementController:
 
     @staticmethod
     def add_transferee_checks(transferer_id, transferee_acc):
+        # Check that the transferee account exist.
+        transferee_acc = Account.query.filter_by(acc_number=transferee_acc).first()
+
         # Check that the transferee info does not exist already in the current user's transferee list.
         if transferee_acc:
             validate_if_exist = Transferee.query.filter_by(transferer_id=transferer_id,
@@ -96,14 +99,22 @@ class BankAccountManagementController:
 
             # Return error if it exists.
             if validate_if_exist:
-                add_error = "Transferee already exists!"
+                add_error = "Transferee already exists"
                 return add_error
 
             else:
-                return None
+                # Check that the transferee acc is not the same as the transferer acc.
+                transferer_acc = Account.query.filter_by(userid=transferer_id).first().acc_number
+
+                if transferer_acc == transferee_acc.acc_number:
+                    add_error = "Unable to add own account to transferee list"
+                    return add_error
+                else:
+                    return None
+
         # Return error if the transferee info does not exist based on the account number provided by the user.
         else:
-            add_error = "Invalid account!"
+            add_error = "Invalid account"
             return add_error
 
     @staticmethod

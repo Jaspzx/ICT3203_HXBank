@@ -437,6 +437,8 @@ def reset_identify():
 
         # Check that the user exists.
         user = amc.decrypt_by_username(username=escape(form.username.data))
+        print("HIO")
+
 
         # Perform checks to ensure that the nric and dob.
         if user:
@@ -866,7 +868,7 @@ def add_transferee():
         amc = AccountManagementController()
 
         # Sanitise data.
-        transferee_acc = Account.query.filter_by(acc_number=escape(form.transferee_acc.data)).first()
+        transferee_acc = escape(form.transferee_acc.data)
 
         # Add transferee checks.
         add_error = bamc.add_transferee_checks(current_user.id, transferee_acc)
