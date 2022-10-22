@@ -169,6 +169,9 @@ class BankAccountManagementController:
             error = "Invalid value"
             return error
         acc = Account.query.filter_by(userid=user_id).first()
+        if datetime.now().date() < acc.reset_xfer_limit_date.date():
+            error = "Transfer limit can only be set once a day!"
+            return error
         acc.acc_xfer_limit = Decimal(amount).quantize(TWO_PLACES)
         update_db_no_close()
         return None
