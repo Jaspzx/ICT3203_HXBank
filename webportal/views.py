@@ -693,8 +693,7 @@ def transfer():
     form.transferee_acc.choices = data
 
     # Get the transferrer's account information.
-    transferrer_userid = current_user.id
-    transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+    transferer_acc = Account.query.filter_by(userid=current_user.id).first()
 
     # Check if the form was submitted.
     if request.method == 'POST' and form.validate_on_submit():
@@ -716,7 +715,7 @@ def transfer():
 
         # Create a transaction.
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
-        transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+        transferer_acc = Account.query.filter_by(userid=current_user.id).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
                                                                                                  transferee_acc,
@@ -873,7 +872,7 @@ def add_transferee():
                                    msg_data=msg_data)
 
         # Add transferee.
-        bamc.add_transferee(current_user.id, transferee_acc)
+        bamc.add_transferee(transferee_acc)
 
         # Create message and send email.
         dec_user = amc.decrypt_by_id(current_user.id)
