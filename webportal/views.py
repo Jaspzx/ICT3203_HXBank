@@ -101,8 +101,7 @@ def register():
         logger.info(f"src_ip {ip_source} -> {username} user account created")
 
         # Retrieve user.
-        user = amc.decrypt_by_username(username)
-        token = emc.generate_token(user.username, user)
+        user = User.query.filter_by(username=username).first()
 
         # Create a bank acc for the newly created user.
         acc_number, welcome_amt = bamc.add_bank_account(user.id)
@@ -115,6 +114,7 @@ def register():
 
         # Create the user's session and redirect to verify email. 
         session['username'] = username
+        token = emc.generate_token(username, user)
         confirm_url = url_for('views.confirm_email', token=token, _external=True)
         emc.send_email(email, "HX-Bank - Email Verification",
                        render_template('/email_templates/activate.html', confirm_url=confirm_url))
@@ -648,10 +648,13 @@ def admin_dashboard():
     user_acc = User.query.all()
     data = []
     for user in user_acc:
-        dec_user = amc.decrypt_by_username(user.username)
-        data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:], "email": dec_user.email,
-                     "last_login": dec_user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "role": dec_user.is_admin,
-                     "is_disabled": dec_user.is_disabled})
+        if user.id == current_user.id:
+            pass
+        else:
+            dec_user = amc.decrypt_by_username(user.username)
+            data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:], "email": dec_user.email,
+                         "last_login": dec_user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "role": dec_user.is_admin,
+                         "is_disabled": dec_user.is_disabled})
     msg_data = load_nav_messages()
 
     # Redirect to the admin dashboard.
@@ -708,13 +711,13 @@ def transfer():
         transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
 
         # Perform checks.
-        error, acc_balance = basm.transfer_money_checks(amount, transferer_acc)
+        error, acc_balance, transferee_user = basm.transfer_money_checks(amount, transferer_acc, transferee_acc_number)
         if error is not None:
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=acc_balance)
 
         # Create a transaction.
-        transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
+        transferee_userid = transferee_user.id
         transferer_acc = Account.query.filter_by(userid=current_user.id).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
@@ -791,14 +794,14 @@ def transfer_onetime():
         transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
 
         # Perform checks.
-        error, acc_balance = basm.transfer_money_checks(amount, transferer_acc)
+        error, acc_balance, transferee_user = basm.transfer_money_checks(amount, transferer_acc, transferee_acc_number)
         if error is not None:
             return render_template('transfer-onetime.html', title="Transfer-Onetime", form=form, xfer_error=error,
                                    msg_data=msg_data,
                                    balance=acc_balance)
 
         # Create a transaction.
-        transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
+        transferee_userid = transferee_user.id
         transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,

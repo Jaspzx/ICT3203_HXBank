@@ -27,24 +27,30 @@ class BankAccountManagementController:
         return acc_number, welcome_amt
 
     @staticmethod
-    def transfer_money_checks(amount, transferrer_acc):
+    def transfer_money_checks(amount, transferrer_acc, transferee_acc):
+        # Check that the transferee exists.
+        transferee_user = Account.query.filter_by(acc_number=transferee_acc).first()
+        if transferee_user is None:
+            error = "Invalid account number"
+            return error, None, None
+
         # Amount to debit and credit from transferee and transferrer respectively.
         if amount < 0.1:
             error = "Invalid amount (Minimum $0.10)"
-            return error, None
+            return error, None, None
 
         # Check that the amount to be transferred does not exceed the transfer limit.
         day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
         if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
             error = "Amount to be transferred exceeds daily transfer limit"
-            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES)
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES), None
 
         # Check that the bank account has sufficient funds for a transfer. 
         if transferrer_acc.acc_balance - transferrer_acc.money_on_hold < amount:
             error = "Insufficient funds"
-            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES)
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES), None
 
-        return None, transferrer_acc.acc_balance
+        return None, transferrer_acc.acc_balance, transferee_user
 
     @staticmethod
     def create_transaction(amount, transferer_acc, transferee_acc, description):
@@ -70,14 +76,13 @@ class BankAccountManagementController:
             transferee_acc_balance = Decimal(transferee_acc.acc_balance + amount).quantize(TWO_PLACES)
             transferee_acc.acc_balance = transferee_acc_balance
 
-            # Reset the transfer limit data if required.
-            if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
-                transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
-                transferer_acc.acc_xfer_daily = 0
+        # Reset the transfer limit data if required.
+        if datetime.now().date() > transferer_acc.reset_xfer_limit_date.date():
+            transferer_acc.reset_xfer_limit_date = datetime.now() + timedelta(days=1)
+            transferer_acc.acc_xfer_daily = 0
 
-            # Increment the transferer's transfer limit.
-            transferer_acc.acc_xfer_daily = Decimal(transferer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
-
+        # Increment the transferer's transfer limit.
+        transferer_acc.acc_xfer_daily = Decimal(transferer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
         update_db_no_close()
 
         return require_approval, transferer_acc.acc_number, transferee_acc.acc_number
@@ -169,9 +174,10 @@ class BankAccountManagementController:
             error = "Invalid value"
             return error
         acc = Account.query.filter_by(userid=user_id).first()
-        if datetime.now().date() < acc.reset_xfer_limit_date.date():
+        if datetime.now().date() < acc.reset_set_xfer_limit_date.date():
             error = "Transfer limit can only be set once a day!"
             return error
+        acc.reset_set_xfer_limit_date = datetime.now() + timedelta(days=1)
         acc.acc_xfer_limit = Decimal(amount).quantize(TWO_PLACES)
         update_db_no_close()
         return None
