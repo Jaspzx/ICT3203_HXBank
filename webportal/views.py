@@ -102,7 +102,7 @@ def register():
 
         # Retrieve user.
         user = amc.decrypt_by_username(username)
-        token = emc.generate_token(email, user)
+        token = emc.generate_token(user.username, user)
 
         # Create a bank acc for the newly created user.
         acc_number, welcome_amt = bamc.add_bank_account(user.id)
@@ -258,10 +258,12 @@ def login():
             # User failed to authenticate. 
             elif auth == 3:
                 logger.warning(f"src_ip {ip_source} -> {user.username} user account failed to login")
+                return render_template('login.html', title="Login", form=form, login_error=error)
 
             # User account has been locked. 
             else:
                 logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")
+                error = "Account has been locked out. Please contact customer support for assistance."
                 return render_template('login.html', title="Login", form=form, login_error=error)
         else:
             return render_template('login.html', title="Login", form=form, login_error=error)
@@ -398,14 +400,15 @@ def resend_verification():
 
     # Initiate the controller. 
     emc = EmailManagementController()
+    amc = AccountManagementController()
+    dec_user = amc.decrypt_by_id(current_user.id)
 
     # Prepare the email verification token.
-    token = emc.generate_token(current_user.email, current_user)
-    current_user.token = token
+    token = emc.generate_token(current_user.username, current_user)
     confirm_url = url_for('views.confirm_email', token=token, _external=True)
 
     # Send the email verification code to the user's email/
-    emc.send_email(current_user.email, "HX-Bank - Email Verification",
+    emc.send_email(dec_user.email, "HX-Bank - Email Verification",
                    render_template('/email_templates/activate.html', confirm_url=confirm_url))
     update_db()
     return redirect(url_for('views.unverified_email'))
@@ -474,7 +477,7 @@ def reset_email_auth():
 
     # Generate email token.
     user = User.query.filter_by(username=session['username']).first()
-    token = emc.generate_token(email, user)
+    token = emc.generate_token(user.username, user)
 
     # Email the reset OTP page.
     confirm_url = url_for('views.confirm_otp', token=token, _external=True)
@@ -490,8 +493,8 @@ def confirm_otp(token):
 
     # Check that the token matches.
     try:
-        email = emc.confirm_token(token)
-        user = decrypt_by_email(email)
+        username = emc.confirm_token(token)
+        user = User.query.filter_by(username=username).first()
         if user.email_token != token:
             abort(404)
         else:
@@ -690,8 +693,7 @@ def transfer():
     form.transferee_acc.choices = data
 
     # Get the transferrer's account information.
-    transferrer_userid = current_user.id
-    transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+    transferer_acc = Account.query.filter_by(userid=current_user.id).first()
 
     # Check if the form was submitted.
     if request.method == 'POST' and form.validate_on_submit():
@@ -713,8 +715,7 @@ def transfer():
 
         # Create a transaction.
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
-        transferee_user = User.query.filter_by(id=transferee_userid).first()
-        transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
+        transferer_acc = Account.query.filter_by(userid=current_user.id).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
                                                                                                  transferee_acc,
@@ -726,24 +727,25 @@ def transfer():
             f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
         # Return approval required page.
+        dec_user = amc.decrypt_by_id(current_user.id)
         if require_approval:
-            emc.send_email(current_user.email, "HX-Bank - Transfer",
+            emc.send_email(dec_user.email, "HX-Bank - Transfer",
                            render_template('/email_templates/transfer-pending.html',
                                            amount=Decimal(amount).quantize(TWO_PLACES),
                                            acc_num=transferee_acc.acc_number,
                                            time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             mmc.send_pending_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
-                                      transferee_user)
+                                      current_user)
             return redirect(url_for('views.approval_required'))
 
         # Return success page.
-        emc.send_email(current_user.email, "HX-Bank - Transfer",
+        emc.send_email(dec_user.email, "HX-Bank - Transfer",
                        render_template('/email_templates/transfer-success.html',
                                        amount=Decimal(amount).quantize(TWO_PLACES),
                                        acc_num=transferee_acc.acc_number,
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         mmc.send_success_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
-                                  transferee_user)
+                                  current_user)
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
@@ -781,6 +783,7 @@ def transfer_onetime():
         mmc = MessageManagementController()
         emc = EmailManagementController()
         bacm = BankAccountManagementController()
+        amc = AccountManagementController()
 
         # Sanitise data.
         description = escape(form.description.data)
@@ -796,7 +799,6 @@ def transfer_onetime():
 
         # Create a transaction.
         transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
-        transferee_user = User.query.filter_by(id=transferee_userid).first()
         transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
@@ -809,25 +811,26 @@ def transfer_onetime():
             f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
         # Return approval required page.
+        dec_user = amc.decrypt_by_id(current_user.id)
         if require_approval:
-            emc.send_email(current_user.email, "HX-Bank - Transfer",
+            emc.send_email(dec_user.email, "HX-Bank - Transfer",
                            render_template('/email_templates/transfer-pending.html',
                                            amount=Decimal(amount).quantize(TWO_PLACES),
                                            acc_num=transferee_acc.acc_number,
                                            time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
             mmc.send_pending_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
-                                      transferee_user)
+                                      current_user)
             return redirect(url_for('views.approval_required'))
 
         # Return success page.
-        emc.send_email(current_user.email, "HX-Bank - Transfer",
+        emc.send_email(dec_user.email, "HX-Bank - Transfer",
                        render_template('/email_templates/transfer-success.html',
                                        amount=Decimal(amount).quantize(TWO_PLACES),
                                        acc_num=transferee_acc.acc_number,
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         mmc.send_success_transfer(Decimal(amount).quantize(TWO_PLACES), escape(form.transferee_acc.data),
-                                  transferee_user)
+                                  current_user)
         return redirect(url_for('views.success'))
 
     # Render the HTML template.
@@ -857,6 +860,7 @@ def add_transferee():
         mmc = MessageManagementController()
         emc = EmailManagementController()
         bamc = BankAccountManagementController()
+        amc = AccountManagementController()
 
         # Sanitise data.
         transferee_acc = Account.query.filter_by(acc_number=escape(form.transferee_acc.data)).first()
@@ -868,11 +872,12 @@ def add_transferee():
                                    msg_data=msg_data)
 
         # Add transferee.
-        bamc.add_transferee(current_user.id, transferee_acc)
+        bamc.add_transferee(transferee_acc)
 
         # Create message and send email.
+        dec_user = amc.decrypt_by_id(current_user.id)
         mmc.send_add_acc_no(transferee_acc.acc_number, current_user)
-        emc.send_email(current_user.email, "HX-Bank - Add Recipient",
+        emc.send_email(dec_user.email, "HX-Bank - Add Recipient",
                        render_template('/email_templates/recipient.html', recipient=transferee_acc.acc_number,
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
@@ -959,6 +964,7 @@ def set_transfer_limit():
         mmc = MessageManagementController()
         emc = EmailManagementController()
         bamc = BankAccountManagementController()
+        amc = AccountManagementController()
 
         #
         amount = float(Decimal(escape(form.transfer_limit.data)).quantize(TWO_PLACES))
@@ -972,7 +978,8 @@ def set_transfer_limit():
 
         # Send a notification to the user.
         mmc.send_transfer_limit(Decimal(amount).quantize(TWO_PLACES), current_user)
-        emc.send_email(current_user.email, "HX-Bank - New Transfer Limit",
+        dec_user = amc.decrypt_by_id(current_user.id)
+        emc.send_email(dec_user.email, "HX-Bank - New Transfer Limit",
                        render_template('/email_templates/transfer-limit.html',
                                        amount=Decimal(amount).quantize(TWO_PLACES),
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -1009,6 +1016,7 @@ def topup_balance():
         mmc = MessageManagementController()
         emc = EmailManagementController()
         bamc = BankAccountManagementController()
+        amc = AccountManagementController()
 
         # Sanitise data.
         amount = float(Decimal(escape(form.amount.data)).quantize(TWO_PLACES))
@@ -1023,7 +1031,8 @@ def topup_balance():
 
         # Send the email.
         mmc.send_top_up(Decimal(amount).quantize(TWO_PLACES), current_user)
-        emc.send_email(current_user.email, "HX-Bank - Top Up",
+        dec_user = amc.decrypt_by_id(current_user.id)
+        emc.send_email(dec_user.email, "HX-Bank - Top Up",
                        render_template('/email_templates/top-up.html', amount=Decimal(amount).quantize(TWO_PLACES),
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
@@ -1033,67 +1042,6 @@ def topup_balance():
 
         return redirect(url_for('views.success'))
     return render_template('topup.html', title="Top Up", form=form, msg_data=msg_data)
-
-
-@views.route("/communication/compose", methods=['GET', 'POST'])
-@login_required
-# @check_email_verification
-def compose():
-    msg_data = load_nav_messages()
-    ip_source = ipaddress.IPv4Address(request.remote_addr)
-    mmc = MessageManagementController()
-    form = ComposeMessage()
-    admins = User.query.filter_by(is_admin=True).all()
-    data = []
-    if not current_user.is_admin:
-        for admin in admins:
-            admin_data = Account.query.filter_by(userid=admin.id).first()
-            acc_num = admin_data.acc_number
-            admin_user_data = User.query.filter_by(id=admin.id).first()
-            first_name = admin_user_data.firstname
-            last_name = admin_user_data.lastname
-            user_data = f"{acc_num} - {first_name} {last_name}"
-            data.append(user_data)
-        form.recipient.choices = data
-    else:
-        msgs = db.session.query(Message).filter_by(userid=current_user.id).all()
-        if msgs:
-            for msg in msgs:
-                username = User.query.filter_by(username=msg.sender).first()
-                if username is not None:
-                    acc_num = Account.query.filter_by(userid=username.id).first().acc_number
-                    first_name = username.firstname
-                    last_name = username.lastname
-                    user_data = f"{acc_num} - {first_name} {last_name}"
-                    if user_data not in data:
-                        data.append(user_data)
-        form.recipient.choices = data
-
-    if request.method == 'POST' and form.validate_on_submit():
-        acc_number = escape(form.recipient.data.split(" ")[0])
-        userid = Account.query.filter_by(acc_number=acc_number).first().userid
-        if userid:
-            target_user = User.query.filter_by(id=userid).first()
-            if current_user.id == userid:
-                error = "An error has occurred"
-                return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
-            error = "Message Sent!"
-            user = User.query.filter_by(id=userid).first()
-            if not current_user.is_admin and not target_user.is_admin:
-                error = "Something went wrong"
-                return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
-
-            mmc.user_created_message(escape(form.message.data), current_user.username, user)
-
-            # Logging.
-            logger = logging.getLogger('user_activity_log')
-            logger.info(f"src_ip {ip_source} -> {current_user.username} has sent a message to {user.username}")
-
-            return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
-        else:
-            error = "Something went wrong"
-            return render_template('compose.html', msg_data=msg_data, form=form, compose_error=error)
-    return render_template('compose.html', msg_data=msg_data, form=form)
 
 
 @views.route("/communication/message-center", methods=['GET', 'POST'])
@@ -1215,7 +1163,8 @@ def change_pwd():
                 amc.change_pw(user, password)
 
                 # Send reset password link.
-                emc.send_email(current_user.email, "HX-Bank - Password Change",
+                dec_user = amc.decrypt_by_id(current_user.id)
+                emc.send_email(dec_user.email, "HX-Bank - Password Change",
                                render_template('/email_templates/reset.html', reset="password",
                                                time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
                 mmc.send_password_change(user)
@@ -1276,8 +1225,9 @@ def auth_qrcode():
     amc.generate_pyotp(current_user)
     mmc = MessageManagementController()
     emc = EmailManagementController()
+    dec_user = amc.decrypt_by_id(current_user.id)
     if current_user.prev_token is not None:
-        emc.send_email(current_user.email, "HX-Bank - OTP Reset",
+        emc.send_email(dec_user.email, "HX-Bank - OTP Reset",
                        render_template('/email_templates/reset.html', reset="OTP",
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         mmc.send_otp_reset(current_user)
@@ -1300,7 +1250,8 @@ def reset_success():
 @login_required
 # @check_email_verification
 def success():
-    return render_template('success.html', title="Success")
+    msg_data = load_nav_messages()
+    return render_template('success.html', title="Success", msg_data=msg_data)
 
 
 @views.route("/enrolment-successful")
@@ -1462,7 +1413,7 @@ def enrol_admin():
             user = amc.decrypt_by_username(username)
 
             # Generate email token.
-            token = emc.generate_token(email, user)
+            token = emc.generate_token(user.username, user)
 
             # Create the user's session and redirect to verify email.
             confirm_url = url_for('views.confirm_email', token=token, _external=True)

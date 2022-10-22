@@ -12,9 +12,7 @@ services:
     env_file:
       - .env
     volumes:
-      - type: bind
-        source: ./db/database.db
-        target: /app/webportal/database.db
+      - ../instance/:/app/instance/
 
   nginx:
     build: ./nginx

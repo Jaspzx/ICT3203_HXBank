@@ -5,6 +5,8 @@ from random import SystemRandom
 from webportal.models.Transferee import *
 from webportal.models.Account import *
 from webportal.models.User import *
+from .AccountManagementController import *
+
 
 # Global variables.
 TWO_PLACES = Decimal(10) ** -2
@@ -53,25 +55,28 @@ class BankAccountManagementController:
             require_approval = True
             status = 1
 
+        # Create a new transaction.
         new_transaction = Transaction(Decimal(amount).quantize(TWO_PLACES), transferer_acc.acc_number,
                                       transferee_acc.acc_number, description, require_approval, status)
         add_db_no_close(new_transaction)
 
         # Add money to onhold if approval is required. 
         if require_approval:
-            money_on_hold = Decimal(transferer_acc.money_on_hold + amount).quantize(TWO_PLACES)
-            transferer_acc.money_on_hold = money_on_hold
+            transferer_acc.money_on_hold = Decimal(transferer_acc.money_on_hold + amount).quantize(TWO_PLACES)
 
         else:
             # Update the balance for both transferer and transferee.
             transferer_acc.acc_balance = Decimal(transferer_acc.acc_balance - amount).quantize(TWO_PLACES)
-            transferee_acc_balance = Decimal(transferee_acc.acc_balance - amount).quantize(TWO_PLACES)
+            transferee_acc_balance = Decimal(transferee_acc.acc_balance + amount).quantize(TWO_PLACES)
             transferee_acc.acc_balance = transferee_acc_balance
+
+            # Reset the transfer limit data if required.
             if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
                 transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
                 transferer_acc.acc_xfer_daily = 0
-            transferrer_acc_xfer_daily = Decimal(transferer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
-            transferer_acc.acc_xfer_daily = transferrer_acc_xfer_daily
+
+            # Increment the transferer's transfer limit.
+            transferer_acc.acc_xfer_daily = Decimal(transferer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
 
         update_db_no_close()
 
@@ -97,14 +102,14 @@ class BankAccountManagementController:
             return add_error
 
     @staticmethod
-    def add_transferee(transferer_id, transferee_acc):
+    def add_transferee(transferee_acc):
         new_transferee = Transferee(current_user.id, transferee_acc.userid)
         add_db_no_close(new_transferee)
 
     @staticmethod
     def transaction_history(user_id):
         # Get the list of transactions that the user is involved in.
-        user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
+        user_acc_number = Account.query.filter_by(userid=user_id).first().acc_number
         transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
         transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
         data = []
@@ -139,7 +144,11 @@ class BankAccountManagementController:
         for transferee in transferee_data:
             transferee_acc_data = Account.query.filter_by(userid=transferee.transferee_id).first()
             acc_num = transferee_acc_data.acc_number
-            transferee_user_data = User.query.filter_by(id=transferee.transferee_id).first()
+
+            # Initalise the controller.
+            amc = AccountManagementController()
+            transferee_user_data = amc.decrypt_by_id(transferee.transferee_id)
+
             first_name = transferee_user_data.firstname
             last_name = transferee_user_data.lastname
             user_data = {"acc_num": acc_num, "first_name": first_name, "last_name": last_name}
@@ -160,6 +169,9 @@ class BankAccountManagementController:
             error = "Invalid value"
             return error
         acc = Account.query.filter_by(userid=user_id).first()
+        if datetime.now().date() < acc.reset_xfer_limit_date.date():
+            error = "Transfer limit can only be set once a day!"
+            return error
         acc.acc_xfer_limit = Decimal(amount).quantize(TWO_PLACES)
         update_db_no_close()
         return None

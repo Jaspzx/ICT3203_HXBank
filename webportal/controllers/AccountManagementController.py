@@ -26,20 +26,24 @@ class AccountManagementController:
 
     @staticmethod
     def verify_details(username, email, mobile, nric, dob, age):
+        enc_email = encryptor.encrypt(email)
+        enc_mobile = encryptor.encrypt(mobile)
+        enc_nric = encryptor.encrypt(nric)
+
         # Check if the username exist. 
         if User.query.filter_by(username=username).first() is not None:
             return True, "Username already in use."
 
         # Check if the email exist. 
-        if User.query.filter_by(email=email).first() is not None:
+        if User.query.filter_by(email=enc_email).first() is not None:
             return True, "Email already in use."
 
         # Check if the mobile number exist. 
-        if User.query.filter_by(mobile=mobile).first() is not None:
+        if User.query.filter_by(mobile=enc_mobile).first() is not None:
             return True, "Mobile number already in use."
 
         # Check if nric exist. 
-        if User.query.filter_by(nric=nric).first() is not None:
+        if User.query.filter_by(nric=enc_nric).first() is not None:
             return True, "Identification No. already in use."
 
         # Check if date and age are valid. 
@@ -101,7 +105,6 @@ class AccountManagementController:
 
             # Check if the user's account is disabled.
             if user.is_disabled:
-                error = "Account has been locked out. Please contact customer support for assistance."
                 return 2
 
             # Redirect to input OTP page is user's account is not disabled. 
@@ -109,16 +112,18 @@ class AccountManagementController:
 
         # Invalid attempt detected.
         else:
-            # Increase failed login attempts. 
+            # Increase failed login attempts.
             user.failed_login_attempts += 1
 
             # Disable if login attempts is greater than 3. 
             if user.failed_login_attempts > 3:
                 user.is_disabled = True
+                user.failed_login_attempts = 0
+                update_db_no_close()
                 return 4
 
                 # Update the db.
-            update_db()
+            update_db_no_close()
 
             return 3
 

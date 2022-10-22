@@ -24,9 +24,9 @@
                     <tbody>
                     {% for i in data %}
                         <tr>
-                            <td>{{ i.acc_num }}</td>
-                            <td>{{ i.first_name }}</td>
-                            <td>{{ i.last_name }}</td>
+                            <td class="text-center">{{ i.acc_num }}</td>
+                            <td class="text-center">{{ i.first_name }}</td>
+                            <td class="text-center">{{ i.last_name }}</td>
                             <form method="POST" action="{{ url_for('views.view_transferee') }}">
                                 {{ form.csrf_token }}
                                 {{ form.transferee_acc(value=i.acc_num) }}
