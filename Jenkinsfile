@@ -4,7 +4,8 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-						sh 'docker build -t hxbank .'
+					    sh 'docker compose down --rmi all'
+						sh 'docker compose up -d'
 					}
 				echo 'Build phase success'
 			}
