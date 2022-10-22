@@ -37,12 +37,12 @@ class BankAccountManagementController:
         day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
         if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
             error = "Amount to be transferred exceeds daily transfer limit"
-            return error, transferrer_acc.acc_balance
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES)
 
         # Check that the bank account has sufficient funds for a transfer. 
         if transferrer_acc.acc_balance - transferrer_acc.money_on_hold < amount:
             error = "Insufficient funds"
-            return error, transferrer_acc.acc_balance
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES)
 
         return None, transferrer_acc.acc_balance
 

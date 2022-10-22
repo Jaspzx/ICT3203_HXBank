@@ -4,7 +4,7 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-						sh 'sudo docker build -t ict3203_hxbank-flask .'
+						sh 'docker build -t hxbank .'
 					}
 				echo 'Build phase success'
 			}
