@@ -25,7 +25,7 @@ pipeline {
 		stage ('Deploy') {
             steps {
                 script{
-                    sh 'docker container run -d -e VIRTUAL_HOST=hxbank.tk  -e VIRTUAL_PORT=5000 --name ict3203_hxbank-flask --env-file .env'
+                    sh 'docker container run -dp 5000:75000  --env-file .env --name ict3203_hxbank-flask ict3203_hxbank-flask'
                 }
             }
         }
