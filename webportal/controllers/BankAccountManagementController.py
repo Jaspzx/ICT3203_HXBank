@@ -32,12 +32,12 @@ class BankAccountManagementController:
         transferee_user = Account.query.filter_by(acc_number=transferee_acc).first()
         if transferee_user is None:
             error = "Invalid account number"
-            return error, None, None
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES), None
 
         # Amount to debit and credit from transferee and transferrer respectively.
         if amount < 0.1:
             error = "Invalid amount (Minimum $0.10)"
-            return error, None, None
+            return error, Decimal(transferrer_acc.acc_balance).quantize(TWO_PLACES), None
 
         # Check that the amount to be transferred does not exceed the transfer limit.
         day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
