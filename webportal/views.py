@@ -440,8 +440,6 @@ def reset_identify():
         # Check that the user exists.
         session['username'] = escape(form.username.data)
         user = amc.decrypt_by_username(username=session['username'])
-        print(user.nric)
-        print(user.dob)
 
         # Perform checks to ensure that the nric and dob.
         if user:
