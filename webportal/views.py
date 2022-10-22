@@ -711,13 +711,13 @@ def transfer():
         transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
 
         # Perform checks.
-        error, acc_balance = basm.transfer_money_checks(amount, transferer_acc)
+        error, acc_balance, transferee_user = basm.transfer_money_checks(amount, transferer_acc, transferee_acc_number)
         if error is not None:
             return render_template('transfer.html', title="Transfer", form=form, xfer_error=error, msg_data=msg_data,
                                    balance=acc_balance)
 
         # Create a transaction.
-        transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
+        transferee_userid = transferee_user.id
         transferer_acc = Account.query.filter_by(userid=current_user.id).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
@@ -794,14 +794,14 @@ def transfer_onetime():
         transferee_acc_number = escape(form.transferee_acc.data.split(" ")[0])
 
         # Perform checks.
-        error, acc_balance = basm.transfer_money_checks(amount, transferer_acc)
+        error, acc_balance, transferee_user = basm.transfer_money_checks(amount, transferer_acc, transferee_acc_number)
         if error is not None:
             return render_template('transfer-onetime.html', title="Transfer-Onetime", form=form, xfer_error=error,
                                    msg_data=msg_data,
                                    balance=acc_balance)
 
         # Create a transaction.
-        transferee_userid = Account.query.filter_by(acc_number=transferee_acc_number).first().userid
+        transferee_userid = transferee_user.id
         transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
         transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,

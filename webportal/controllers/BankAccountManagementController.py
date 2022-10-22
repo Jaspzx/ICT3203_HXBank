@@ -27,24 +27,30 @@ class BankAccountManagementController:
         return acc_number, welcome_amt
 
     @staticmethod
-    def transfer_money_checks(amount, transferrer_acc):
+    def transfer_money_checks(amount, transferrer_acc, transferee_acc):
+        # Check that the transferee exists.
+        transferee_user = Account.query.filter_by(acc_number=transferee_acc).first()
+        if transferee_user is None:
+            error = "Invalid account number"
+            return error, None, None
+
         # Amount to debit and credit from transferee and transferrer respectively.
         if amount < 0.1:
             error = "Invalid amount (Minimum $0.10)"
-            return error, None
+            return error, None, None
 
         # Check that the amount to be transferred does not exceed the transfer limit.
         day_amount = Decimal(transferrer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
         if datetime.now().date() < transferrer_acc.reset_xfer_limit_date.date() and day_amount > transferrer_acc.acc_xfer_limit:
             error = "Amount to be transferred exceeds daily transfer limit"
-            return error, transferrer_acc.acc_balance
+            return error, transferrer_acc.acc_balance, None
 
         # Check that the bank account has sufficient funds for a transfer. 
         if transferrer_acc.acc_balance - transferrer_acc.money_on_hold < amount:
             error = "Insufficient funds"
-            return error, transferrer_acc.acc_balance
+            return error, transferrer_acc.acc_balance, None
 
-        return None, transferrer_acc.acc_balance
+        return None, transferrer_acc.acc_balance, transferee_user
 
     @staticmethod
     def create_transaction(amount, transferer_acc, transferee_acc, description):
