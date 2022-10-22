@@ -4,6 +4,8 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
+					    sh 'docker container rm --f hxbankwebsite'
+                        sh 'docker image rm --f hxbankwebsite'
                         sh 'docker build -t hxbankwebsite .'
 					}
 				echo 'Build phase success'
