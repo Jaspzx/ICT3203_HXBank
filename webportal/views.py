@@ -648,10 +648,13 @@ def admin_dashboard():
     user_acc = User.query.all()
     data = []
     for user in user_acc:
-        dec_user = amc.decrypt_by_username(user.username)
-        data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:], "email": dec_user.email,
-                     "last_login": dec_user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "role": dec_user.is_admin,
-                     "is_disabled": dec_user.is_disabled})
+        if user.id == current_user.id:
+            pass
+        else:
+            dec_user = amc.decrypt_by_username(user.username)
+            data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:], "email": dec_user.email,
+                         "last_login": dec_user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "role": dec_user.is_admin,
+                         "is_disabled": dec_user.is_disabled})
     msg_data = load_nav_messages()
 
     # Redirect to the admin dashboard.
