@@ -156,7 +156,6 @@ def create_webportal():
             dob = encryptor.encrypt(os.getenv('SUPER_USER_DOB'))
             password = flask_bcrypt.generate_password_hash(os.getenv('SUPER_USER_PASSWORD'))
             user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None, None, True)
-            print("HI")
             db.session.add(user)
             db.session.commit()
             db.session.close()

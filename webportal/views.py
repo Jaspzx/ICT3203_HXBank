@@ -310,7 +310,7 @@ def otp_input():
             return redirect(url_for('views.admin_dashboard'))
         return redirect(url_for('views.dashboard'))
 
-    # Initiatise the 2FA form.
+    # Initialise the 2FA form.
     form = Token2FAForm(request.form)
     error = "Invalid Token"
 
@@ -556,7 +556,6 @@ def reset_authenticate():
             if session['type'] == "pwd":
                 del session['type']
                 session['flag'] = 1
-                print("going to reset pwd")
                 return redirect(url_for("views.reset_pwd"))
             else:
                 session.clear()
