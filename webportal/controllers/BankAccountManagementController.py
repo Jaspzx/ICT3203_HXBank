@@ -70,14 +70,13 @@ class BankAccountManagementController:
             transferee_acc_balance = Decimal(transferee_acc.acc_balance + amount).quantize(TWO_PLACES)
             transferee_acc.acc_balance = transferee_acc_balance
 
-            # Reset the transfer limit data if required.
-            if datetime.now().date() > transferee_acc.reset_xfer_limit_date.date():
-                transferee_acc.reset_xfer_limit = date.today() + timedelta(days=1)
-                transferer_acc.acc_xfer_daily = 0
+        # Reset the transfer limit data if required.
+        if datetime.now().date() > transferer_acc.reset_xfer_limit_date.date():
+            transferer_acc.reset_xfer_limit_date = datetime.now() + timedelta(days=1)
+            transferer_acc.acc_xfer_daily = 0
 
-            # Increment the transferer's transfer limit.
-            transferer_acc.acc_xfer_daily = Decimal(transferer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
-
+        # Increment the transferer's transfer limit.
+        transferer_acc.acc_xfer_daily = Decimal(transferer_acc.acc_xfer_daily + amount).quantize(TWO_PLACES)
         update_db_no_close()
 
         return require_approval, transferer_acc.acc_number, transferee_acc.acc_number
