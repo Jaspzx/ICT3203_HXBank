@@ -186,18 +186,19 @@ def qrcode():
     if user is None:
         abort(404)
 
-    # Generate the pyotp secret. 
-    amc.generate_pyotp(user)
-
     # 
     if user.prev_token is not None:
         if 'flag' not in session:
+            session.clear()
             return redirect(url_for("views.login"))
         del session['flag']
         emc.send_email(user.email, "HX-Bank - OTP Reset",
                        render_template('/email_templates/reset.html', reset="OTP",
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         mmc.send_otp_reset(user)
+
+    # Generate the pyotp secret.
+    amc.generate_pyotp(user)
     del session['username']
     url = pyqrcode.create(user.get_totp_uri())
     stream = BytesIO()
@@ -300,6 +301,7 @@ def otp_input():
 
     # Redirect the user if they are not in a session.
     if 'username' not in session:
+        session.clear()
         return redirect(url_for('views.login'))
 
     # Redirect users to the appropriate page based on their roles if they are authenticated.
@@ -436,43 +438,62 @@ def reset_identify():
         error = "Identification Failed"
 
         # Check that the user exists.
-        user = amc.decrypt_by_username(username=escape(form.username.data))
-        print("HIO")
-
+        session['username'] = escape(form.username.data)
+        user = amc.decrypt_by_username(username=session['username'])
 
         # Perform checks to ensure that the nric and dob.
         if user:
             session['nric'] = user.nric
             session['dob'] = user.dob
+            session['flag'] = 1
 
             # Reset OTP.
             if "username" in session and session['type'] == "otp":
-                session['flag'] = 1
                 session['email'] = user.email
 
                 # Check that the nric and dob provided has a match in the database.
-                if user.nric == session['nric'] and user.dob == session['dob'] \
-                        and user.email == session['email']:
+                if session['nric'] == escape(form.nric.data) and session['dob'] == str(escape(form.dob.data)):
                     del session['nric']
                     del session['dob']
                     return redirect(url_for("views.reset_email_auth"))
                 else:
+                    session.clear()
                     return redirect(url_for("views.login"))
-            else:
-                if str(form.dob.data) == session['dob']:
+            elif "username" in session and session['type'] == "pwd":
+                if session['nric'] == escape(form.nric.data).upper() and session['dob'] == str(escape(form.dob.data)):
                     del session['dob']
+                    del session['nric']
                     return redirect(url_for("views.reset_authenticate"))
                 else:
+                    del session['nric']
+                    del session['dob']
+                    del session['flag']
+                    del session['username']
                     return render_template('reset-identify.html', form=form, identity_error=error)
+            else:
+                del session['nric']
+                del session['dob']
+                del session['flag']
+                del session['username']
+                error = "An unknown error has occurred"
+                return render_template('reset-identify.html', form=form, identity_error=error)
         else:
+            del session['nric']
+            del session['dob']
+            del session['flag']
+            del session['username']
             return render_template('reset-identify.html', form=form, identity_error=error)
     return render_template('reset-identify.html', form=form)
 
 
 @views.route('/reset-email-auth', methods=['GET', 'POST'])
 def reset_email_auth():
+    if 'flag' not in session:
+        session.clear()
+        return redirect(url_for("views.login"))
     email = session['email']
     del session['email']
+    del session['flag']
 
     # Initialise the controller.
     emc = EmailManagementController()
@@ -485,6 +506,7 @@ def reset_email_auth():
     confirm_url = url_for('views.confirm_otp', token=token, _external=True)
     emc.send_email(email, "HX-Bank - OTP Reset", render_template('/email_templates/otp.html', confirm_url=confirm_url,
                                                                  time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+    session.clear()
     return redirect(url_for('views.reset_success'))
 
 
@@ -508,59 +530,76 @@ def confirm_otp(token):
 
 @views.route('/reset-authenticate', methods=['GET', 'POST'])
 def reset_authenticate():
+    if 'flag' not in session:
+        session.clear()
+        return redirect(url_for("views.login"))
+
     # Initiate the controller.
     amc = AccountManagementController()
 
-    if 'nric' not in session:
-        return redirect(url_for('views.reset_identify'))
+    if 'username' not in session:
+        session.clear()
+        return redirect(url_for("views.login"))
     if 'type' not in session:
+        session.clear()
         return redirect(url_for("views.login"))
     form = ResetFormAuthenticate(request.form)
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
+        del session['flag']
         user = amc.decrypt_by_username(session['username'])
         if user and user.prev_token == escape(form.token.data):
             error = "Something went wrong"
-            return render_template('otp-input.html', form=form, authenticate_error=error)
+            session['flag'] = 1
+            return render_template('reset-authenticate.html', form=form, authenticate_error=error)
         elif user and user.verify_totp(escape(form.token.data)):
             if session['type'] == "pwd":
                 del session['type']
+                session['flag'] = 1
+                print("going to reset pwd")
                 return redirect(url_for("views.reset_pwd"))
             else:
+                session.clear()
                 return redirect(url_for('views.login'))
         else:
+            session['flag'] = 1
             return render_template('reset-authenticate.html', form=form, authenticate_error=error)
     return render_template('reset-authenticate.html', form=form)
 
 
 @views.route('/reset-pwd', methods=['GET', 'POST'])
 def reset_pwd():
+    if 'flag' not in session:
+        session.clear()
+        return redirect(url_for("views.login"))
     # Initiate the controller.
     amc = AccountManagementController()
 
-    if 'nric' not in session:
-        return redirect(url_for('views.reset_identify'))
+    if 'username' not in session:
+        session.clear()
+        return redirect(url_for("views.login"))
     form = ResetPasswordForm(request.form)
     error = "Reset Failed"
     if request.method == 'POST' and form.validate_on_submit():
+        del session['flag']
         mmc = MessageManagementController()
         emc = EmailManagementController()
-        user = amc.decrypt_by_username(session['username'])
-        session['nric'] = user.nric
+        user = User.query.filter_by(username=session['username']).first()
+        dec_user = amc.decrypt_by_username(session['username'])
         if user:
-            del session['nric']
-
             # Reset the user password.
             mmc.send_password_reset(user)
             password = flask_bcrypt.generate_password_hash(form.password.data)
             amc.reset_pwd(user, password)
 
             # Send the password reset link.
-            emc.send_email(user.email, "HX-Bank - Password Reset",
+            emc.send_email(dec_user.email, "HX-Bank - Password Reset",
                            render_template('/email_templates/reset.html', reset="password",
                                            time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+            session.clear()
             return redirect(url_for("views.reset_success"))
         else:
+            session['flag'] = 1
             return render_template('reset-pwd.html', form=form, reset_error=error)
     return render_template('reset-pwd.html', form=form)
 
