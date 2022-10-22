@@ -4,8 +4,7 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-					    sh 'docker compose down --rmi local'
-						sh 'docker compose up -d'
+                        sh 'docker build -t hxbankwebsite .'
 					}
 				echo 'Build phase success'
 			}
