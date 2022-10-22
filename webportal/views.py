@@ -101,8 +101,7 @@ def register():
         logger.info(f"src_ip {ip_source} -> {username} user account created")
 
         # Retrieve user.
-        user = amc.decrypt_by_username(username)
-        token = emc.generate_token(user.username, user)
+        user = User.query.filter_by(username=username).first()
 
         # Create a bank acc for the newly created user.
         acc_number, welcome_amt = bamc.add_bank_account(user.id)
@@ -115,6 +114,7 @@ def register():
 
         # Create the user's session and redirect to verify email. 
         session['username'] = username
+        token = emc.generate_token(username, user)
         confirm_url = url_for('views.confirm_email', token=token, _external=True)
         emc.send_email(email, "HX-Bank - Email Verification",
                        render_template('/email_templates/activate.html', confirm_url=confirm_url))
