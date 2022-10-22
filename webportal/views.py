@@ -648,7 +648,7 @@ def admin_dashboard():
     user_acc = User.query.all()
     data = []
     for user in user_acc:
-        if user.id == current_user.id: 
+        if user.id == current_user.id:
             pass
         else:
             dec_user = amc.decrypt_by_username(user.username)
