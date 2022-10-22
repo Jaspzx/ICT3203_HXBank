@@ -3,7 +3,10 @@ pipeline {
 	stages {
 		stage('Build') {
 			steps {
-				echo 'Build phase'
+					script{
+						sh 'docker build -t hxbank .'
+					}
+				echo 'Build phase success'
 			}
 		}
 		stage('Test') {

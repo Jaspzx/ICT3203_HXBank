@@ -719,9 +719,9 @@ def transfer():
                                    balance=acc_balance)
 
         # Create a transaction.
-        transferee_userid = transferee_user.id
+        transferee_userid = transferee_user.acc_number
         transferer_acc = Account.query.filter_by(userid=current_user.id).first()
-        transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
+        transferee_acc = Account.query.filter_by(acc_number=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
                                                                                                  transferee_acc,
                                                                                                  description)
@@ -803,9 +803,9 @@ def transfer_onetime():
                                    balance=acc_balance)
 
         # Create a transaction.
-        transferee_userid = transferee_user.id
+        transferee_userid = transferee_user.acc_number
         transferer_acc = Account.query.filter_by(userid=transferrer_userid).first()
-        transferee_acc = Account.query.filter_by(userid=transferee_userid).first()
+        transferee_acc = Account.query.filter_by(acc_number=transferee_userid).first()
         require_approval, transferer_acc_number, transferee_acc_number = bacm.create_transaction(amount, transferer_acc,
                                                                                                  transferee_acc,
                                                                                                  description)
