@@ -4,8 +4,8 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-					    sh 'docker compose down --rmi all'
-						sh 'docker compose up -d'
+					    sh 'docker-compose down --rmi local'
+						sh 'docker-compose up -d'
 					}
 				echo 'Build phase success'
 			}
