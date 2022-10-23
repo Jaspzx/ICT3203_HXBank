@@ -4,11 +4,9 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-					    sh 'docker compose stop flask'
-                        sh 'docker compose stop nginx'
-                        sh 'docker compose rm -f flask'
+					    sh 'docker container rm -f flask'
                         sh 'docker image rm -f ict3203_hxbank-flask'
-                        sh 'docker compose build flask'
+                        sh 'docker build -t ict3203_hxbank-flask .'
 					}
 				echo 'Build phase success'
 			}
@@ -28,7 +26,6 @@ pipeline {
             steps {
                 script{
                     sh 'docker compose up -d flask'
-                    sh 'docker compose start nginx'
                 }
             }
         }
