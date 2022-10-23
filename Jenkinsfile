@@ -26,6 +26,7 @@ pipeline {
             steps {
                 script{
                     sh 'docker container run -d --expose 5000  -v /home/Team-13/webportal/instance:/app/instance/ -w /app --env-file .env --name flask ict3203_hxbank-flask'
+                    sh 'docker network connect HXBank_bridge flask'
                 }
             }
         }
