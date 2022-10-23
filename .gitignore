@@ -111,4 +111,3 @@ venv-win/
 .env
 certbot/
 db/
-instance/database.db
