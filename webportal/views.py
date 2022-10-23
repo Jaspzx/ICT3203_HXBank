@@ -670,6 +670,9 @@ def admin_dashboard():
     if request.method == "POST" and form.validate_on_submit():
         user_acc = User.query.filter_by(id=escape(form.userid.data)).first()
 
+        if user_acc.id == current_user.id:
+            return redirect(url_for('views.admin_dashboard'))
+
         # Unlock the account.
         if form.data["unlock"]:
             amc.unlock_account(user_acc)
