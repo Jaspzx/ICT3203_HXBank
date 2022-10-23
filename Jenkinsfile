@@ -4,9 +4,11 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-					    sh 'docker container rm -f flask'
+					    sh 'docker compose stop flask'
+                        sh 'docker compose stop nginx'
+                        sh 'docker compose rm -f flask'
                         sh 'docker image rm -f ict3203_hxbank-flask'
-                        sh 'docker build -t ict3203_hxbank-flask .'
+                        sh 'docker compose build flask'
 					}
 				echo 'Build phase success'
 			}
@@ -25,7 +27,8 @@ pipeline {
 		stage ('Deploy') {
             steps {
                 script{
-                    sh 'docker container run -d --expose 5000  -v /home/Team-13/webportal/instance:/app/instance/ -w /app --env-file .env --network HXBank_bridge --network-alias flask --name flask ict3203_hxbank-flask'
+                    sh 'docker compose up -d flask'
+                    sh 'docker compose start nginx'
                 }
             }
         }
