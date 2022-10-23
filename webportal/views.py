@@ -478,9 +478,6 @@ def reset_identify():
                 error = "An unknown error has occurred"
                 return render_template('reset-identify.html', form=form, identity_error=error)
         else:
-            del session['nric']
-            del session['dob']
-            del session['flag']
             del session['username']
             return render_template('reset-identify.html', form=form, identity_error=error)
     return render_template('reset-identify.html', form=form)
