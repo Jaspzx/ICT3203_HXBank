@@ -25,7 +25,7 @@ pipeline {
 		stage ('Deploy') {
             steps {
                 script{
-                    sh 'docker container run -d --expose 5000  --env-file .env --name flask ict3203_hxbank-flask'
+                    sh 'docker container run -d --expose 5000  --v ../instance/:/app/instance/ --env-file .env --name flask ict3203_hxbank-flask'
                 }
             }
         }
