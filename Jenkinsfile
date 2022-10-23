@@ -5,7 +5,7 @@ pipeline {
 			steps {
 					script{
 					    sh 'docker container rm -f flask'
-                        sh 'docker image rm -f ict3203_hxbank-flask'
+                        SH 'docker image rm -f hxbankpipeline-flask'
                         sh 'docker compose build flask'
 					}
 				echo 'Build phase success'
