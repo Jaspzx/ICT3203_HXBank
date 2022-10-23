@@ -4,7 +4,7 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-					    sh 'docker container rm -f ict3203_hxbank-flask'
+					    sh 'docker container rm -f flask'
                         sh 'docker image rm -f ict3203_hxbank-flask'
                         sh 'docker build -t ict3203_hxbank-flask .'
 					}
@@ -25,7 +25,7 @@ pipeline {
 		stage ('Deploy') {
             steps {
                 script{
-                    sh 'docker container run -dp 5000:5000  --env-file .env --name ict3203_hxbank-flask ict3203_hxbank-flask'
+                    sh 'docker container run -d --expose 5000  --env-file .env --name flask ict3203_hxbank-flask'
                 }
             }
         }
