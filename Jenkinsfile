@@ -25,7 +25,7 @@ pipeline {
 		stage ('Deploy') {
             steps {
                 script{
-                    sh 'docker container run -d --expose 5000  -v /home/Team-13/webportal/instance:/app/instance/ -w /app --env-file .env --network HXBank_bridge --name flask ict3203_hxbank-flask'
+                    sh 'docker container run -d --expose 5000  -v /home/Team-13/webportal/instance:/app/instance/ -w /app --env-file .env --network HXBank_bridge --network-alias=[flask , flask] --name flask ict3203_hxbank-flask'
                 }
             }
         }
