@@ -4,7 +4,9 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-						sh 'docker build -t hxbank .'
+					    sh 'docker container rm -f ict3203_hxbank-flask'
+                        sh 'docker image rm -f ict3203_hxbank-flask'
+                        sh 'docker build -t ict3203_hxbank-flask .'
 					}
 				echo 'Build phase success'
 			}
@@ -19,6 +21,14 @@ pipeline {
 				dependencyCheck additionalArguments: '--format HTML --format XML', odcInstallation: 'OWASP Dependency Check'
 			}
 		}
+
+		stage ('Deploy') {
+            steps {
+                script{
+                    sh 'docker container run -dp 5000:5000  --env-file .env --name ict3203_hxbank-flask ict3203_hxbank-flask'
+                }
+            }
+        }
 	}	
 	post {
 		success {
