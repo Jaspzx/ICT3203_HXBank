@@ -99,7 +99,6 @@ def create_webportal():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=int(os.getenv('PERMANENT_SESSION_LIFETIME')))
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = "Strict"
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
     app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
     app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
@@ -139,7 +138,8 @@ def create_webportal():
             ],
             'object-src': '\'self\'',
         },
-        content_security_policy_nonce_in=['script-src', 'style-src']
+        content_security_policy_nonce_in=['script-src', 'style-src'],
+        session_cookie_samesite="Strict"
     )
     login_manager.session_protection = "strong"
     login_manager.login_view = 'views.login'
