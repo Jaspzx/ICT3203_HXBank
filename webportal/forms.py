@@ -161,10 +161,3 @@ class ChangePasswordForm(FlaskForm):
                         render_kw={"placeholder": "OTP Token"})
     recaptcha = RecaptchaField()
     change_pwd_submit = SubmitField("Change")
-
-
-class ComposeMessage(FlaskForm):
-    recipient = SelectField("Recipient", coerce=str, validators=[InputRequired()])
-    message = StringField("Message Content", validators=[InputRequired(), Length(min=3, max=150)])  # need regex
-    recaptcha = RecaptchaField()
-    message_submit = SubmitField("Send")
