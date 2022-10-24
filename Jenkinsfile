@@ -8,7 +8,6 @@ pipeline {
                         sh 'docker image rm -f hxbankpipeline-flask'
                         sh 'docker compose build flask'
 					}
-				echo 'Build phase success'
 			}
 		}
 		stage('Test') {
