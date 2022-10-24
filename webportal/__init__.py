@@ -99,7 +99,7 @@ def create_webportal():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=int(os.getenv('PERMANENT_SESSION_LIFETIME')))
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = os.getenv('SESSION_COOKIE_SAMESITE')
+    app.config['SESSION_COOKIE_SAMESITE'] = "Strict"
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
     app.config['MAIL_PORT'] = os.getenv('MAIL_PORT')
     app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
