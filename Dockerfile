@@ -6,7 +6,7 @@ ADD . /app
 
 RUN apk add build-base linux-headers pcre-dev
 
-RUN apk add --no-cache mariadb-dev build-base
+RUN apk add --no-cache mariadb-dev build-base mariadb-connector-c-dev
 
 RUN command pip install uwsgi
 
