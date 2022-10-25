@@ -602,7 +602,7 @@ def reset_pwd():
 
 @views.route('/personal-banking/dashboard', methods=['GET'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def dashboard():
     # Initiate the controllers.
     amc = AccountManagementController()
@@ -851,7 +851,8 @@ def transfer_onetime():
         # Logging.
         logger = logging.getLogger('user_activity_log')
         logger.info(
-            f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
+            f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to "
+            f"{transferee_acc_number}")
 
         # Return approval required page.
         dec_user = amc.decrypt_by_id(current_user.id)
