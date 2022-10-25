@@ -61,6 +61,7 @@ services:
 
 networks:
   default:
+    driver: bridge
     name: HXBank_bridge
     ipam:
       driver: default
