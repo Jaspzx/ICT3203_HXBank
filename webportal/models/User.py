@@ -16,7 +16,7 @@ class User(db.Model, UserMixin):
     nric = db.Column(db.String(200), unique=True, nullable=False)
     dob = db.Column(db.String(200), nullable=False)
     password_hash = db.Column(db.String(150), nullable=False)
-    otp_secret = db.Column(db.String(16), nullable=False)
+    otp_secret = db.Column(db.String(40), nullable=False)
     prev_token = db.Column(db.String(6))
     date_joined = db.Column(db.DateTime(), nullable=False)
     failed_login_attempts = db.Column(db.INT, nullable=False)
