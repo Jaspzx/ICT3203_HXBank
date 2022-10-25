@@ -13,6 +13,9 @@ services:
       - .env
     volumes:
       - ../instance/:/app/instance/
+    networks:
+      default:
+        ipv4_address: 172.30.0.2
 
   nginx:
     build: ./nginx
@@ -25,6 +28,9 @@ services:
     volumes:
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/nginx/ssl/:ro
+    networks:
+      default:
+        ipv4_address: 172.30.0.3
 
   certbot:
     image: certbot/certbot
@@ -32,6 +38,9 @@ services:
     volumes:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
+    networks:
+      default:
+        ipv4_address: 172.30.0.4
 
   jenkins-blueocean:
     build: ./jenkins
@@ -46,10 +55,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/nginx/ssl/:ro
+    networks:
+      default:
+        ipv4_address: 172.30.0.5
 
 networks:
   default:
     name: HXBank_bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/16
 
 volumes:
   jenkins-data:
