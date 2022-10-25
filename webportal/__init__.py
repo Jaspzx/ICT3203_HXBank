@@ -9,7 +9,6 @@ from flask_talisman import Talisman
 from logging.config import dictConfig
 from .flask_simple_crypt import SimpleCrypt
 from flask_bcrypt import Bcrypt
-from sqlalchemy import create_engine
 
 app = Flask(__name__)
 db = SQLAlchemy()
@@ -18,7 +17,6 @@ login_manager = LoginManager()
 csrf = CSRFProtect()
 mail = Mail()
 talisman = Talisman()
-# DB_NAME = "database"
 encryptor = SimpleCrypt()
 
 from webportal.models.User import *
@@ -147,22 +145,22 @@ def create_webportal():
 
     with app.app_context():
         db.create_all()
-        # try:
-        username = "super_user"
-        firstname = encryptor.encrypt(os.getenv('SUPER_USER_FIRSTNAME'))
-        lastname = encryptor.encrypt(os.getenv('SUPER_USER_LASTNAME'))
-        address = encryptor.encrypt("None")
-        email = encryptor.encrypt(os.getenv('SUPER_USER_EMAIL'))
-        nric = encryptor.encrypt(os.getenv('SUPER_USER_NRIC'))
-        mobile = encryptor.encrypt(os.getenv('SUPER_USER_MOBILE'))
-        dob = encryptor.encrypt(os.getenv('SUPER_USER_DOB'))
-        password = flask_bcrypt.generate_password_hash(os.getenv('SUPER_USER_PASSWORD'))
-        user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, "Q", None, True)
-        db.session.add(user)
-        db.session.commit()
-        db.session.close()
-        # except:
-        #     pass
+        try:
+            username = "super_user"
+            firstname = encryptor.encrypt(os.getenv('SUPER_USER_FIRSTNAME'))
+            lastname = encryptor.encrypt(os.getenv('SUPER_USER_LASTNAME'))
+            address = encryptor.encrypt("None")
+            email = encryptor.encrypt(os.getenv('SUPER_USER_EMAIL'))
+            nric = encryptor.encrypt(os.getenv('SUPER_USER_NRIC'))
+            mobile = encryptor.encrypt(os.getenv('SUPER_USER_MOBILE'))
+            dob = encryptor.encrypt(os.getenv('SUPER_USER_DOB'))
+            password = flask_bcrypt.generate_password_hash(os.getenv('SUPER_USER_PASSWORD'))
+            user = User(username, firstname, lastname, address, email, mobile, nric, dob, password, None, None, True)
+            db.session.add(user)
+            db.session.commit()
+            db.session.close()
+        except:
+            pass
 
     from .views import views
     app.register_blueprint(views, url_prefix='/')
