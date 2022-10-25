@@ -651,7 +651,7 @@ def dashboard():
 
 @views.route("/admin/admin-dashboard", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def admin_dashboard():
     # Redirect users to the normal dashboard if they do not have admin privileges.
     if not current_user.is_admin:
@@ -704,7 +704,7 @@ def admin_dashboard():
 
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def transfer():
     # Initiate controllers.
     basm = BankAccountManagementController()
@@ -798,7 +798,7 @@ def transfer():
 
 @views.route("/personal-banking/transfer-onetime", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def transfer_onetime():
     # Initiate controllers.
     basm = BankAccountManagementController()
@@ -884,7 +884,7 @@ def transfer_onetime():
 
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def add_transferee():
     # Redirect users to the admin dashboard if they have admin privileges.
     if current_user.is_admin:
@@ -937,7 +937,7 @@ def add_transferee():
 
 @views.route("/personal-banking/transaction-history", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def transaction_history():
     # Redirect users with admin privileges.
     if current_user.is_admin:
@@ -958,7 +958,7 @@ def transaction_history():
 
 @views.route("/personal-banking/view-transferee", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def view_transferee():
     # Redirect users with admin privileges.
     if current_user.is_admin:
@@ -985,7 +985,7 @@ def view_transferee():
 
 @views.route("/personal-banking/set-transfer-limit", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def set_transfer_limit():
     # Redirect users with admin privileges.
     if current_user.is_admin:
@@ -1040,7 +1040,7 @@ def set_transfer_limit():
 
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def topup_balance():
     # Redirect users with admin privileges.
     if current_user.is_admin:
@@ -1090,7 +1090,7 @@ def topup_balance():
 
 @views.route("/communication/message-center", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def message_center():
     # Initiate the controller.
     mmc = MessageManagementController()
@@ -1130,7 +1130,7 @@ def message_center():
 
 @views.route("/admin/transaction-management", methods=["GET", "POST"])
 @login_required
-# @check_email_verification
+@check_email_verification
 def transaction_management():
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
@@ -1171,7 +1171,7 @@ def transaction_management():
 
 @views.route("/account_management/account-settings", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def acc_settings():
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     msg_data = load_nav_messages()
@@ -1182,7 +1182,7 @@ def acc_settings():
 
 @views.route('/account-management/change-pwd', methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def change_pwd():
     # Initiate the controller.
     amc = AccountManagementController()
@@ -1226,7 +1226,7 @@ def change_pwd():
 
 @views.route('/account-management/change-otp', methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def change_otp():
     msg_data = load_nav_messages()
     form = Token2FAForm()
@@ -1249,7 +1249,7 @@ def change_otp():
 
 @views.route('/account-management/otp-setup', methods=['GET'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def auth_otp_reset():
     if 'flag' not in session:
         return redirect(url_for("views.acc_settings"))
@@ -1263,7 +1263,7 @@ def auth_otp_reset():
 
 @views.route('/account-management/qrcode', methods=['GET'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def auth_qrcode():
     amc = AccountManagementController()
     amc.generate_pyotp(current_user)
@@ -1292,7 +1292,7 @@ def reset_success():
 
 @views.route("/success")
 @login_required
-# @check_email_verification
+@check_email_verification
 def success():
     msg_data = load_nav_messages()
     return render_template('success.html', title="Success", msg_data=msg_data)
@@ -1300,16 +1300,17 @@ def success():
 
 @views.route("/enrolment-successful")
 @login_required
-# @check_email_verification
+@check_email_verification
 def enrolment_success():
     return render_template('/admin/enrolment-successful.html', title="Success")
 
 
 @views.route("/approval-required")
 @login_required
-# @check_email_verification
+@check_email_verification
 def approval_required():
-    return render_template('approval-required.html', title="Approval Required")
+    msg_data = load_nav_messages()
+    return render_template('approval-required.html', title="Approval Required", msg_data=msg_data)
 
 
 @views.route("/robots.txt", methods=['GET'])
@@ -1319,7 +1320,7 @@ def robots():
 
 @views.route("/api/acc-overview", methods=['GET'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def acc_overview():
     if current_user.is_admin:
         abort(403)
@@ -1337,7 +1338,7 @@ def acc_overview():
 
 @views.route("/api/barchart-graph", methods=['GET'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def barchart_graph():
     if current_user.is_admin:
         abort(403)
@@ -1360,7 +1361,7 @@ def barchart_graph():
 
 @views.route("/api/recent-transactions", methods=['GET'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def recent_transactions():
     if current_user.is_admin:
         abort(403)
@@ -1393,7 +1394,7 @@ def recent_transactions():
 
 @views.route("/personal-banking/profile", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def profile():
     # Initiate the controller.
     amc = AccountManagementController()
@@ -1412,7 +1413,7 @@ def profile():
 
 @views.route("/admin/enrol-admin", methods=['GET', 'POST'])
 @login_required
-# @check_email_verification
+@check_email_verification
 def enrol_admin():
     # Check if the current user is admin.
     if current_user.is_admin:
