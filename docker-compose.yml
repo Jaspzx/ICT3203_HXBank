@@ -1,4 +1,3 @@
-# To be added NGIX for digital ocean: https://realpython.com/dockerizing-flask-with-compose-and-machine-from-localhost-to-the-cloud/
 version: "3.9"
 
 services:
