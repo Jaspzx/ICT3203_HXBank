@@ -5,6 +5,8 @@ services:
   flask:
     build: .
     container_name: flask
+    depends_on:
+      - db
     expose:
       - "5000"
     working_dir: /app
