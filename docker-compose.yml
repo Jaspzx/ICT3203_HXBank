@@ -11,6 +11,8 @@ services:
     expose:
       - "5000"
     working_dir: /app
+    volumes:
+      - ./db/:/etc/certs/
     env_file:
       - .env
     networks:
@@ -62,6 +64,14 @@ services:
   db:
     image: mysql:latest
     container_name: db
+    command: [ "mysqld",
+               "--character-set-server=utf8mb4",
+               "--collation-server=utf8mb4_unicode_ci",
+               "--bind-address=0.0.0.0",
+               "--require_secure_transport=ON",
+               "--ssl-ca=/etc/certs/ca.pem",
+               "--ssl-cert=/etc/certs/server-cert.pem",
+               "--ssl-key=/etc/certs/server-key.pem" ]
     env_file:
       - mysql.env
     restart: always
@@ -69,6 +79,7 @@ services:
       - '3306:3306'
     volumes:
       - mysql-data:/var/lib/mysql
+      - ./db/:/etc/certs/
     healthcheck:
       test: "mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'show databases;'"
       interval: 3s

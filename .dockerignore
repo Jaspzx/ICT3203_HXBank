@@ -107,5 +107,7 @@ venv.bak/
 venv-win/
 .vscode
 .env
-
+mysql.env
 nginx/
+db/
+cert/
