@@ -107,6 +107,8 @@ HXBank
 |   |   |   ├── footer.html
 |   |   |   ├── navigation.html
 |   │   ├── layouts/
+|   |   |   ├── 404.html
+|   |   |   ├── 500.html
 |   │   │   ├── base.html
 |   |   |   ├── about.html
 |   |   |   ├── account-setting.html
