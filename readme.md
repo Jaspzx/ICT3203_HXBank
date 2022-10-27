@@ -156,4 +156,3 @@ HXBank
 ├── readme.md
 ├── requirements.txt
 ```
-This is to test CI/CD
