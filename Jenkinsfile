@@ -4,9 +4,11 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
+					    sh 'docker container rm -f db'
 					    sh 'docker container rm -f flask'
                         sh 'docker image rm -f flask'
                         sh 'docker compose build flask'
+                        sh 'docker compose build db'
 					}
 			}
 		}
