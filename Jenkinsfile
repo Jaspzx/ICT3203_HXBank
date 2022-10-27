@@ -4,10 +4,9 @@ pipeline {
 		stage('Build') {
 			steps {
 					script{
-					    sh 'docker container rm -f db'
 					    sh 'docker container rm -f flask'
                         sh 'docker image rm -f flask'
-                        sh 'docker compose build flask'
+                        sh 'docker build -t flask .'
 					}
 			}
 		}
@@ -25,7 +24,7 @@ pipeline {
 		stage ('Deploy') {
             steps {
                 script{
-                    sh 'docker compose up -d flask'
+                    sh 'docker container run -d --expose 5000 -v "$WORKSPACE/db/:/etc/certs/" -w /app --env-file .env --network HXBank_bridge --ip 172.30.0.2 --network-alias flask --name flask flask'
                 }
             }
         }
