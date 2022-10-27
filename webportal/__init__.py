@@ -1,6 +1,6 @@
 import os
 import socket
-from flask import Flask
+from flask import Flask, render_template
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
@@ -163,4 +163,13 @@ def create_webportal():
 
     from .views import views
     app.register_blueprint(views, url_prefix='/')
+
+    def page_not_found(e):
+        return render_template('404.html'), 404
+    app.register_error_handler(404, page_not_found)
+    def internal_server_error(e):
+        return render_template('500.html'), 500
+    app.register_error_handler(500, internal_server_error)
+
+
     return app
