@@ -24,7 +24,7 @@ pipeline {
 		stage ('Deploy') {
             steps {
                 script{
-                    sh 'docker container run -d --expose 5000 -v "$WORKSPACE/db/:/etc/certs/" -w /app --env-file .env --network HXBank_bridge --ip 172.30.0.2 --network-alias flask --name flask flask'
+                    sh 'docker container run -d --expose 5000 -v "./db/:/etc/certs/" -w /app --env-file .env --network HXBank_bridge --ip 172.30.0.2 --network-alias flask --name flask flask'
                 }
             }
         }
