@@ -26,6 +26,7 @@ def check_email_verification(func):
         if current_user.email_verified is False:
             return redirect(url_for('views.unverified_email'))
         return func(*args, **kwargs)
+
     return decorated_function
 
 
@@ -587,7 +588,8 @@ def admin_dashboard():
             pass
         else:
             dec_user = amc.decrypt_by_username(user.username)
-            data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:], "email": dec_user.email,
+            data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:],
+                         "email": dec_user.email,
                          "last_login": dec_user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "role": dec_user.is_admin,
                          "is_disabled": dec_user.is_disabled})
     msg_data = load_nav_messages()
@@ -1239,7 +1241,8 @@ def enrol_admin():
 
             check, register_error = amc.verify_details(username, email, mobile, nric, dob, age)
             if check:
-                return render_template('/admin/enrol-admin.html', title="Register", form=form, register_error=register_error)
+                return render_template('/admin/enrol-admin.html', title="Register", form=form,
+                                       register_error=register_error)
 
             logger = logging.getLogger('user_activity_log')
 
