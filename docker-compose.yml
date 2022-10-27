@@ -4,6 +4,7 @@ services:
 
   flask:
     build: .
+    image: flask
     container_name: flask
     depends_on:
       db:
