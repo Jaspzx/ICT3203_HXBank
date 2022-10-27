@@ -1,0 +1,37 @@
+{% extends "layouts/base.html" %}
+{% block title %} Topup {% endblock %}
+{% block content %}
+    <section class="container d-flex flex-column justify-content-start h-100 h-100 pt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-7 col-xl-6">
+                <div class="form-container text-center align-self-center">
+                    <h1 class="my-4 text-center">Top Up</h1>
+                    {% if form.amount.errors %}
+                        {% for error in form.amount.errors %}
+                            <div class="alert alert-danger" role="alert">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('views.topup_balance') }}" id="top-up">
+                        {{ form.csrf_token }}
+                        <div class="form-group">
+                            {{ form.amount.label(class="mb-2") }}
+                            <div class="input-group">
+                                <span class="input-group-text mb-4">$</span>
+                                {{ form.amount(class="form-control mb-4", size=1, placeholder="Enter Amount") }}
+                            </div>
+                            {{ form.recaptcha }}
+                            {{ form.topup_submit(class="form-btn my-4", id="recaptcha-submit") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+{% block javascripts %}
+<script nonce="{{ csp_nonce() }}">
+    function onSubmitCallback(token) {
+        document.getElementById("top-up").submit();
+    }
+</script>
+{% endblock %}

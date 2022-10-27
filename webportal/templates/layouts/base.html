@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel = "icon" href ="/static/images/HXBank_logo.png" type = "image/x-icon" nonce="{{ csp_nonce() }}">
+    <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}" nonce="{{ csp_nonce() }}"></script>
+    <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}" nonce="{{ csp_nonce() }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" nonce="{{ csp_nonce() }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" nonce="{{ csp_nonce() }}"/>
+</head>
+{% block stylesheets %}{% endblock %}
+<body class="">
+{% include 'includes/navigation.html' %}
+{% block content %}{% endblock %}
+{% block javascripts %}{% endblock %}
+{% include 'includes/footer.html' %}
+</body>
+</html>

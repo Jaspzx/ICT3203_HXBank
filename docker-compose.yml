@@ -1,0 +1,104 @@
+version: "3.9"
+
+services:
+
+  flask:
+    build: .
+    container_name: flask
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "5000"
+    working_dir: /app
+    volumes:
+      - ./db/:/etc/certs/
+    env_file:
+      - .env
+    networks:
+      default:
+        ipv4_address: 172.30.0.2
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8443:8443"
+    restart: always
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+    networks:
+      default:
+        ipv4_address: 172.30.0.3
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+    networks:
+      default:
+        ipv4_address: 172.30.0.4
+
+  jenkins-blueocean:
+    build: ./jenkins
+    user: root
+    container_name: jenkins-blueocean
+    restart: on-failure
+    expose:
+      - '8080:8080'
+      - '50000:50000'
+    volumes:
+      - 'jenkins-data:/var/jenkins_home'
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./certbot/www/:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+    networks:
+      default:
+        ipv4_address: 172.30.0.5
+
+  db:
+    image: mysql:latest
+    container_name: db
+    command: [ "mysqld",
+               "--character-set-server=utf8mb4",
+               "--collation-server=utf8mb4_unicode_ci",
+               "--bind-address=0.0.0.0",
+               "--require_secure_transport=ON",
+               "--ssl-ca=/etc/certs/ca.pem",
+               "--ssl-cert=/etc/certs/server-cert.pem",
+               "--ssl-key=/etc/certs/server-key.pem" ]
+    env_file:
+      - mysql.env
+    restart: always
+    expose:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./db/:/etc/certs/
+    healthcheck:
+      test: "mysql -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'show databases;'"
+      interval: 3s
+      timeout: 3s
+      retries: 5
+    networks:
+      default:
+        ipv4_address: 172.30.0.6
+
+networks:
+  default:
+    driver: bridge
+    name: HXBank_bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.30.0.0/16
+
+volumes:
+  jenkins-data:
+  jenkins-docker-certs:
+  mysql-data:

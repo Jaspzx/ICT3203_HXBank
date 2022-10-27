@@ -1,0 +1,58 @@
+{% extends "layouts/base.html" %}
+{% block title %} Transfer Recipients {% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}" nonce="{{ csp_nonce() }}"/>
+{% endblock stylesheets %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="transfer-table col-md-8">
+                <h1 class="my-4 text-center">Transfer Recipients</h1>
+                {% if form.transferee_acc.errors %}
+                    {% for error in form.transferee_acc.errors %}
+                        <div class="alert alert-danger" role="alert">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+                <table class="table table-striped table-bordered" id="transferee_table">
+                    <thead>
+                    <tr>
+                        <th>Account Number</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for i in data %}
+                        <tr>
+                            <td class="text-center">{{ i.acc_num }}</td>
+                            <td class="text-center">{{ i.first_name }}</td>
+                            <td class="text-center">{{ i.last_name }}</td>
+                            <form method="POST" action="{{ url_for('views.view_transferee') }}">
+                                {{ form.csrf_token }}
+                                {{ form.transferee_acc(value=i.acc_num) }}
+                                <td>
+                                    {{ form.submit(class="form-btn") }}
+                                </td>
+                            </form>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block javascripts %}
+    <script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}" nonce="{{ csp_nonce() }}"></script>
+    <script nonce="{{ csp_nonce() }}">
+        $(document).ready(function () {
+            $('#transferee_table').DataTable({
+                "columnDefs": [{
+                    target: "_all",
+                    className: "dt-center"
+                }],
+                responsive: true,
+            });
+        });
+    </script>
+{% endblock %}

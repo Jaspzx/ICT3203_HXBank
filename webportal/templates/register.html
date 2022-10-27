@@ -1,0 +1,138 @@
+{% extends "layouts/base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+    <main id="register" class="h-100 pt-5">
+        <section class="container d-flex flex-column justify-content-start h-100">
+            <div class="row justify-content-center">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="form-container text-center align-self-center">
+                        <form method="POST" action="{{ url_for('views.register') }}" id="register-form">
+                            {{ form.csrf_token }}
+                            <div class="form-title">
+                                <h1 class="title">Register</h1>
+                                <p>Enter your account details below:</p>
+                            </div>
+                            {% if register_error %}
+                                <div class="alert alert-danger" role="alert">{{ register_error }}</div>
+                            {% endif %}
+                            {% if form.username.errors %}
+                            {% for error in form.username.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.firstname.errors %}
+                            {% for error in form.firstname.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.lastname.errors %}
+                            {% for error in form.lastname.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.address.errors %}
+                            {% for error in form.address.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.email.errors %}
+                            {% for error in form.email.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.nric.errors %}
+                            {% for error in form.nric.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.mobile.errors %}
+                            {% for error in form.mobile.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.dob.errors %}
+                            {% for error in form.dob.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                                <div class="alert alert-danger" role="alert">
+                                    {{ error }}
+                                    <small><br>
+                                    Minimum 8 Alphanumeric Characters<br>
+                                    At least one number and one upper and lower case alphabet<br>
+                                    At least one special character
+                                    </small>
+                                </div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.confirm_password.errors %}
+                            {% for error in form.confirm_password.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            {% if form.accept_tos.errors %}
+                            {% for error in form.accept_tos.errors %}
+                                <div class="alert alert-danger" role="alert">{{ error }}</div>
+                            {% endfor %}
+                            {% endif %}
+                            <p>
+                                {{ form.username.label }} {{ form.username(size=20,
+                                class="form-control", placeholder="Enter your Username") }}
+                            </p>
+                            <p>
+                                {{ form.firstname.label }} {{ form.firstname(size=20,
+                                class="form-control", placeholder="Enter your First Name") }}
+                            </p>
+                            <p>
+                                {{ form.lastname.label }} {{ form.lastname(size=20,
+                                class="form-control", placeholder="Enter your Last Name") }}
+                            </p>
+                            <p>
+                                {{ form.address.label }} {{ form.address(size=20,
+                                class="form-control", placeholder="Enter your Address") }}
+                            </p>
+                            <p>
+                                {{ form.email.label }} {{ form.email(size=50,
+                                class="form-control", placeholder="Enter your Email") }}
+                            </p>
+                            <p>
+                                {{ form.nric.label }} {{ form.nric(size=20,
+                                class="form-control", placeholder="Enter your Identification No.") }}
+                            </p>
+                            <p>
+                                {{ form.mobile.label }} {{ form.mobile(size=20,
+                                class="form-control", placeholder="Enter your Mobile Number") }}
+                            </p>
+                            <p>
+                                {{ form.dob.label }} {{ form.dob(size=20,
+                                class="form-control", placeholder="Enter your DOB") }}
+                            </p>
+                            <p>
+                                {{ form.password.label }} {{ form.password(size=20,
+                                class="form-control", placeholder="Enter your Password") }}
+                            </p>
+                            <p>
+                                {{ form.confirm_password.label }} {{ form.confirm_password(size=20,
+                                class="form-control", placeholder="Confirm your Password") }}
+                            </p>
+                            <p>
+                                {{ form.accept_tos.label }} {{ form.accept_tos(size=20, class="form-check-input") }}
+                            </p>
+                            {{ form.recaptcha }}
+                            {{ form.register_submit(class="form-btn", id="recaptcha-submit") }}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}
+{% block javascripts %}
+<script nonce="{{ csp_nonce() }}">
+    function onSubmitCallback(token) {
+        document.getElementById("register-form").submit();
+    }
+</script>
+{% endblock %}

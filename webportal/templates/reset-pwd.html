@@ -1,0 +1,52 @@
+{% extends "layouts/base.html" %}
+{% block title %} Reset Password {% endblock %}
+{% block content %}
+    <main id="login" class="h-100 pt-5">
+        <section class="container d-flex flex-column justify-content-start h-100">
+            <div class="row justify-content-center">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="form-container text-center align-self-center">
+                        <form method="POST" action="{{ url_for('views.reset_pwd') }}" id="reset-pwd">
+                            {{ form.csrf_token }}
+                            <div class="form-title">
+                                <h1 class="title">Reset Password</h1>
+                                {% if reset_error %}
+                                    <div class="alert alert-danger" role="alert">{{ reset_error }}</div>
+                                {% endif %}
+                                {% if form.password.errors %}
+                                {% for error in form.password.errors %}
+                                    <div class="alert alert-danger" role="alert">{{ error }}</div>
+                                {% endfor %}
+                                {% endif %}
+                                {% if form.confirm_password.errors %}
+                                {% for error in form.confirm_password.errors %}
+                                    <div class="alert alert-danger" role="alert">{{ error }}</div>
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                {{ form.password.label }}
+                                {{ form.password(class="form-control", placeholder="Enter your new password") }}
+                            </div>
+                            <div class="form-group">
+                                {{ form.confirm_password.label }}
+                                {{ form.confirm_password(class="form-control", placeholder="Confirm your new password") }}
+                            </div>
+                            <div class="form-group">
+                                {{ form.recaptcha }}
+                                {{ form.reset_pwd_submit(class="form-btn", id="recaptcha-submit") }}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}
+{% block javascripts %}
+<script nonce="{{ csp_nonce() }}">
+    function onSubmitCallback(token) {
+        document.getElementById("reset-pwd").submit();
+    }
+</script>
+{% endblock %}

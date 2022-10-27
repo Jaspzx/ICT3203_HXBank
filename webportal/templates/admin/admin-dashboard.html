@@ -1,0 +1,77 @@
+{% extends "layouts/base.html" %}
+{% block title %} Admin Dashboard {% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/datatables/datatables.min.css') }}" nonce="{{ csp_nonce() }}"/>
+{% endblock stylesheets %}
+{% block content %}
+<main id="login" class="h-100 pt-5">
+    <section class="container d-flex flex-column justify-content-start h-100">
+        <div class="row align-items-start">
+            <table class="table" id="approve_transactions">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Last Login</th>
+                        <th>IC</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in data %}
+                    <tr>
+                        <td>{{ i.username }}</td>
+                        <td>
+                            {% if i.role == True %}
+                                Admin
+                            {% elif i.role == False %}
+                                User
+                            {% endif %}
+                        </td>
+                        <td>{{ i.last_login }}</td>
+                        <td>******{{ i.nric }}</td>
+                        <td>{{ i.email }}</td>
+                        <td>
+                            {% if i.is_disabled == 0 %}
+                                Enabled
+                            {% elif i.is_disabled == 1 %}
+                                Disabled
+                            {% endif %}
+                        </td>
+                        <form method="POST" action="{{ url_for('views.admin_dashboard') }}">
+                            <td>
+                                {{ form.csrf_token }}
+                                {{ form.userid(value=i.userid) }}
+                                {% if i.is_disabled %}
+                                    {{ form.unlock }}
+                                {% else %}
+                                    {{ form.disable }}
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ form.delete }}
+                            </td>
+                        </form>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ url_for('static', filename='vendor/datatables/datatables.min.js') }}" nonce="{{ csp_nonce() }}"></script>
+<script nonce="{{ csp_nonce() }}">
+    $(document).ready(function () {
+        $('#approve_transactions').DataTable({
+            responsive: true,
+            order: [[3, 'asc']],
+        });
+    });
+</script>
+{% endblock %}

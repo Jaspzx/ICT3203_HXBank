@@ -1,0 +1,58 @@
+{% extends "layouts/base.html" %}
+{% block title %} Login {% endblock %}
+{% block content %}
+    <main id="login" class="h-100 pt-5">
+        <section class="container d-flex flex-column justify-content-start h-100">
+            <div class="row justify-content-center">
+                <div class="col-lg-7 col-xl-6">
+                    <div class="form-container text-center align-self-center">
+                        <form method="POST" action="{{ url_for('views.login') }}" id="login-form">
+                            {{ form.csrf_token }}
+                            <div class="form-title">
+                                <h1 class="title">Sign In</h1>
+                                {% if login_error %}
+                                    <div class="alert alert-danger" role="alert">{{ login_error }}</div>
+                                {% endif %}
+                                {% if form.username.errors %}
+                                {% for error in form.username.errors %}
+                                    <div class="alert alert-danger" role="alert">{{ error }}</div>
+                                {% endfor %}
+                                {% endif %}
+                                {% if form.password.errors %}
+                                {% for error in form.password.errors %}
+                                    <div class="alert alert-danger" role="alert">{{ error }}</div>
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                {{ form.username.label }}
+                                {{ form.username(class="form-control", placeholder="Enter your Username") }}
+                            </div>
+                            <div class="form-group">
+                                {{ form.password.label }}
+                                {{ form.password(class="form-control", placeholder="Enter your Password") }}
+                            </div>
+                            <div class="form-group">
+                                {{ form.recaptcha }}
+                                {{ form.login_submit(class="form-btn", id="recaptcha-submit") }}
+                                </br></br>
+                                <small class="form-text text-muted sign-up-text">Don't have an account? <a
+                                        href="{{ url_for('views.register') }}" title="Register Page">Create a New
+                                    Account.</a></small><br>
+                                <small class="form-text text-muted sign-up-text"><a
+                                        href="{{ url_for('views.reset_identify', type='pwd') }}" title="Identify Yourself">Forgot Password.</a></small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}
+{% block javascripts %}
+<script nonce="{{ csp_nonce() }}">
+    function onSubmitCallback(token) {
+        document.getElementById("login-form").submit();
+    }
+</script>
+{% endblock %}

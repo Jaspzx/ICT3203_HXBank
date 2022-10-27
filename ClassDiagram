@@ -1,0 +1,144 @@
+Afnan, [24/10/2022 6:25 PM]
+@startuml
+AccountManagementController  --> User:creates
+AccountManagementController  --> EmailManagementController:uses
+BankAccountManagementController --> Account:uses
+BankAccountManagementController --> Transaction:uses
+BankAccountManagementController --> Transferee:uses
+MessageManagementController  --> Message:uses
+!theme plain
+top to bottom direction
+skinparam linetype ortho
+
+class AccountManagementController as "<Control> AccountManagementController" {
+   session_token: str
+   last_login: DateTime
+   is_disabled: bool
+   password_hash: str
+   prev_token: str
+   failed_login_attempts: int 
+   otp_secret: str
+   login_success(arg_user, arg_token): void
+   login_fail(arg_user): void
+   verify_details(username, email, mobile, nric, dob, age): bool
+   add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, otp_secret, token, perms): void
+   decrypt_by_username(username): user
+   decrypt_by_id(id): user
+   authenticate(user, password): int
+   generate_pyotp(user): void
+   reset_pwd(user, password): void
+   change_pw(user, password): void
+   unlock_account(user): void
+   disable_account(user): void
+   delete_account(user): void
+}
+class BankAccountManagementController as "<Control> BankAccountManagementController" {
+   add_bank_account(user_id): str, int
+   transfer_money_checks(amount, transferrer_acc, transferee_acc):  float, Account
+   create_transaction(amount, transferer_acc, transferee_acc, description): bool, str, str
+   add_transferee_checks(transferer_id, transferee_acc): str
+   add_transferee(transferee_acc): void
+   transaction_history(user_id): dict
+   view_transferee(user_id): list , dict
+   remove_transferee(transferee_acc): void
+   set_transfer_limit(user_id, amount): str
+   topup_balance(user_id, user_acc, amount, description): str
+}
+class EmailManagementController as "<Control> EmailManagementController" {
+   template: str
+   subject: str
+   email_token: str
+   send_email(self, arg_to, arg_subject, arg_template): void
+   generate_token(arg_username, user): str
+   nullify_token(user): void
+   confirm_token(arg_token, expiration=3600): str
+   verify_token(username, token): bool
+}
+class MessageManagementController as "<Control> MessageManagementController" {
+   read: bool
+   message: str
+   create_message(self, arg_user): void
+   send_welcome_msg(self, arg_amt, arg_user): void
+   send_incorrect_attempts(self, arg_user): void
+   send_last_login(self, arg_user): void
+   send_otp_reset(self, arg_user): void
+   send_password_reset(self, arg_user): void
+   send_pending_transfer(self, arg_amt, arg_transferee_acc_data, arg_user): void
+   send_success_transfer(self, arg_amt, arg_transferee_acc_data, arg_user): void
+   send_add_acc_no(self, arg_acc_no, arg_user): void
+   send_transfer_limit(self, arg_amt, arg_user): void
+   send_top_up(self, arg_amt, arg_user): void
+   send_password_change(self, arg_user): void
+   mark_message(msg): void
+   unmark_message(msg): void
+   del_messasge(msg): void
+}
+
+class Account as "Account" {
+   acc_number: str
+   acc_xfer_limit: float
+   reset_xfer_limit_date: DateTime
+   acc_balance: float
+   money_on_hold: float
+   acc_xfer_daily: float
+   reset_set_xfer_limit_date: DateTime
+   userid: int
+}
+class Message as "Message" {
+   date_sent: DateTime
+   sender: str
+   message: str
+   userid: int
+   id: omt
+   sender: str 
+   message: str
+   read: bol
+   date_sent: datetime 
+   userid: int
+}
+
+class Transaction as "Transaction" {
+   transferee_acc_number: str
+   description: str
+   date_transferred: DateTime
+   require_approval: bool
+   transferrer_acc_number: str
+   amt_transferred: float
+   status: int
+   id: int
+}
+
+class Transferee as "Transferee" {
+   date_added: DateTime
+   transferer_id: int
+   transferee_id: int
+   id: int
+}
+
+class User as "User" {
+   firstname: str
+   address: str
+   last_login: DateTime
+   is_disabled: bool
+   mobile: str
+   prev_token: str 
+   email_token: str
+   failed_login_attempts: int 
+   nric: str
+   otp_secret: str
+   lastname: str
+   is_admin: bool
+   dob: str
+   password_hash: str
+   date_joined: DateTime
+   email: str
+   username: str
+   id: int
+   username: str
+   email_verified: bool
+   session_token: str
+   get_totp_uri(self): str
+   verify_totp(self, token): bool
+   get_id(self): str
+}
+@enduml
