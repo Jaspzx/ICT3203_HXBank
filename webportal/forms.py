@@ -118,12 +118,12 @@ class TransferMoneyOneTimeForm(FlaskForm):
 
 
 class RemoveTransfereeForm(FlaskForm):
-    transferee_acc = HiddenField()
+    transferee_acc = HiddenField(validators=[InputRequired()])
     submit = SubmitField("Remove")
 
 
 class SecureMessageForm(FlaskForm):
-    msg = HiddenField()
+    msg = HiddenField(validators=[InputRequired()])
     mark = SubmitField("Read")
     unmark = SubmitField("Unread")
     delete = SubmitField("Delete")
@@ -136,14 +136,14 @@ class TopUpForm(FlaskForm):
 
 
 class ManageUserForm(FlaskForm):
-    userid = HiddenField()
+    userid = HiddenField(validators=[InputRequired()])
     disable = SubmitField("Disable")
     unlock = SubmitField("Unlock")
     delete = SubmitField("Delete")
 
 
 class ApproveTransactionForm(FlaskForm):
-    transactionid = HiddenField()
+    transactionid = HiddenField(validators=[InputRequired()])
     approve = SubmitField("Approve")
     reject = SubmitField("Reject")
 
