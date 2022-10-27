@@ -57,6 +57,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/nginx/ssl/:ro
+      - ./db/:./var/jenkins_home/workspace/hxbankpipeline/
     networks:
       default:
         ipv4_address: 172.30.0.5
