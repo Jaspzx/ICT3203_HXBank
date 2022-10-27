@@ -17,7 +17,6 @@ login_manager = LoginManager()
 csrf = CSRFProtect()
 mail = Mail()
 talisman = Talisman()
-DB_NAME = "database.db"
 encryptor = SimpleCrypt()
 
 from webportal.models.User import *
