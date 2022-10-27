@@ -14,7 +14,6 @@ pip install -r requirements.txt
 ```
 3. Run the program
 ```
-
 python main.py
 ```
 
@@ -36,8 +35,6 @@ HXBank
 ├── nginx/
 │   ├── Dockerfile
 │   │── nginx.conf
-├── instance/
-│   ├── database.db
 ├── webportal/
 │   ├── controllers/
 │   │   ├── AccountManagementController.py

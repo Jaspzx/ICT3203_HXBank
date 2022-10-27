@@ -26,7 +26,6 @@ from webportal.models.Transferee import *
 from webportal.models.Message import *
 from dotenv import load_dotenv
 
-# LOGGING
 FORMAT = "%(asctime)s {app} [%(thread)d] %(levelname)-5s %(name)s - %(message)s."
 formatted = FORMAT.format(app=__name__)
 log_dir = f'{os.getcwd()}\\webportal\\log'

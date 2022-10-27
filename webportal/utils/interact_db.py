@@ -2,10 +2,6 @@ from webportal import db
 
 
 def update_db() -> None:
-    """
-    Update database
-    :return None:
-    """
     try:
         db.session.commit()
     except:
@@ -15,10 +11,6 @@ def update_db() -> None:
 
 
 def add_db(new_obj) -> None:
-    """
-    Add database entry
-    :return None:
-    """
     try:
         db.session.add(new_obj)
         db.session.commit()
@@ -29,10 +21,6 @@ def add_db(new_obj) -> None:
 
 
 def del_db(target_obj) -> None:
-    """
-    Delete database entry
-    :return None:
-    """
     try:
         db.session.delete(target_obj)
         db.session.commit()
@@ -43,10 +31,6 @@ def del_db(target_obj) -> None:
 
 
 def update_db_no_close() -> None:
-    """
-    Update database but session is not closed
-    :return None:
-    """
     try:
         db.session.commit()
     except:
@@ -54,10 +38,6 @@ def update_db_no_close() -> None:
 
 
 def add_db_no_close(new_obj) -> None:
-    """
-    Add database entry but session is not closed
-    :return None:
-    """
     try:
         db.session.add(new_obj)
         db.session.commit()
@@ -66,10 +46,6 @@ def add_db_no_close(new_obj) -> None:
 
 
 def del_db_no_close(target_obj) -> None:
-    """
-    Delete database entry but session is not closed
-    :return None:
-    """
     try:
         db.session.delete(target_obj)
         db.session.commit()
