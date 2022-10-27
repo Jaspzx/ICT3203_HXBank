@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 
 FORMAT = "%(asctime)s {app} [%(thread)d] %(levelname)-5s %(name)s - %(message)s."
 formatted = FORMAT.format(app=__name__)
-log_dir = f'{os.getcwd()}\\webportal\\log'
+log_dir = os.path.join(os.getcwd(), "webportal", "log")
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
@@ -105,10 +105,11 @@ def create_webportal():
     app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS')
     app.config['RECAPTCHA_PUBLIC_KEY'] = os.getenv('RECAPTCHA_PUBLIC_KEY')
     app.config['RECAPTCHA_PRIVATE_KEY'] = os.getenv('RECAPTCHA_PRIVATE_KEY')
-    app.config['RECAPTCHA_DATA_ATTRS'] = {'bind': 'recaptcha-submit', 'callback': 'onSubmitCallback', 'size': 'invisible'}
+    app.config['RECAPTCHA_DATA_ATTRS'] = {'bind': 'recaptcha-submit', 'callback': 'onSubmitCallback',
+                                          'size': 'invisible'}
     app.config['FSC_EXPANSION_COUNT'] = 2048
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-    
+
     db.init_app(app)
     encryptor.init_app(app)
     mail.init_app(app)
@@ -166,10 +167,12 @@ def create_webportal():
 
     def page_not_found(e):
         return render_template('404.html'), 404
+
     app.register_error_handler(404, page_not_found)
+
     def internal_server_error(e):
         return render_template('500.html'), 500
-    app.register_error_handler(500, internal_server_error)
 
+    app.register_error_handler(500, internal_server_error)
 
     return app
