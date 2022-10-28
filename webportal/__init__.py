@@ -164,3 +164,25 @@ def create_webportal():
     from .views import views
     app.register_blueprint(views, url_prefix='/')
     return app
+
+
+def create_test_webportal():
+    load_dotenv()
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS')
+    app.config['SECURITY_PASSWORD_SALT'] = os.getenv('SECURITY_PASSWORD_SALT')
+
+    db.init_app(app)
+    encryptor.init_app(app)
+    flask_bcrypt.init_app(app)
+
+    login_manager.session_protection = "strong"
+    login_manager.login_view = 'views.login'
+
+    with app.app_context():
+        db.create_all()
+
+    from .views import views
+    app.register_blueprint(views, url_prefix='/')
+    return app
