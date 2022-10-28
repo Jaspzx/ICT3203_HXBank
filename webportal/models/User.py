@@ -1,7 +1,6 @@
 from flask_login import UserMixin
 from datetime import datetime
 from webportal import db
-import uuid
 import pyotp
 
 
