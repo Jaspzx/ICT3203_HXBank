@@ -141,7 +141,7 @@ def create_webportal():
     )
     login_manager.session_protection = "strong"
     login_manager.login_view = 'views.login'
-    print(app.config['SQLALCHEMY_DATABASE_URI'])
+
     with app.app_context():
         db.create_all()
         try:

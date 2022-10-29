@@ -193,9 +193,7 @@ def login():
     error = "Login Failed"
 
     if request.method == 'POST' and form.validate_on_submit():
-        print("posted")
         user = User.query.filter_by(username=escape(form.username.data)).first()
-        print(user)
         password = form.password.data
 
         if user:
