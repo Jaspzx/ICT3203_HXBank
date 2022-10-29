@@ -11,6 +11,9 @@
                             <div class="alert alert-danger" role="alert">{{ error }}</div>
                         {% endfor %}
                     {% endif %}
+                    {% if topup_error %}
+                        <div class="alert alert-danger" role="alert">{{ topup_error }}</div>
+                    {% endif %}
                     {% if form.csrf_token.errors %}
                         <div class="alert alert-danger" role="alert">You have submitted an invalid CSRF token</div>
                     {% endif %}
