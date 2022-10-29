@@ -96,6 +96,7 @@ class BankAccountManagementController:
 
     @staticmethod
     def add_transferee(transferee_acc):
+        transferee_acc = Account.query.filter_by(acc_number=transferee_acc).first()
         new_transferee = Transferee(current_user.id, transferee_acc.userid)
         add_db_no_close(new_transferee)
 
