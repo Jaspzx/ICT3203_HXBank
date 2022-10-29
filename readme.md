@@ -117,7 +117,6 @@ HXBank
 |   |   |   ├── auth-change-otp.html
 |   |   |   ├── change-otp.html
 |   |   |   ├── change-pwd.html
-|   |   |   ├── compose.html
 |   |   |   ├── dashboard.html
 |   |   |   ├── home.html
 |   |   |   ├── login.html
