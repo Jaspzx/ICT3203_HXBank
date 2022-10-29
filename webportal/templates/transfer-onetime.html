@@ -27,7 +27,7 @@
                     {% if transferee_error %}
                         <div class="alert alert-danger" role="alert">{{ transferee_error }}</div>
                     {% endif %}
-                    {% if form.csrf_token.errors %}
+                    {% if form.csrf_token and form.csrf_token.errors %}
                         <div class="alert alert-danger" role="alert">You have submitted an invalid CSRF token</div>
                     {% endif %}
                     <h2 class="my-4" style="text-size">Remaining Balance: ${{ balance }}</h2>

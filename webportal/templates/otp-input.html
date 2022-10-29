@@ -14,7 +14,7 @@
                             {% if login_error %}
                                 <div class="alert alert-danger" role="alert">{{ login_error }}</div>
                             {% endif %}
-                            {% if form.csrf_token.errors %}
+                            {% if form.csrf_token and form.csrf_token.errors %}
                                 <div class="alert alert-danger" role="alert">You have submitted an invalid CSRF token</div>
                             {% endif %}
                             {% if form.token.errors %}
@@ -30,7 +30,7 @@
                         <div class="form-group">
                             {{ form.recaptcha }}
                             {{ form.otp_submit(class="form-btn", id="recaptcha-submit") }}
-                            </br></br>
+                            <br><br>
                             <small class="form-text text-muted sign-up-text">Setup 2FA again? <a
                                         href="{{ url_for('views.reset_identify', type='otp') }}" title="OTP Setup">Click Here</a></small>
                         </div>
