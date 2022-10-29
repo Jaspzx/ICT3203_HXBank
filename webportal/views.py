@@ -58,7 +58,6 @@ def register():
     if current_user.is_authenticated:
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
-
         return redirect(url_for('views.dashboard'))
 
     form = RegisterForm()
@@ -102,7 +101,6 @@ def register():
         confirm_url = url_for('views.confirm_email', token=token, _external=True)
         emc.send_email(email, "HX-Bank - Email Verification",
                        render_template('/email_templates/activate.html', confirm_url=confirm_url))
-
         return redirect(url_for("views.otp_setup"))
     return render_template('register.html', title="Register", form=form)
 
@@ -110,13 +108,11 @@ def register():
 @views.route('/confirm/<token>')
 def confirm_email(token):
     emc = EmailManagementController()
-
     try:
         email = emc.confirm_token(token)
         if emc.verify_token(email, token):
             if 'username' in session:
                 pass
-
             return redirect(url_for('views.login'))
         else:
             abort(404)
@@ -189,35 +185,30 @@ def login():
     logger = logging.getLogger('auth_log')
     if current_user.is_authenticated:
         logger.info(f"src_ip {ip_source} -> {current_user.username} user account successfully logged in")
-
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
-
         return redirect(url_for('views.dashboard'))
 
     form = LoginForm()
     error = "Login Failed"
 
     if request.method == 'POST' and form.validate_on_submit():
-
+        print("posted")
         user = User.query.filter_by(username=escape(form.username.data)).first()
+        print(user)
         password = form.password.data
 
         if user:
             auth = amc.authenticate(user, password)
-
             if auth == 1:
                 session['username'] = user.username
                 return redirect(url_for('views.otp_input'))
-
             elif auth == 2:
                 error = "Account has been locked out. Please contact customer support for assistance."
                 return render_template('login.html', title="Login", form=form, login_error=error)
-
             elif auth == 3:
                 logger.warning(f"src_ip {ip_source} -> {user.username} user account failed to login")
                 return render_template('login.html', title="Login", form=form, login_error=error)
-
             else:
                 logger.warning(f"src_ip {ip_source} -> {user.username} user account has been locked out")
                 error = "Account has been locked out. Please contact customer support for assistance."
@@ -231,10 +222,8 @@ def login():
 @login_required
 def logout():
     ip_source = ipaddress.IPv4Address(request.remote_addr)
-
     logger = logging.getLogger('auth_log')
     logger.info(f"src_ip {ip_source} -> {current_user.username} user account successfully logged out")
-
     logout_user()
     session.clear()
     return redirect(url_for('views.login'))
@@ -264,27 +253,21 @@ def otp_input():
     if request.method == 'POST' and form.validate_on_submit():
         amc = AccountManagementController()
         user = User.query.filter_by(username=session['username']).first()
-
         if user and user.prev_token == escape(form.token.data):
             error = "Something went wrong"
             return render_template('otp-input.html', form=form, login_error=error)
-
         elif user.is_disabled:
             del session['username']
             form = LoginForm()
             error = "Account has been locked out. Please contact customer support for assistance."
             return render_template('login.html', title="Login", form=form, login_error=error)
-
         elif user and user.verify_totp(escape(form.token.data)):
             del session['username']
             amc.login_success(user, escape(form.token.data))
             login_user(user)
-
             if current_user.failed_login_attempts > 0:
                 mmc.send_incorrect_attempts(current_user)
-
             mmc.send_last_login(current_user)
-
             log_message = f"src_ip {ip_source} -> {current_user.username} logged in on {current_user.last_login.strftime('%Y-%m-%d %H:%M:%S')}"
             logger.info(log_message)
 
@@ -310,10 +293,8 @@ def otp_input():
 @login_required
 def unverified_email():
     if current_user.email_verified:
-
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
-
         else:
             return redirect(url_for('views.dashboard'))
     return render_template('verify-email.html')
@@ -325,7 +306,6 @@ def resend_verification():
     if current_user.email_verified:
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
-
         else:
             return redirect(url_for('views.dashboard'))
 
@@ -367,10 +347,8 @@ def reset_identify():
             session['nric'] = user.nric
             session['dob'] = user.dob
             session['flag'] = 1
-
             if "username" in session and session['type'] == "otp":
                 session['email'] = user.email
-
                 if session['nric'] == escape(form.nric.data) and session['dob'] == str(escape(form.dob.data)):
                     del session['nric']
                     del session['dob']
@@ -426,7 +404,6 @@ def reset_email_auth():
 @views.route('/confirm_otp/<token>')
 def confirm_otp(token):
     emc = EmailManagementController()
-
     try:
         username = emc.confirm_token(token)
         user = User.query.filter_by(username=username).first()
@@ -542,12 +519,9 @@ def dashboard():
                          "description": item.description, "require_approval": item.require_approval,
                          "status": item.status, "debit": True})
     data = {x['date_transferred']: x for x in data}.values()
-
     user = amc.decrypt_by_username(username=current_user.username)
     firstname, lastname = user.firstname, user.lastname
-
     msg_data = load_nav_messages()
-
     return render_template('dashboard.html', title="Dashboard", firstname=firstname, lastname=lastname,
                            data=user_data, msg_data=msg_data, recent_trans=data,
                            available_balance=total_available_balance, xfer_remain=daily_xfer_remain)
@@ -566,19 +540,14 @@ def admin_dashboard():
 
     if request.method == "POST" and form.validate_on_submit():
         user_acc = User.query.filter_by(id=escape(form.userid.data)).first()
-
         if user_acc.id == current_user.id:
             return redirect(url_for('views.admin_dashboard'))
-
         if form.data["unlock"]:
             amc.unlock_account(user_acc)
-
         elif form.data["disable"]:
             amc.disable_account(user_acc)
-
         elif form.data["delete"]:
             amc.delete_account(user_acc)
-
         return redirect(url_for('views.admin_dashboard'))
 
     user_acc = User.query.all()
@@ -593,7 +562,6 @@ def admin_dashboard():
                          "last_login": dec_user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "role": dec_user.is_admin,
                          "is_disabled": dec_user.is_disabled})
     msg_data = load_nav_messages()
-
     return render_template('/admin/admin-dashboard.html', title="Admin Dashboard", data=data, form=form,
                            msg_data=msg_data)
 
@@ -796,13 +764,9 @@ def add_transferee():
 def transaction_history():
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
-
     msg_data = load_nav_messages()
-
     bamc = BankAccountManagementController()
-
     data = bamc.transaction_history(current_user.id)
-
     return render_template('transaction-history.html', title="Transaction History", data=data, msg_data=msg_data)
 
 
@@ -849,7 +813,6 @@ def set_transfer_limit():
         amc = AccountManagementController()
 
         amount = float(Decimal(escape(form.transfer_limit.data)).quantize(TWO_PLACES))
-
         set_status = bamc.set_transfer_limit(current_user.id, amount)
         if set_status is not None:
             return render_template('set-transfer-limit.html', title="Set Transfer Limit", form=form, msg_data=msg_data,
@@ -968,7 +931,6 @@ def transaction_management():
             transaction.status = 0
             transaction.require_approval = False
             update_db_no_close()
-
         else:
             transferrer_acc.acc_balance += transferrer_acc.money_on_hold
             transferrer_acc.money_on_hold -= transferrer_acc.money_on_hold
@@ -1025,7 +987,6 @@ def change_pwd():
 
                 logger = logging.getLogger('user_activity_log')
                 logger.info(f"src_ip {ip_source} -> {current_user.username} has changed their password")
-
                 return redirect(url_for("views.acc_settings"))
             else:
                 error = "Incorrect OTP"
@@ -1205,13 +1166,9 @@ def recent_transactions():
 @check_email_verification
 def profile():
     amc = AccountManagementController()
-
     user = amc.decrypt_by_username(username=current_user.username)
-
     acc_info = Account.query.filter_by(userid=current_user.id).first()
-
     msg_data = load_nav_messages()
-
     return render_template('profile.html', title="Profile Page", user=user, msg_data=msg_data, acc_info=acc_info)
 
 
@@ -1257,14 +1214,11 @@ def enrol_admin():
             confirm_url = url_for('views.confirm_email', token=token, _external=True)
             emc.send_email(email, "HX-Bank - Email Verification",
                            render_template('/email_templates/activate.html', confirm_url=confirm_url))
-
             logout_user()
             session.clear()
             session['username'] = username
-
             return redirect(url_for("views.otp_setup"))
         return render_template('/admin/enrol-admin.html', title="Register Admin", form=form)
-
     return redirect(url_for('views.login'))
 
 

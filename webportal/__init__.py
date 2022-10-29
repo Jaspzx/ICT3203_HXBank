@@ -109,7 +109,6 @@ def create_webportal():
                                           'size': 'invisible'}
     app.config['FSC_EXPANSION_COUNT'] = 2048
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-
     db.init_app(app)
     encryptor.init_app(app)
     mail.init_app(app)
@@ -142,7 +141,7 @@ def create_webportal():
     )
     login_manager.session_protection = "strong"
     login_manager.login_view = 'views.login'
-
+    print(app.config['SQLALCHEMY_DATABASE_URI'])
     with app.app_context():
         db.create_all()
         try:
