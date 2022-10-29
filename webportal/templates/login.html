@@ -13,6 +13,9 @@
                                 {% if login_error %}
                                     <div class="alert alert-danger" role="alert">{{ login_error }}</div>
                                 {% endif %}
+                                {% if form.csrf_token.errors %}
+                                    <div class="alert alert-danger" role="alert">You have submitted an invalid CSRF token</div>
+                                {% endif %}
                                 {% if form.username.errors %}
                                 {% for error in form.username.errors %}
                                     <div class="alert alert-danger" role="alert">{{ error }}</div>

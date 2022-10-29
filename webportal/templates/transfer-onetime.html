@@ -27,6 +27,9 @@
                     {% if transferee_error %}
                         <div class="alert alert-danger" role="alert">{{ transferee_error }}</div>
                     {% endif %}
+                    {% if form.csrf_token.errors %}
+                        <div class="alert alert-danger" role="alert">You have submitted an invalid CSRF token</div>
+                    {% endif %}
                     <h2 class="my-4" style="text-size">Remaining Balance: ${{ balance }}</h2>
                     <form method="POST" action="{{ url_for('views.transfer_onetime') }}" id="transfer-onetime">
                         {{ form.csrf_token }}

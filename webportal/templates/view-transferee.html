@@ -13,6 +13,9 @@
                         <div class="alert alert-danger" role="alert">{{ error }}</div>
                     {% endfor %}
                 {% endif %}
+                {% if form.csrf_token.errors %}
+                    <div class="alert alert-danger" role="alert">You have submitted an invalid CSRF token</div>
+                {% endif %}
                 <table class="table table-striped table-bordered" id="transferee_table">
                     <thead>
                     <tr>
