@@ -245,7 +245,7 @@ def otp_input():
             return redirect(url_for('views.admin_dashboard'))
         return redirect(url_for('views.dashboard'))
 
-    form = Token2FAForm(request.form)
+    form = Token2FAForm()
     error = "Invalid Token"
 
     if request.method == 'POST' and form.validate_on_submit():
@@ -334,7 +334,7 @@ def reset_identify():
             if 'type' not in session:
                 return redirect(url_for('views.login'))
 
-    form = ResetFormIdentify(request.form)
+    form = ResetFormIdentify()
     if request.method == 'POST' and form.validate_on_submit():
         error = "Identification Failed"
 
@@ -428,7 +428,7 @@ def reset_authenticate():
     if 'type' not in session:
         session.clear()
         return redirect(url_for("views.login"))
-    form = ResetFormAuthenticate(request.form)
+    form = ResetFormAuthenticate()
     error = "Invalid Token"
     if request.method == 'POST' and form.validate_on_submit():
         del session['flag']
@@ -461,7 +461,7 @@ def reset_pwd():
     if 'username' not in session:
         session.clear()
         return redirect(url_for("views.login"))
-    form = ResetPasswordForm(request.form)
+    form = ResetPasswordForm()
     error = "Reset Failed"
     if request.method == 'POST' and form.validate_on_submit():
         del session['flag']
@@ -968,6 +968,9 @@ def change_pwd():
         emc = EmailManagementController()
         user = User.query.filter_by(username=current_user.username).first()
         if user:
+            if form.current_password.data == form.password.data:
+                error = "Old and New Passwords cannot be identical"
+                return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)
             if user.prev_token == form.token.data:
                 error = "Something went wrong"
                 return render_template('change-pwd.html', form=form, reset_error=error, msg_data=msg_data)

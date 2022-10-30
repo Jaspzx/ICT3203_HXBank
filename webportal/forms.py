@@ -100,7 +100,9 @@ class SetTransferLimitForm(FlaskForm):
 
 
 class TransferMoneyForm(FlaskForm):
-    transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
+    transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired(), Length(min=10, max=10),
+                                                                       Regexp("^\\d{10,10}$",
+                                                                              message="Invalid account number")])
     amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
     description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50),
                                                           Regexp("^[A-Za-z0-9$\\.\\s]", message="Invalid Characters")])
@@ -126,7 +128,7 @@ class RemoveTransfereeForm(FlaskForm):
 
 
 class SecureMessageForm(FlaskForm):
-    msg = HiddenField(validators=[InputRequired()])
+    msg = HiddenField(validators=[InputRequired(), Regexp("^[\\d]+$", message="Invalid ID")])
     mark = SubmitField("Read")
     unmark = SubmitField("Unread")
     delete = SubmitField("Delete")
@@ -139,20 +141,23 @@ class TopUpForm(FlaskForm):
 
 
 class ManageUserForm(FlaskForm):
-    userid = HiddenField(validators=[InputRequired()])
+    userid = HiddenField(validators=[InputRequired(), Regexp("^[\\d]+$", message="Invalid ID")])
     disable = SubmitField("Disable")
     unlock = SubmitField("Unlock")
     delete = SubmitField("Delete")
 
 
 class ApproveTransactionForm(FlaskForm):
-    transactionid = HiddenField(validators=[InputRequired()])
+    transactionid = HiddenField(validators=[InputRequired(), Regexp("^[\\d]+$", message="Invalid ID")])
     approve = SubmitField("Approve")
     reject = SubmitField("Reject")
 
 
 class ChangePasswordForm(FlaskForm):
-    current_password = PasswordField("Current Password", validators=[InputRequired()],
+    current_password = PasswordField("Current Password", validators=[InputRequired(), Length(min=8),
+                                                                     Regexp(
+                                                                         "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
+                                                                         message="Password complexity not met")],
                                      render_kw={"placeholder": "Password"})
     password = PasswordField("New Password", validators=[InputRequired(), Length(min=8),
                                                          EqualTo('confirm_password', message='Passwords must match'),
