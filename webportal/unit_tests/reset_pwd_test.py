@@ -32,6 +32,46 @@ class ResetpwdTest(unittest.TestCase):
             authenticate = self.amc.authenticate(user, "Password11_")
             self.assertEqual(authenticate, 1)
 
+    def testIdentify(self):
+        """
+        Test the reset identify with all correct values
+        """
+        with app.app_context():
+            with self.client:
+                response = self.client.post('/reset-identify?type=pwd', data={"username": "test", "nric": "S1234123Q",
+                                                                              "dob": "1111-11-11"}, follow_redirects=True)
+                self.assertIn(b'Authenticate Yourself', response.data)
+
+    def testUsernameI(self):
+        """
+        Test the reset identify with wrong username
+        """
+        with app.app_context():
+            with self.client:
+                response = self.client.post('/reset-identify?type=pwd', data={"username": "test1", "nric": "S1234123Q",
+                                                                              "dob": "1111-11-11"}, follow_redirects=True)
+                self.assertIn(b'Identification Failed', response.data)
+
+    def testIDI(self):
+        """
+        Test the reset identify with wrong ID
+        """
+        with app.app_context():
+            with self.client:
+                response = self.client.post('/reset-identify?type=pwd', data={"username": "test", "nric": "S1234123R",
+                                                                              "dob": "1111-11-11"}, follow_redirects=True)
+                self.assertIn(b'Identification Failed', response.data)
+
+    def testDOBI(self):
+        """
+        Test the reset identify with wrong DOB
+        """
+        with app.app_context():
+            with self.client:
+                response = self.client.post('/reset-identify?type=pwd', data={"username": "test", "nric": "S1234123Q",
+                                                                              "dob": "1111-11-12"}, follow_redirects=True)
+                self.assertIn(b'Identification Failed', response.data)
+
     def tearDown(self):
         """
         Tear down the unit test.
