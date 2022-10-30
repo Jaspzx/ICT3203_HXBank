@@ -83,6 +83,7 @@ def register():
             return render_template('register.html', title="Register", form=form, register_error=register_error)
 
         logger = logging.getLogger('user_activity_log')
+        logger.propagate = False
 
         amc.add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, None, None, 0)
 
@@ -183,6 +184,7 @@ def login():
     ip_source = ipaddress.IPv4Address(request.remote_addr)
 
     logger = logging.getLogger('auth_log')
+    logger.propagate = False
     if current_user.is_authenticated:
         logger.info(f"src_ip {ip_source} -> {current_user.username} user account successfully logged in")
         if current_user.is_admin:
@@ -221,6 +223,7 @@ def login():
 def logout():
     ip_source = ipaddress.IPv4Address(request.remote_addr)
     logger = logging.getLogger('auth_log')
+    logger.propagate = False
     logger.info(f"src_ip {ip_source} -> {current_user.username} user account successfully logged out")
     logout_user()
     session.clear()
@@ -235,6 +238,7 @@ def otp_input():
     ip_source = ipaddress.IPv4Address(request.remote_addr)
 
     logger = logging.getLogger('auth_log')
+    logger.propagate = False
 
     if 'username' not in session:
         session.clear()
@@ -615,6 +619,7 @@ def transfer():
                                                                                                  description)
 
         logger = logging.getLogger('user_activity_log')
+        logger.propagate = False
         logger.info(
             f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to {transferee_acc_number}")
 
@@ -684,6 +689,7 @@ def transfer_onetime():
                                                                                                  description)
 
         logger = logging.getLogger('user_activity_log')
+        logger.propagate = False
         logger.info(
             f"src_ip {ip_source} -> {Decimal(amount).quantize(TWO_PLACES)} transferred from {transferer_acc_number} to "
             f"{transferee_acc_number}")
@@ -748,6 +754,7 @@ def add_transferee():
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         logger = logging.getLogger('user_activity_log')
+        logger.propagate = False
         logger.info(
             f"src_ip {ip_source} -> {current_user.username} has added {transferee_acc.acc_number} as a transferee")
 
@@ -825,6 +832,7 @@ def set_transfer_limit():
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         logger = logging.getLogger('user_activity_log')
+        logger.propagate = False
         logger.info(f"src_ip {ip_source} -> {current_user.username} has updated transfer limit to ${amount}")
 
         return redirect(url_for('views.success'))
@@ -868,6 +876,7 @@ def topup_balance():
                                        time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
         logger = logging.getLogger('user_activity_log')
+        logger.propagate = False
         logger.info(f"src_ip {ip_source} -> {current_user.username} has topped up {amount}")
 
         return redirect(url_for('views.success'))
@@ -987,6 +996,7 @@ def change_pwd():
                 mmc.send_password_change(user)
 
                 logger = logging.getLogger('user_activity_log')
+                logger.propagate = False
                 logger.info(f"src_ip {ip_source} -> {current_user.username} has changed their password")
                 return redirect(url_for("views.acc_settings"))
             else:
@@ -1009,6 +1019,7 @@ def change_otp():
             return render_template('auth-change-otp.html', form=form, msg_data=msg_data, otp_error=error)
         elif current_user.verify_totp(escape(form.token.data)):
             logger = logging.getLogger('user_activity_log')
+            logger.propagate = False
             logger.info(f"src_ip {ip_source} -> {current_user.username} has updated their OTP")
             session['flag'] = 1
             return redirect(url_for("views.auth_otp_reset"))
@@ -1203,6 +1214,7 @@ def enrol_admin():
                                        register_error=register_error)
 
             logger = logging.getLogger('user_activity_log')
+            logger.propagate = False
 
             amc.add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, None, None, 1)
 
