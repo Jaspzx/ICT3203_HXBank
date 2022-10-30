@@ -107,6 +107,8 @@ HXBank
 |   |   |   ├── footer.html
 |   |   |   ├── navigation.html
 |   │   ├── layouts/
+|   |   |   ├── 404.html
+|   |   |   ├── 500.html
 |   │   │   ├── base.html
 |   |   |   ├── about.html
 |   |   |   ├── account-setting.html
@@ -115,7 +117,6 @@ HXBank
 |   |   |   ├── auth-change-otp.html
 |   |   |   ├── change-otp.html
 |   |   |   ├── change-pwd.html
-|   |   |   ├── compose.html
 |   |   |   ├── dashboard.html
 |   |   |   ├── home.html
 |   |   |   ├── login.html

@@ -1,4 +1,5 @@
 from random import SystemRandom
+from webportal import db
 from webportal.models.Account import *
 from datetime import datetime, timedelta
 

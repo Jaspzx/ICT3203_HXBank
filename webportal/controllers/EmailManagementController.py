@@ -45,12 +45,8 @@ class EmailManagementController:
     @staticmethod
     def verify_token(username, token):
         user = User.query.filter_by(username=username).first()
-
-        # Abort if not match.
         if user.email_token != token:
             return False
-
-        # Redirect if matches. 
         elif user.email_verified:
             return True
         else:

@@ -30,23 +30,18 @@ class AccountManagementController:
         enc_mobile = encryptor.encrypt(mobile)
         enc_nric = encryptor.encrypt(nric)
 
-        # Check if the username exist. 
         if User.query.filter_by(username=username).first() is not None:
             return True, "Username already in use."
 
-        # Check if the email exist. 
         if User.query.filter_by(email=enc_email).first() is not None:
             return True, "Email already in use."
 
-        # Check if the mobile number exist. 
         if User.query.filter_by(mobile=enc_mobile).first() is not None:
             return True, "Mobile number already in use."
 
-        # Check if nric exist. 
         if User.query.filter_by(nric=enc_nric).first() is not None:
             return True, "Identification No. already in use."
 
-        # Check if date and age are valid. 
         if dob > date.today():
             return True, "Invalid date"
         elif age < 16:
@@ -100,36 +95,22 @@ class AccountManagementController:
 
     @staticmethod
     def authenticate(user, password):
-        # Check the user's password against the db. 
         if flask_bcrypt.check_password_hash(user.password_hash, password):
-
-            # Check if the user's account is disabled.
             if user.is_disabled:
                 return 2
-
-            # Redirect to input OTP page is user's account is not disabled. 
             return 1
-
-        # Invalid attempt detected.
         else:
-            # Increase failed login attempts.
             user.failed_login_attempts += 1
-
-            # Disable if login attempts is greater than 3. 
             if user.failed_login_attempts > 3:
                 user.is_disabled = True
                 user.failed_login_attempts = 0
                 update_db_no_close()
                 return 4
-
-                # Update the db.
             update_db_no_close()
-
             return 3
 
     @staticmethod
     def generate_pyotp(user):
-        # Generate the pyotp secret. 
         user.otp_secret = pyotp.random_base32()
         update_db_no_close()
 
