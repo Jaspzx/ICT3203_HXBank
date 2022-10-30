@@ -102,7 +102,8 @@ class SetTransferLimitForm(FlaskForm):
 class TransferMoneyForm(FlaskForm):
     transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
     amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
-    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
+    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50),
+                                                          Regexp("^[A-Za-z0-9$\\.\\s]", message="Invalid Characters")])
     recaptcha = RecaptchaField()
     transfer_money_submit = SubmitField("Transfer")
 
@@ -112,13 +113,15 @@ class TransferMoneyOneTimeForm(FlaskForm):
                                                                       Regexp("^\\d{10,10}$",
                                                                              message="Invalid account number")])
     amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
-    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
+    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50),
+                                                          Regexp("^[A-Za-z0-9$\\.\\s]", message="Invalid Characters")])
     recaptcha = RecaptchaField()
     transfer_onetime_submit = SubmitField("Transfer")
 
 
 class RemoveTransfereeForm(FlaskForm):
-    transferee_acc = HiddenField(validators=[InputRequired()])
+    transferee_acc = HiddenField(validators=[InputRequired(), Length(min=10, max=10), Regexp("^\\d{10,10}$",
+                                                                                             message="Invalid account number")])
     submit = SubmitField("Remove")
 
 

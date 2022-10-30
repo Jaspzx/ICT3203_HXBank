@@ -5,6 +5,7 @@ from webportal.controllers.AccountManagementController import *
 from webportal.controllers.BankAccountManagementController import *
 from webportal.models.User import *
 from webportal.models.Account import *
+from flask_login import login_user
 
 app = create_test_webportal()
 
@@ -21,6 +22,7 @@ class ViewTransfereeTest(unittest.TestCase):
         """
         password1 = flask_bcrypt.generate_password_hash("Password1_")
         password2 = flask_bcrypt.generate_password_hash("Password2_")
+        self.client = app.test_client()
         with app.app_context():
             db.create_all()
             self.amc.add_user("test", "Raymond", "Tan", "10kkj", "raymondtan@gmail.com", "98765433", "S1234123Q",
@@ -38,6 +40,53 @@ class ViewTransfereeTest(unittest.TestCase):
             self.bamc.add_transferee(self.user1_id, transferee_acc.acc_number)
             data = self.bamc.view_transferee(self.user1_id)
             self.assertIsNotNone(data, len(data) != 0)
+
+    def testAddTransfereeI(self):
+        """
+        Tests add transferee using invalid account number
+        """
+        with app.app_context():
+            with self.client:
+                self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
+                user = User.query.filter_by(id=self.user1_id).first()
+                user.email_verified = True
+                update_db_no_close()
+                login_user(user)
+                response = self.client.post('/personal-banking/add-transferee', data={"transferee_acc": "010102097e"},
+                                            follow_redirects=True)
+                self.assertIn(b'Invalid account number', response.data)
+
+    def testDeleteTransfereeI(self):
+        """
+        Tests delete transferee using invalid account number
+        """
+        with app.app_context():
+            with self.client:
+                self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
+                user = User.query.filter_by(id=self.user1_id).first()
+                user.email_verified = True
+                update_db_no_close()
+                login_user(user)
+                response = self.client.post('/personal-banking/view-transferee', data={"transferee_acc": "010102097e"},
+                                            follow_redirects=True)
+                self.assertIn(b'Invalid account number', response.data)
+
+    def testAddTransferee(self):
+        """
+        Tests add transferee using valid account number
+        """
+        with app.app_context():
+            with self.client:
+                self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
+                user = User.query.filter_by(id=self.user1_id).first()
+                user.email_verified = True
+                update_db_no_close()
+                login_user(user)
+                transferee_acc_no = Account.query.filter_by(userid=self.user2_id).first().acc_number
+                response = self.client.post('/personal-banking/add-transferee',
+                                            data={"transferee_acc": transferee_acc_no},
+                                            follow_redirects=True)
+                self.assertIn(b'You have added account number:', response.data)
 
     def tearDown(self):
         """
