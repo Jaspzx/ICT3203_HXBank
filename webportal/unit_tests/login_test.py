@@ -18,7 +18,7 @@ class LoginTest(unittest.TestCase):
         with app.app_context():
             db.create_all()
             self.amc.add_user("test", "Raymond", "Tan", "10kkj", "raymondtan@gmail.com", "98765433", "S1234123Q",
-                              "11-11-1111", password1, None, None, 0)
+                              "1111-11-11", password1, None, None, 0)
 
     def testInit(self):
         """
@@ -96,6 +96,9 @@ class LoginTest(unittest.TestCase):
                 self.assertIn(b'Something went wrong', response.data)
 
     def tearDown(self):
+        """
+        Tear down the unit test.
+        """
         with app.app_context():
             db.session.remove()
             db.drop_all()
