@@ -3,6 +3,9 @@ from flask_bcrypt import Bcrypt
 from webportal import db, create_webportal, create_test_webportal
 from webportal.controllers.AccountManagementController import *
 from webportal.controllers.BankAccountManagementController import *
+from webportal.models.User import *
+from webportal.models.Account import *
+
 
 app = create_test_webportal()
 

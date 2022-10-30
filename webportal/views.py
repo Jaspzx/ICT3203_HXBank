@@ -739,7 +739,7 @@ def add_transferee():
             return render_template('add-transferee.html', title="Add Transferee", form=form, add_error=add_error,
                                    msg_data=msg_data)
 
-        transferee_acc = bamc.add_transferee(transferee_acc)
+        transferee_acc = bamc.add_transferee(current_user.id, transferee_acc)
 
         dec_user = amc.decrypt_by_id(current_user.id)
         mmc.send_add_acc_no(transferee_acc.acc_number, current_user)
