@@ -1,5 +1,4 @@
 from webportal import create_webportal
-from webportal.unit_tests.register_test import *
 from flask import Flask
 
 app = create_webportal()
