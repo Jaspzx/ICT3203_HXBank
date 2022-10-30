@@ -13,13 +13,14 @@ class ResetpwdTest(unittest.TestCase):
         """
         Test the setting up of the db with values.
         """
-        password = flask_bcrypt.generate_password_hash("password1")
+        password = flask_bcrypt.generate_password_hash("Password1_")
+        self.client = app.test_client()
         with app.app_context():
             db.create_all()
-            self.amc.add_user("test", "Raymond", "Tan", "10kkj", "raymondtan@gmail.com", "98765433", "S12341235",
-                         "11-11-1111", password, None, None, 0)
+            self.amc.add_user("test", "Raymond", "Tan", "10kkj", "raymondtan@gmail.com", "98765433", "S1234123Q",
+                              "1111-11-11", password, None, None, 0)
             user = User.query.filter_by(username="test").first()
-            newpass = flask_bcrypt.generate_password_hash("password11")
+            newpass = flask_bcrypt.generate_password_hash("Password11_")
             self.amc.reset_pwd(user, newpass)
 
     def testLogin(self):
@@ -28,7 +29,7 @@ class ResetpwdTest(unittest.TestCase):
         """
         with app.app_context():
             user = User.query.filter_by(username="test").first()
-            authenticate = self.amc.authenticate(user, "password11")
+            authenticate = self.amc.authenticate(user, "Password11_")
             self.assertEqual(authenticate, 1)
 
     def tearDown(self):

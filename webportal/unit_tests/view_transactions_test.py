@@ -17,14 +17,14 @@ class ViewtransactionsTest(unittest.TestCase):
         """
         Test the setting up of the db with values.
         """
-        password1 = flask_bcrypt.generate_password_hash("password1")
-        password2 = flask_bcrypt.generate_password_hash("password2")
+        password1 = flask_bcrypt.generate_password_hash("Password1_")
+        password2 = flask_bcrypt.generate_password_hash("Password2_")
         with app.app_context():
             db.create_all()
-            self.amc.add_user("test", "Raymond", "Tan", "10kkj", "raymondtan@gmail.com", "98765433", "S12341235",
-                         "11-11-1111", password1, None, None, 0)
-            self.amc.add_user("test1", "Bernard", "Tan", "10kkj", "bernardtan@gmail.com", "98765432", "S12341234",
-                         "11-11-1111", password2, None, None, 0)
+            self.amc.add_user("test", "Raymond", "Tan", "10kkj", "raymondtan@gmail.com", "98765433", "S1234123Q",
+                              "1111-11-11", password1, None, None, 0)
+            self.amc.add_user("test1", "Bernard", "Tan", "10kkj", "bernardtan@gmail.com", "98765432", "S1234123W",
+                              "1111-11-11", password2, None, None, 0)
             self.user1_id = User.query.filter_by(username="test").first().id
             self.user2_id = User.query.filter_by(username="test1").first().id
             self.bamc.add_bank_account(self.user1_id)
