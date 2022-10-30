@@ -5,26 +5,36 @@ from webportal.controllers.AccountManagementController import *
 
 app = create_test_webportal()
 
-class UpdateprofileTest(unittest.TestCase):
+
+class ResetpwdTest(unittest.TestCase):
     amc = AccountManagementController()
 
     def setUp(self):
-        password = flask_bcrypt.generate_password_hash("password")
+        """
+        Test the setting up of the db with values.
+        """
+        password = flask_bcrypt.generate_password_hash("password1")
         with app.app_context():
             db.create_all()
-            self.amc.add_user("test2", "Benedict", "Tan", "10kkj", "benedicttan@gmail.com", "98765431", "S12341233",
-                              "11-11-1111", password, None, None, 0)
-            user = User.query.filter_by(username="test2").first()
+            self.amc.add_user("test", "Raymond", "Tan", "10kkj", "raymondtan@gmail.com", "98765433", "S12341235",
+                         "11-11-1111", password, None, None, 0)
+            user = User.query.filter_by(username="test").first()
             newpass = flask_bcrypt.generate_password_hash("password11")
-            self.amc.change_pw(user, newpass)
+            self.amc.reset_pwd(user, newpass)
 
-    def testInit(self):
+    def testLogin(self):
+        """
+        Test the login with the newly changed password.
+        """
         with app.app_context():
-            user = User.query.filter_by(username="test2").first()
+            user = User.query.filter_by(username="test").first()
             authenticate = self.amc.authenticate(user, "password11")
             self.assertEqual(authenticate, 1)
 
     def tearDown(self):
+        """
+        Tear down the unit test.
+        """
         with app.app_context():
             db.session.remove()
             db.drop_all()

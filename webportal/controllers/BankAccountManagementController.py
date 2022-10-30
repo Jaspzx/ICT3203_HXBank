@@ -15,16 +15,14 @@ class BankAccountManagementController:
     def add_bank_account(user_id):
         random_gen = SystemRandom()
         welcome_amt = random_gen.randrange(1000, 10000)
-        exist = Account.query.filter_by(userid=user_id).first()
-        if exist is not None:
-            while True:
-                acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
-                exist = Account.query.filter_by(acc_number=acc_number).first()
-                if exist is None:
-                    new_account = Account(acc_number, user_id, welcome_amt)
-                    add_db_no_close(new_account)
-                    return acc_number, welcome_amt
-        return None, None
+        while True:
+            acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
+            exist = Account.query.filter_by(acc_number=acc_number).first()
+            if exist is None:
+                new_account = Account(acc_number, user_id, welcome_amt)
+                add_db_no_close(new_account)
+                break
+        return acc_number, welcome_amt
 
     @staticmethod
     def transfer_money_checks(amount, transferrer_acc, transferee_acc):

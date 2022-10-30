@@ -60,6 +60,9 @@ class RegisterTest(unittest.TestCase):
             self.assertEqual(self.bamc.add_bank_account(User.query.filter_by(username="test").first().id), (None, None))
 
     def tearDown(self):
+        """
+        Tear down the unit test.
+        """
         with app.app_context():
             db.session.remove()
             db.drop_all()
