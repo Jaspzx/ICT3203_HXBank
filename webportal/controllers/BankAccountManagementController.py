@@ -15,13 +15,10 @@ class BankAccountManagementController:
     def add_bank_account(user_id):
         random_gen = SystemRandom()
         welcome_amt = random_gen.randrange(1000, 10000)
-        user_exist = User.query.filter_by(id=user_id).first()
-        if user_exist:
-            return None, None
         while True:
             acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
-            acc_exist = Account.query.filter_by(acc_number=acc_number).first()
-            if acc_exist is None:
+            exist = Account.query.filter_by(acc_number=acc_number).first()
+            if exist is None:
                 new_account = Account(acc_number, user_id, welcome_amt)
                 add_db_no_close(new_account)
                 break
