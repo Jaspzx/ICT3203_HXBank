@@ -137,7 +137,7 @@ def create_webportal():
             'object-src': '\'self\'',
         },
         content_security_policy_nonce_in=['script-src', 'style-src'],
-        session_cookie_samesite="Strict"
+        session_cookie_samesite="Lax"
     )
     login_manager.session_protection = "strong"
     login_manager.login_view = 'views.login'
