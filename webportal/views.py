@@ -172,6 +172,7 @@ def qrcode():
     url = pyqrcode.create(user.get_totp_uri())
     stream = BytesIO()
     url.svg(stream, scale=3)
+    session.clear()
     return stream.getvalue(), 200, {
         'Content-Type': 'image/svg+xml',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -353,7 +354,7 @@ def reset_identify():
             session['flag'] = 1
             if "username" in session and session['type'] == "otp":
                 session['email'] = user.email
-                if session['nric'] == escape(form.nric.data) and session['dob'] == str(escape(form.dob.data)):
+                if session['nric'] == escape(form.nric.data).upper() and session['dob'] == str(escape(form.dob.data)):
                     del session['nric']
                     del session['dob']
                     return redirect(url_for("views.reset_email_auth"))
@@ -410,6 +411,7 @@ def confirm_otp(token):
     emc = EmailManagementController()
     try:
         username = emc.confirm_token(token)
+        session['username'] = username
         user = User.query.filter_by(username=username).first()
         if user.email_token != token:
             abort(404)
