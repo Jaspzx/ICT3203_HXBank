@@ -238,10 +238,6 @@ class AdminApproveTransactionTest(unittest.TestCase):
             self.assertEqual(self.amc.add_user("test", "Raymond", "Tan", "10kkj", "raymondtan@gmail.com", "98765433",
                                                "S12341235", "11-11-1111", password1, None, None, 0), None)
 
-    def testDuplicateAccount(self):
-        with app.app_context():
-            self.assertEqual(self.bamc.add_bank_account(User.query.filter_by(username="test").first().id), (None, None))
-
     def testLogin(self):
         with app.app_context():
             user = User.query.filter_by(username="test").first()
