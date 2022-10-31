@@ -42,6 +42,11 @@
             </ul>
             <ul class="navbar-nav ms-auto w-80 justify-content-end">
                 {% if not current_user.is_authenticated %}
+                {% block nav_about %}
+                    <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('views.about') }}">About</a>
+                    </li>
+                {% endblock %}
                 {% block nav_login %}
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('views.login') }}">Login</a>

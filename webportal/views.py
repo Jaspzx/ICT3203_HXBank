@@ -560,6 +560,7 @@ def admin_dashboard():
     data = []
     for user in user_acc:
         if user.id == current_user.id:
+            print("skipped")
             pass
         else:
             dec_user = amc.decrypt_by_username(user.username)
@@ -1197,7 +1198,6 @@ def enrol_admin():
 
         form = RegisterForm()
         if request.method == 'POST' and form.validate_on_submit():
-            mmc = MessageManagementController()
             emc = EmailManagementController()
             amc = AccountManagementController()
 
