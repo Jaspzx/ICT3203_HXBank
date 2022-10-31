@@ -246,7 +246,7 @@ class AdminApproveTransactionTest(unittest.TestCase):
         with app.app_context():
             user = User.query.filter_by(username="test").first()
             authenticate = self.amc.authenticate(user, "Password11_")
-            self.assertEqual(authenticate, 1)
+            self.assertEqual(authenticate, 3)
 
     def testIdentify(self):
         with app.app_context():

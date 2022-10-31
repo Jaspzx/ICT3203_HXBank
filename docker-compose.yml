@@ -101,6 +101,6 @@ networks:
         - subnet: 172.30.0.0/16
 
 volumes:
-  jenkins-data:
-  jenkins-docker-certs:
+#  jenkins-data:
+#  jenkins-docker-certs:
   mysql-data:
