@@ -351,7 +351,7 @@ def reset_identify():
             session['flag'] = 1
             if "username" in session and session['type'] == "otp":
                 session['email'] = user.email
-                if session['nric'] == escape(form.nric.data) and session['dob'] == str(escape(form.dob.data)):
+                if session['nric'] == escape(form.nric.data).upper() and session['dob'] == str(escape(form.dob.data)):
                     del session['nric']
                     del session['dob']
                     return redirect(url_for("views.reset_email_auth"))
