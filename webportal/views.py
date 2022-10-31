@@ -170,6 +170,7 @@ def qrcode():
     url = pyqrcode.create(user.get_totp_uri())
     stream = BytesIO()
     url.svg(stream, scale=3)
+    session.clear()
     return stream.getvalue(), 200, {
         'Content-Type': 'image/svg+xml',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -408,6 +409,7 @@ def confirm_otp(token):
     emc = EmailManagementController()
     try:
         username = emc.confirm_token(token)
+        session['username'] = username
         user = User.query.filter_by(username=username).first()
         if user.email_token != token:
             abort(404)
