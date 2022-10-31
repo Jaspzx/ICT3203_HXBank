@@ -12,7 +12,7 @@ pipeline {
 		}
 		stage('Test') {
 			steps {
-				echo 'Testing'
+				sh 'python3 -m unittest discover -s webportal/unit_tests/ -p unit_tests.py'
 			}
 		}
 		stage('OWASP DependencyCheck') {
