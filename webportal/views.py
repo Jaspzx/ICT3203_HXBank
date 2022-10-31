@@ -560,8 +560,7 @@ def admin_dashboard():
     data = []
     for user in user_acc:
         if user.id == current_user.id:
-            print("skipped")
-            pass
+            continue
         else:
             dec_user = amc.decrypt_by_username(user.username)
             data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:],
