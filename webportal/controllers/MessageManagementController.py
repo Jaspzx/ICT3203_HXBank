@@ -1,4 +1,5 @@
-from webportal.models.Message import *
+from webportal.models.Message import Message
+from datetime import datetime
 from webportal.utils.interact_db import add_db_no_close, update_db, del_db
 
 
