@@ -1,10 +1,10 @@
 import secrets
 import pyotp
 import copy
-from webportal.utils.interact_db import *
-from datetime import datetime, timedelta, date
+from webportal.utils.interact_db import update_db_no_close, add_db_no_close, update_db, del_db
+from datetime import date
 from datetime import datetime
-from webportal.models.Transferee import User
+from webportal.models.User import User
 from webportal import flask_bcrypt, encryptor
 
 

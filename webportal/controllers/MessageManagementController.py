@@ -1,5 +1,5 @@
 from webportal.models.Message import *
-from webportal.utils.interact_db import *
+from webportal.utils.interact_db import add_db_no_close, update_db, del_db
 
 
 class MessageManagementController:
