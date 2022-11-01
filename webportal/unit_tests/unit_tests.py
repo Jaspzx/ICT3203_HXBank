@@ -8,7 +8,6 @@ from webportal.models.Account import *
 from webportal.models.Transferee import *
 from flask_login import login_user
 
-
 app = create_test_webportal()
 
 
@@ -50,15 +49,22 @@ class AdminApproveTransactionTest(unittest.TestCase):
         with app.app_context():
             transferer_acc = Account.query.filter_by(userid=self.user1_id).first()
             transferee_acc = Account.query.filter_by(userid=self.user2_id).first()
-            require_approval, transferer_acc_number, transferee_acc_number = self.bamc.create_transaction(10000, transferer_acc, transferee_acc, "test transaction")
+            require_approval, transferer_acc_number, transferee_acc_number = self.bamc.create_transaction(10000,
+                                                                                                          transferer_acc,
+                                                                                                          transferee_acc,
+                                                                                                          "test transaction")
             self.assertEqual(require_approval, True)
 
     def testCreateTransaction(self):
         with app.app_context():
             transferer_acc = Account.query.filter_by(userid=self.user1_id).first()
             transferee_acc = Account.query.filter_by(userid=self.user2_id).first()
-            require_approval, transferer_acc_number, transferee_acc_number = self.bamc.create_transaction(10000, transferer_acc, transferee_acc, "test transaction")
-            transaction = Transaction.query.filter_by(transferrer_acc_number=transferer_acc_number, transferee_acc_number=transferee_acc_number).first()
+            require_approval, transferer_acc_number, transferee_acc_number = self.bamc.create_transaction(10000,
+                                                                                                          transferer_acc,
+                                                                                                          transferee_acc,
+                                                                                                          "test transaction")
+            transaction = Transaction.query.filter_by(transferrer_acc_number=transferer_acc_number,
+                                                      transferee_acc_number=transferee_acc_number).first()
             if transaction:
                 created = True
             self.assertEqual(True, created)
@@ -86,9 +92,10 @@ class AdminApproveTransactionTest(unittest.TestCase):
                 update_db_no_close()
                 login_user(user)
                 transferee_acc_no = Account.query.filter_by(userid=self.user2_id).first().acc_number
-                response = self.client.post('/personal-banking/transfer-onetime', data={"transferee_acc": transferee_acc_no,
-                                                                                        "amount": "aaa",
-                                                                                        "description": "Test"},
+                response = self.client.post('/personal-banking/transfer-onetime',
+                                            data={"transferee_acc": transferee_acc_no,
+                                                  "amount": "aaa",
+                                                  "description": "Test"},
                                             follow_redirects=True)
                 self.assertIn(b'Not a valid float value', response.data)
 
@@ -101,9 +108,10 @@ class AdminApproveTransactionTest(unittest.TestCase):
                 update_db_no_close()
                 login_user(user)
                 transferee_acc_no = Account.query.filter_by(userid=self.user2_id).first().acc_number
-                response = self.client.post('/personal-banking/transfer-onetime', data={"transferee_acc": transferee_acc_no,
-                                                                                        "amount": "100",
-                                                                                        "description": "<script onafterscriptexecute=alert(1)><script>1</script>"},
+                response = self.client.post('/personal-banking/transfer-onetime',
+                                            data={"transferee_acc": transferee_acc_no,
+                                                  "amount": "100",
+                                                  "description": "<script onafterscriptexecute=alert(1)><script>1</script>"},
                                             follow_redirects=True)
                 self.assertIn(b'Invalid Characters', response.data)
 
@@ -363,4 +371,6 @@ class AdminApproveTransactionTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    import xmlrunner
+    with open('results.xml', 'wb') as output:
+        unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output), failfast=False, buffer=False, catchbreak=False)

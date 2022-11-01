@@ -12,7 +12,7 @@ pipeline {
 		}
 		stage('Test') {
 			steps {
-				sh 'python3 -m unittest discover -s webportal/unit_tests/ -p unit_tests.py'
+				sh 'python3 -m xmlrunner discover -s webportal/unit_tests/ -p  unit_tests.py -o webportal/unit_tests/result'
 			}
 		}
 		stage('OWASP DependencyCheck') {
@@ -33,7 +33,8 @@ pipeline {
 	}	
 	post {
 		success {
-			dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+		    junit skipPublishingChecks: true, testResults: '/var/jenkins_home/workspace/hxbankpipeline/webportal/unit_tests/result/*.xml'
+			dependencyCheckPublisher pattern: '/var/jenkins_home/workspace/hxbankpipeline/dependency-check-report.xml'
 		}
 	}
 }
