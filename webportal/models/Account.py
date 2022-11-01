@@ -1,8 +1,5 @@
-from datetime import datetime, timedelta, date
-from random import SystemRandom
-from webportal.models.Transaction import *
-from .. import db
-from ..utils.messaging import *
+from datetime import datetime, timedelta
+from webportal import db
 
 
 class Account(db.Model):

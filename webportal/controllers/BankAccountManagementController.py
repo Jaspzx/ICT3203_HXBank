@@ -1,11 +1,15 @@
 import secrets
+from datetime import timedelta
 from decimal import Decimal
-from webportal.utils.interact_db import *
+
+from flask_login import current_user
 from random import SystemRandom
-from webportal.models.Transferee import *
-from webportal.models.Account import *
-from webportal.models.User import *
-from .AccountManagementController import *
+from webportal.models.Transferee import Transferee
+from webportal.models.Transaction import Transaction
+from webportal.models.Account import Account
+from webportal.utils.interact_db import update_db_no_close, add_db_no_close, update_db
+from datetime import datetime
+from .AccountManagementController import AccountManagementController
 
 TWO_PLACES = Decimal(10) ** -2
 
@@ -16,7 +20,7 @@ class BankAccountManagementController:
         random_gen = SystemRandom()
         welcome_amt = random_gen.randrange(1000, 10000)
         while True:
-            acc_number = "".join([str(random_gen.randrange(9)) for i in range(10)])
+            acc_number = "".join([str(random_gen.randrange(9)) for _ in range(10)])
             exist = Account.query.filter_by(acc_number=acc_number).first()
             if exist is None:
                 new_account = Account(acc_number, user_id, welcome_amt)

@@ -1,8 +1,8 @@
 from flask_mail import Message as Mail_Message
 from webportal import app, mail
 from itsdangerous import URLSafeTimedSerializer
-from webportal.utils.interact_db import *
-from webportal.models.Transferee import User
+from webportal.utils.interact_db import update_db, update_db_no_close
+from webportal.models.User import User
 
 
 class EmailManagementController:
