@@ -1,0 +1,16 @@
+{% extends "layouts/base.html" %}
+{% block title %} Timeout {% endblock %}
+{% block content %}
+<section class="container d-flex flex-column justify-content-start h-100 h-100 pt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-xl-6">
+            <div class="form-container text-center align-self-center">
+                <h1>You have Timed Out!</h1>
+                <p>Your session has been timed out due to inactivity.</p>
+                <p>Kindly refresh or log in again.</p>
+                <a href="{{ url_for('views.login') }}" class="btn btn-primary">Go to Login</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

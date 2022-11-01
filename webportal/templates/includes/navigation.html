@@ -7,7 +7,8 @@
         {% elif current_user.is_authenticated and current_user.is_admin %}
         <a class="navbar-brand w-50 me-auto" href="{{ url_for('views.admin_dashboard') }}">HX-Bank</a>
         {% endif %}
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar"
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
+                aria-controls="navbar"
                 aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -18,16 +19,19 @@
                     <a class="nav-link" href="{{ url_for('views.transaction_history') }}">Transaction History</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userTransferDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="userTransferDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Transfer
                     </a>
                     <div class="dropdown-menu dropdown-menu-dark" aria-labelledby="userTransferDropdown">
                         <a class="dropdown-item" href="{{ url_for('views.transfer') }}">Transfer to another account</a>
-                        <a class="dropdown-item" href="{{ url_for('views.transfer_onetime') }}">Transfer to another account (One-Time)</a>
+                        <a class="dropdown-item" href="{{ url_for('views.transfer_onetime') }}">Transfer to another
+                            account (One-Time)</a>
                         <a class="dropdown-item" href="{{ url_for('views.add_transferee') }}">Add Transfer Recipient</a>
                         <div class="dropdown-divider border border-secondary"></div>
                         <a class="dropdown-item" href="{{ url_for('views.set_transfer_limit') }}">Set Transfer Limit</a>
-                        <a class="dropdown-item" href="{{ url_for('views.view_transferee') }}">View Transfer Recipients</a>
+                        <a class="dropdown-item" href="{{ url_for('views.view_transferee') }}">View Transfer
+                            Recipients</a>
                         <a class="dropdown-item" href="{{ url_for('views.topup_balance') }}">Top Up Balance</a>
                     </div>
                 </li>
@@ -55,37 +59,42 @@
                 {% endif %}
                 {% if current_user.is_authenticated %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-link" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">
                         {% if msg_data %}
                         <span class="material-icons md-light">notifications_active</span>
                         {% else %}
                         <span class="material-icons md-light">notifications_none</span>
                         {% endif %}
                     </a>
-                    <div class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="notificationDropdown">
+                    <div class="dropdown-menu dropdown-menu-dark dropdown-menu-end"
+                         aria-labelledby="notificationDropdown">
                         {% if msg_data %}
                         {% for msg in msg_data %}
-                            {% if loop.index <= 5 %}
-                                <p class="dropdown-item {{ 'text-muted' if msg.read else 'text-white' }}">
-                                    {% if not msg.read %}
-                                    <span class="material-icons md-18 md-light align-middle">priority_high</span>
-                                    {% endif %}
-                                    {{ msg.message|truncate(42, True) }}
-                                </p>
-                                <div class="dropdown-divider border border-secondary"></div>
+                        {% if loop.index <= 5 %}
+                        <p class="dropdown-item {{ 'text-muted' if msg.read else 'text-white' }}">
+                            {% if not msg.read %}
+                            <span class="material-icons md-18 md-light align-middle">priority_high</span>
                             {% endif %}
+                            {{ msg.message|truncate(42, True) }}
+                        </p>
+                        <div class="dropdown-divider border border-secondary"></div>
+                        {% endif %}
                         {% endfor %}
                         {% else %}
                         <p class="dropdown-item text-center">You have no new Messages!</p>
                         {% endif %}
-                        <a class="dropdown-item text-center" href="{{ url_for('views.message_center') }}">View All Message(s)</a>
+                        <a class="dropdown-item text-center" href="{{ url_for('views.message_center') }}">View All
+                            Message(s)</a>
                     </div>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('views.acc_settings') }}"><span class="material-icons md-light">settings</span></a>
+                    <a class="nav-link" href="{{ url_for('views.acc_settings') }}"><span
+                            class="material-icons md-light">settings</span></a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-link" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">
                         <span class="material-icons md-light">account_circle</span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="profileDropdown">
@@ -95,25 +104,8 @@
                         <a class="dropdown-item" href="{{ url_for('views.logout') }}">Logout</a>
                     </div>
                 </li>
-                <script nonce="{{ csp_nonce() }}">
-                    function showNoti(){
-                        window.location.replace("/logout");
-                        localStorage.setItem("showdiv", "show");
-                    };
-                    setInterval(showNoti, 60000);
-                </script>
                 {% endif %}
             </ul>
         </div>
     </div>
 </nav>
-<div id="timeout-notification">
-    Sorry, your session has timed out.
-</div>
-<script nonce="{{ csp_nonce() }}">
-    const showdiv = localStorage.getItem("showdiv");
-    if(showdiv == "show") {
-        document.getElementById("timeout-notification").style.display = "block";
-        localStorage.clear()
-    }
-</script>

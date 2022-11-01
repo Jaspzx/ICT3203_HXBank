@@ -14,7 +14,9 @@
 <body class="">
 {% include 'includes/navigation.html' %}
 {% block content %}{% endblock %}
-{% block javascripts %}{% endblock %}
+{% block javascripts %}
+<script src="{{ url_for('static', filename='js/timeout.js') }}" nonce="{{ csp_nonce() }}"></script>
+{% endblock %}
 {% include 'includes/footer.html' %}
 </body>
 </html>

@@ -51,6 +51,14 @@ def about():
     return render_template('about.html', title="About")
 
 
+@views.route('/timeout', methods=['GET'])
+def timeout():
+    if current_user.is_authenticated:
+        return redirect(url_for('views.logout'))
+    session.clear()
+    return render_template('timeout.html')
+
+
 @views.route('/register', methods=['GET', 'POST'])
 def register():
     ip_source = ipaddress.IPv4Address(request.remote_addr)
