@@ -95,7 +95,7 @@
                         <a class="dropdown-item" href="{{ url_for('views.logout') }}">Logout</a>
                     </div>
                 </li>
-                <script>
+                <script nonce="{{ csp_nonce() }}">
                     function showNoti(){
                         window.location.replace("/logout");
                         localStorage.setItem("showdiv", "show");
@@ -110,7 +110,7 @@
 <div id="timeout-notification">
     Sorry, your session has timed out.
 </div>
-<script>
+<script nonce="{{ csp_nonce() }}">
     const showdiv = localStorage.getItem("showdiv");
     if(showdiv == "show") {
         document.getElementById("timeout-notification").style.display = "block";
