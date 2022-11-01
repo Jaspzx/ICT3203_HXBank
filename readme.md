@@ -61,6 +61,7 @@ HXBank
 |   |   |   |── mobile_banking.png
 │   │   ├── js/
 │   │   │   ├── dashboard.js
+│   │   │   ├── timeout.js
 │   │   ├── vendor/
 │   │   │   ├── bootstrap/
 │   │   │   │   ├── bootstrap.bundle.min.js
@@ -132,6 +133,7 @@ HXBank
 |   |   |   ├── robots.txt
 |   |   |   ├── set-transferee-limit.html
 |   |   |   ├── success.html
+|   |   |   ├── timeout.html
 |   |   |   ├── top-up.html
 |   |   |   ├── transaction-history.html
 |   |   |   ├── transfer.html
