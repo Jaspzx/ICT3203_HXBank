@@ -3,24 +3,27 @@ from flask_login import current_user
 from wtforms import StringField, DateField, IntegerField, BooleanField, PasswordField, SubmitField, SelectField, \
     FloatField, HiddenField
 from wtforms.validators import InputRequired, Length, Email, EqualTo, Regexp
-from webportal.models.Account import *
-
+from webportal.models.Account import Account
+passExp = "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$"
+nameExp = "^(?=.{1,40}$)[a-zA-Z]+(?:[-'\\s][a-zA-Z]+)*$"
+usernameExp = "^[A-Za-z][A-Za-z0-9_]{3,20}$"
+twoFaExp = "^\\d{6,6}$"
 
 class RegisterForm(FlaskForm):
     username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20),
-                                                   Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$",
+                                                   Regexp(usernameExp,
                                                           message="Invalid username")])
     firstname = StringField("First Name", validators=[InputRequired(), Length(min=3, max=20),
-                                                      Regexp("^(?=.{1,40}$)[a-zA-Z]+(?:[-'\\s][a-zA-Z]+)*$",
+                                                      Regexp(nameExp,
                                                              message="Invalid name")])
     lastname = StringField("Last Name", validators=[InputRequired(), Length(min=3, max=20),
-                                                    Regexp("^(?=.{1,40}$)[a-zA-Z]+(?:[-'\\s][a-zA-Z]+)*$",
+                                                    Regexp(nameExp,
                                                            message="Invalid name")])
     address = StringField("Address", validators=[InputRequired(), Length(min=3, max=30)])
     password = PasswordField("Password", validators=[InputRequired(), Length(min=8),
                                                      EqualTo('confirm_password', message='Passwords must match'),
                                                      Regexp(
-                                                         "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
+                                                        passExp,
                                                          message="Password complexity not met")])
     confirm_password = PasswordField("Confirm Password")
     email = StringField("Email", validators=[InputRequired(), Length(min=5, max=50), Email()])
@@ -38,7 +41,7 @@ class RegisterForm(FlaskForm):
 
 class LoginForm(FlaskForm):
     username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20),
-                                                   Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$",
+                                                   Regexp(usernameExp,
                                                           message="Invalid username")])
     password = PasswordField("Password", validators=[InputRequired()],
                              render_kw={"placeholder": "Password"})
@@ -49,7 +52,7 @@ class LoginForm(FlaskForm):
 class Token2FAForm(FlaskForm):
     token = StringField("2FA Token", validators=[InputRequired(),
                                                  Length(min=6, max=6),
-                                                 Regexp("^\\d{6,6}$")],
+                                                 Regexp(twoFaExp)],
                         render_kw={"placeholder": "OTP Token"})
     recaptcha = RecaptchaField()
     otp_submit = SubmitField("Authenticate")
@@ -57,7 +60,7 @@ class Token2FAForm(FlaskForm):
 
 class ResetFormIdentify(FlaskForm):
     username = StringField("Username", validators=[InputRequired(), Length(min=3, max=20),
-                                                   Regexp("^[A-Za-z][A-Za-z0-9_]{3,20}$",
+                                                   Regexp(usernameExp,
                                                           message="Invalid username")])
     nric = StringField("Identification No.", validators=[InputRequired(), Length(min=9, max=9),
                                                          Regexp("^[STFGstfg]\\d{7}[A-Za-z]$",
@@ -68,7 +71,7 @@ class ResetFormIdentify(FlaskForm):
 
 
 class ResetFormAuthenticate(FlaskForm):
-    token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp("^\\d{6,6}$")],
+    token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp(twoFaExp)],
                         render_kw={"placeholder": "OTP Token"})
     recaptcha = RecaptchaField()
     reset_auth_submit = SubmitField("Next")
@@ -78,7 +81,7 @@ class ResetPasswordForm(FlaskForm):
     password = PasswordField("Password", validators=[InputRequired(), Length(min=8),
                                                      EqualTo('confirm_password', message='Passwords must match'),
                                                      Regexp(
-                                                         "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
+                                                         passExp,
                                                          message="Password complexity not met")])
     confirm_password = PasswordField("Confirm Password")
     recaptcha = RecaptchaField()
@@ -100,9 +103,13 @@ class SetTransferLimitForm(FlaskForm):
 
 
 class TransferMoneyForm(FlaskForm):
-    transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired()])
+
+    transferee_acc = SelectField("Transferee", coerce=str, validators=[InputRequired(), Length(min=10, max=40),
+                                                                       Regexp("^\\d{10,10}\\s-\\s(?=.{1,40}$)[a-zA-Z]+(?:[-'\\s][a-zA-Z]+)*\\s(?=.{1,40}$)[a-zA-Z]+(?:[-'\\s][a-zA-Z]+)*$",
+                                                                              message="Invalid account number")])
     amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
-    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
+    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50),
+                                                          Regexp("^[A-Za-z0-9$\\.\\s]", message="Invalid Characters")])
     recaptcha = RecaptchaField()
     transfer_money_submit = SubmitField("Transfer")
 
@@ -112,18 +119,20 @@ class TransferMoneyOneTimeForm(FlaskForm):
                                                                       Regexp("^\\d{10,10}$",
                                                                              message="Invalid account number")])
     amount = FloatField("Amount to Transfer.", validators=[InputRequired()])
-    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50)])
+    description = StringField("Description.", validators=[InputRequired(), Length(min=1, max=50),
+                                                          Regexp("^[A-Za-z0-9$\\.\\s]", message="Invalid Characters")])
     recaptcha = RecaptchaField()
     transfer_onetime_submit = SubmitField("Transfer")
 
 
 class RemoveTransfereeForm(FlaskForm):
-    transferee_acc = HiddenField()
+    transferee_acc = HiddenField(validators=[InputRequired(), Length(min=10, max=10), Regexp("^\\d{10,10}$",
+                                                                                             message="Invalid account number")])
     submit = SubmitField("Remove")
 
 
 class SecureMessageForm(FlaskForm):
-    msg = HiddenField()
+    msg = HiddenField(validators=[InputRequired(), Regexp("^[\\d]+$", message="Invalid ID")])
     mark = SubmitField("Read")
     unmark = SubmitField("Unread")
     delete = SubmitField("Delete")
@@ -136,28 +145,31 @@ class TopUpForm(FlaskForm):
 
 
 class ManageUserForm(FlaskForm):
-    userid = HiddenField()
+    userid = HiddenField(validators=[InputRequired(), Regexp("^[\\d]+$", message="Invalid ID")])
     disable = SubmitField("Disable")
     unlock = SubmitField("Unlock")
     delete = SubmitField("Delete")
 
 
 class ApproveTransactionForm(FlaskForm):
-    transactionid = HiddenField()
+    transactionid = HiddenField(validators=[InputRequired(), Regexp("^[\\d]+$", message="Invalid ID")])
     approve = SubmitField("Approve")
     reject = SubmitField("Reject")
 
 
 class ChangePasswordForm(FlaskForm):
-    current_password = PasswordField("Current Password", validators=[InputRequired()],
+    current_password = PasswordField("Current Password", validators=[InputRequired(), Length(min=8),
+                                                                     Regexp(
+                                                                         passExp,
+                                                                         message="Password complexity not met")],
                                      render_kw={"placeholder": "Password"})
     password = PasswordField("New Password", validators=[InputRequired(), Length(min=8),
                                                          EqualTo('confirm_password', message='Passwords must match'),
                                                          Regexp(
-                                                             "^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$",
+                                                             passExp,
                                                              message="Password complexity not met")])
     confirm_password = PasswordField("Confirm Password")
-    token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp("^\\d{6,6}$")],
+    token = StringField("2FA Token", validators=[InputRequired(), Length(min=6, max=6), Regexp(twoFaExp)],
                         render_kw={"placeholder": "OTP Token"})
     recaptcha = RecaptchaField()
     change_pwd_submit = SubmitField("Change")

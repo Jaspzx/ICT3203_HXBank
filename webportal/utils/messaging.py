@@ -1,5 +1,5 @@
-from webportal.models.Message import *
-from webportal.models.User import *
+from webportal.models.Message import Message
+from webportal.models.User import User
 from sqlalchemy import desc
 from flask_login import current_user
 from webportal import db

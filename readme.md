@@ -61,6 +61,7 @@ HXBank
 |   |   |   |── mobile_banking.png
 │   │   ├── js/
 │   │   │   ├── dashboard.js
+│   │   │   ├── timeout.js
 │   │   ├── vendor/
 │   │   │   ├── bootstrap/
 │   │   │   │   ├── bootstrap.bundle.min.js
@@ -107,6 +108,8 @@ HXBank
 |   |   |   ├── footer.html
 |   |   |   ├── navigation.html
 |   │   ├── layouts/
+|   |   |   ├── 404.html
+|   |   |   ├── 500.html
 |   │   │   ├── base.html
 |   |   |   ├── about.html
 |   |   |   ├── account-setting.html
@@ -115,7 +118,6 @@ HXBank
 |   |   |   ├── auth-change-otp.html
 |   |   |   ├── change-otp.html
 |   |   |   ├── change-pwd.html
-|   |   |   ├── compose.html
 |   |   |   ├── dashboard.html
 |   |   |   ├── home.html
 |   |   |   ├── login.html
@@ -131,6 +133,7 @@ HXBank
 |   |   |   ├── robots.txt
 |   |   |   ├── set-transferee-limit.html
 |   |   |   ├── success.html
+|   |   |   ├── timeout.html
 |   |   |   ├── top-up.html
 |   |   |   ├── transaction-history.html
 |   |   |   ├── transfer.html

@@ -1,7 +1,5 @@
 from webportal import db
-from random import SystemRandom
-from webportal.models.Account import *
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 class Transaction(db.Model):

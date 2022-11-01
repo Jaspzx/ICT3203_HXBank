@@ -112,3 +112,5 @@ venv-win/
 mysql.env
 certbot/
 db/
+.scannerwork/
+

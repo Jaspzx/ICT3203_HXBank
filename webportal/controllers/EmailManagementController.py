@@ -1,8 +1,8 @@
 from flask_mail import Message as Mail_Message
 from webportal import app, mail
 from itsdangerous import URLSafeTimedSerializer
-from webportal.utils.interact_db import *
-from webportal.models.Transferee import User
+from webportal.utils.interact_db import update_db, update_db_no_close
+from webportal.models.User import User
 
 
 class EmailManagementController:
@@ -45,12 +45,8 @@ class EmailManagementController:
     @staticmethod
     def verify_token(username, token):
         user = User.query.filter_by(username=username).first()
-
-        # Abort if not match.
         if user.email_token != token:
             return False
-
-        # Redirect if matches. 
         elif user.email_verified:
             return True
         else:

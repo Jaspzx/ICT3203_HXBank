@@ -1,6 +1,5 @@
-from random import SystemRandom
-from webportal.models.Account import *
-from datetime import datetime, timedelta
+from webportal import db
+from datetime import datetime
 
 
 class Transferee(db.Model):

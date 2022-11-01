@@ -4,6 +4,7 @@ services:
 
   flask:
     build: .
+    image: flask
     container_name: flask
     depends_on:
       db:
@@ -13,6 +14,7 @@ services:
     working_dir: /app
     volumes:
       - ./db/:/etc/certs/
+      - ./webportal/log/:/app/webportal/log/
     env_file:
       - .env
     networks:
@@ -54,6 +56,7 @@ services:
       - '50000:50000'
     volumes:
       - 'jenkins-data:/var/jenkins_home'
+      - ./db/:/etc/certs/
       - /var/run/docker.sock:/var/run/docker.sock
       - ./certbot/www/:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/nginx/ssl/:ro
