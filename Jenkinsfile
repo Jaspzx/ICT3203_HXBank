@@ -33,7 +33,7 @@ pipeline {
 	}	
 	post {
 		success {
-		    junit skipPublishingChecks: true, testResults: 'webportal/unit_tests/result/*.xml'
+		    junit skipOldReports: true , testResults: 'webportal/unit_tests/result/*.xml'
 			dependencyCheckPublisher pattern: 'dependency-check-report.xml'
 		}
 	}
