@@ -1,4 +1,3 @@
-Afnan, [24/10/2022 6:25 PM]
 @startuml
 AccountManagementController  --> User:creates
 AccountManagementController  --> EmailManagementController:uses
@@ -6,6 +5,11 @@ BankAccountManagementController --> Account:uses
 BankAccountManagementController --> Transaction:uses
 BankAccountManagementController --> Transferee:uses
 MessageManagementController  --> Message:uses
+AccountManagementController  --> interact_db:uses
+BankAccountManagementController --> interact_db:uses
+MessageManagementController  --> interact_db:uses
+EmailManagementController  --> interact_db:uses
+
 !theme plain
 top to bottom direction
 skinparam linetype ortho
@@ -140,5 +144,13 @@ class User as "User" {
    get_totp_uri(self): str
    verify_totp(self, token): bool
    get_id(self): str
+}
+class interact_db as "interact_db" {
+   update_db(): void
+   add_db(new_obj): void
+   del_db(target_obj): void
+   update_db_no_close(): void
+   add_db_no_close(new_obj): void
+   del_db_no_close(target_obj): void
 }
 @enduml
