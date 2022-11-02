@@ -11,7 +11,7 @@ from flask_login import login_user
 app = create_test_webportal()
 
 
-class AdminApproveTransactionTest(unittest.TestCase):
+class UnitTests(unittest.TestCase):
     amc = AccountManagementController()
     bamc = BankAccountManagementController()
     random_gen = SystemRandom()
