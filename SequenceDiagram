@@ -55,6 +55,10 @@ C --> A: return "Account has been locked out."
 A --> User: return "Account has been locked out."
 else Wrong Password 
     C -> C: user.failed_login_attempts += 1
+    C -> db: update_user(user)
+    activate db
+    db --> C: success
+    deactivate db
     D --> C: return 3
     C --> A: return "Login Fail"
     A --> User: return "Login Fail"
@@ -155,4 +159,5 @@ C --> B: success
 deactivate C
 B --> User: redirect to dashboard page
 deactivate B
+
 @enduml
