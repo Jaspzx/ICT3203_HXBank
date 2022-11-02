@@ -554,6 +554,8 @@ def admin_dashboard():
 
     if request.method == "POST" and form.validate_on_submit():
         user_acc = User.query.filter_by(id=escape(form.userid.data)).first()
+        if user_acc.username == "super_user":
+            return redirect(url_for('views.admin_dashboard'))
         if user_acc.id == current_user.id:
             return redirect(url_for('views.admin_dashboard'))
         if form.data["unlock"]:
@@ -571,10 +573,13 @@ def admin_dashboard():
             continue
         else:
             dec_user = amc.decrypt_by_username(user.username)
-            data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:],
-                         "email": dec_user.email,
-                         "last_login": dec_user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "role": dec_user.is_admin,
-                         "is_disabled": dec_user.is_disabled})
+            if dec_user.username == "super_user":
+                pass
+            else:
+                data.append({"userid": dec_user.id, "username": dec_user.username, "nric": dec_user.nric[-3:],
+                             "email": dec_user.email,
+                             "last_login": dec_user.last_login.strftime('%Y-%m-%d %H:%M:%S'), "role": dec_user.is_admin,
+                             "is_disabled": dec_user.is_disabled})
     msg_data = load_nav_messages()
     return render_template('/admin/admin-dashboard.html', title="Admin Dashboard", data=data, form=form,
                            msg_data=msg_data)

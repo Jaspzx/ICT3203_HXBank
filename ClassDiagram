@@ -4,6 +4,7 @@ AccountManagementController  --> EmailManagementController:uses
 BankAccountManagementController --> Account:uses
 BankAccountManagementController --> Transaction:uses
 BankAccountManagementController --> Transferee:uses
+BankAccountManagementController --> EmailManagementController:uses
 MessageManagementController  --> Message:uses
 AccountManagementController  --> interact_db:uses
 BankAccountManagementController --> interact_db:uses

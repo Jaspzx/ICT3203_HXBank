@@ -1,0 +1,163 @@
+@startuml
+skinparam monochrome true
+skinparam sequenceMessageAlign center
+actor User
+participant "//<<views>>// \n **Login Page UI**" as A
+participant "//<<views>>// \n **OTP Page UI**" as B
+participant "//<<boundary>>// \n **Views.py**" as C
+participant "//<<control>>//\n**AccountManagement**\n**Controller.py**" as D
+participant "//<<control>>//\n**MessageManagement**\n**Controller.py**" as I
+participant "//<<entity>>//\n**User.py**" as E
+participant "**Bcrypt.py**" as F
+participant "**TOTP.py**" as G
+participant "**Google**\n**ReCAPTCHA**" as H
+database "**Database**" as db
+
+User -> A:User login with the 'username'\n and 'password'
+activate A 
+A -> H: requestCaptcha()
+activate H
+H -> H: Generate Captcha
+H --> A: return captcha
+A --> User: return "Verify Captcha"
+User -> A: Submit Captcha
+A -> H: verifyCaptcha()
+H --> A: success
+deactivate H
+A -> C: (username, password)
+activate C
+
+C -> E: (username)
+activate E
+
+E -> db: retrievedByUsername(username)
+activate db
+db --> E: return user
+deactivate db
+
+E --> C: return user
+deactivate E
+
+alt User not found
+    C --> A: return "Login Fail"
+    A --> User: return "Login Fail"
+end
+
+
+C -> D: authenticate(user , password)
+activate D
+D -> F: check_password_hash(user.password_hash, password)
+activate F
+F --> D: return False
+alt Account is locked
+D --> C: return 2 or 4
+C --> A: return "Account has been locked out."
+A --> User: return "Account has been locked out."
+else Wrong Password 
+    C -> C: user.failed_login_attempts += 1
+    C -> db: update_user(user)
+    activate db
+    db --> C: success
+    deactivate db
+    D --> C: return 3
+    C --> A: return "Login Fail"
+    A --> User: return "Login Fail"
+deactivate A
+end
+F --> D: return True
+deactivate F
+D --> C: return 1
+deactivate D
+C --> B: redirect OTP page
+deactivate C
+activate B
+User -> B:User enter OTP
+B -> H: requestCaptcha()
+activate H
+H -> H: Generate Captcha
+H --> B: return captcha
+B --> User: return "Verify Captcha"
+User -> B: Submit Captcha
+B -> H: verifyCaptcha()
+H --> B: success
+deactivate H
+B -> C: (username, otp)
+activate C
+
+C -> E: (username)
+activate E
+E -> db: retrievedByUsername(username)
+activate db
+db --> E: return user
+deactivate db
+
+E --> C: return user
+deactivate E
+
+alt User uses previous token
+    C -> C: user.prev_token == otp
+    C --> B: return "Something went wrong"
+    B --> User: return "Something went wrong"
+else Account is locked
+    C -> C: user.is_disabled == True
+    C --> A: redirect Login Page
+    activate A
+    A --> User: return "Account has been locked out."
+    deactivate A
+end
+C -> E: verify_totp(self, token)
+activate E
+E -> G: verify(self, token)
+activate G
+alt Wrong OTP
+    G --> E: return False
+    E --> C: return False
+    C -> D: login_fail(user, token)
+    activate D
+    D -> D: user.failed_login_attempts += 1
+    D -> db: update_user(user)
+    activate db
+    db --> D: success
+    deactivate db
+    D --> C: success
+    deactivate D
+    C --> B: return "Invalid Token"
+    B --> User: return "Invalid Token"
+end
+
+G --> E: return True
+deactivate G
+E --> C: return True
+deactivate E
+C -> D: login_success(user, token)
+activate D
+D -> db: update_user(user)
+activate db
+db --> D: success
+deactivate db
+D --> C: success
+deactivate D
+alt User has at least one failed login attempt
+    C -> I: send_incorrect_attempts(user)
+    activate I
+    I -> db: create_message(user)
+    activate db
+    db --> I: success
+    deactivate db
+    I --> C: success
+    deactivate I
+end
+C -> I: send_last_login(user)
+activate I
+I -> db: create_message(user)
+activate db
+db --> I: success
+deactivate db
+I --> C: success
+deactivate I
+C --> B: success
+deactivate C
+B --> User: redirect to dashboard page
+deactivate B
+
+@enduml
