@@ -34,7 +34,7 @@ class EmailManagementController:
         update_db()
 
     @staticmethod
-    def confirm_token(arg_token: str, expiration=3600) -> [str, bool]:
+    def confirm_token(arg_token: str, expiration: int = 3600) -> [str, bool]:
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
         try:
             username = serializer.loads(arg_token, salt=app.config['SECURITY_PASSWORD_SALT'], max_age=expiration)
