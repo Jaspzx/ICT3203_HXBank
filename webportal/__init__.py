@@ -88,7 +88,7 @@ dictConfig(LOGGING_CONFIG)
 app = Flask(__name__)
 
 
-def create_webportal():
+def create_webportal() -> Flask:
     load_dotenv()
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
@@ -177,7 +177,7 @@ def create_webportal():
     return app
 
 
-def create_test_webportal():
+def create_test_webportal() -> Flask:
     load_dotenv()
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
