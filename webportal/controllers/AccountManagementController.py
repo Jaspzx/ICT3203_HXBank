@@ -10,7 +10,7 @@ from webportal import flask_bcrypt, encryptor
 
 class AccountManagementController:
     @staticmethod
-    def login_success(arg_user, arg_token):
+    def login_success(arg_user: User, arg_token: str) -> None:
         arg_user.session_token = secrets.token_urlsafe(20)
         arg_user.last_login = datetime.now()
         arg_user.failed_login_attempts = 0
@@ -18,14 +18,14 @@ class AccountManagementController:
         update_db_no_close()
 
     @staticmethod
-    def login_fail(arg_user):
+    def login_fail(arg_user: User) -> None:
         arg_user.failed_login_attempts += 1
         if arg_user.failed_login_attempts > 3:
             arg_user.is_disabled = True
         update_db_no_close()
 
     @staticmethod
-    def verify_details(username, email, mobile, nric, dob, age):
+    def verify_details(username: str, email: str, mobile: str, nric: str, dob: date, age: int) -> [bool, str]:
         enc_email = encryptor.encrypt(email)
         enc_mobile = encryptor.encrypt(mobile)
         enc_nric = encryptor.encrypt(nric)
@@ -49,7 +49,8 @@ class AccountManagementController:
         return False, None
 
     @staticmethod
-    def add_user(username, firstname, lastname, address, email, mobile, nric, dob, password, otp_secret, token, perms):
+    def add_user(username: str, firstname: str, lastname: str, address: str, email: str, mobile: str, nric: str,
+                 dob: date, password: str, otp_secret: [str, None], token: [str, None], perms: int) -> None:
         enc_firstname = encryptor.encrypt(firstname)
         enc_lastname = encryptor.encrypt(lastname)
         enc_address = encryptor.encrypt(address)
@@ -66,7 +67,7 @@ class AccountManagementController:
         add_db_no_close(new_user)
 
     @staticmethod
-    def decrypt_by_username(username):
+    def decrypt_by_username(username: str) -> User:
         user = User.query.filter_by(username=username).first()
         if user is None:
             return None
@@ -81,7 +82,7 @@ class AccountManagementController:
         return user_copy
 
     @staticmethod
-    def decrypt_by_id(id):
+    def decrypt_by_id(id: int) -> User:
         user = User.query.filter_by(id=id).first()
         user_copy = copy.deepcopy(user)
         user_copy.firstname = encryptor.decrypt(user.firstname).decode()
@@ -94,7 +95,7 @@ class AccountManagementController:
         return user_copy
 
     @staticmethod
-    def authenticate(user, password):
+    def authenticate(user: User, password: str) -> int:
         if flask_bcrypt.check_password_hash(user.password_hash, password):
             if user.is_disabled:
                 return 2
@@ -110,31 +111,31 @@ class AccountManagementController:
             return 3
 
     @staticmethod
-    def generate_pyotp(user):
+    def generate_pyotp(user: User) -> None:
         user.otp_secret = pyotp.random_base32()
         update_db_no_close()
 
     @staticmethod
-    def reset_pwd(user, password):
+    def reset_pwd(user: User, password: str) -> None:
         user.password_hash = password
         update_db()
 
     @staticmethod
-    def change_pw(user, password):
+    def change_pw(user: User, password: str) -> None:
         user.password_hash = password
         update_db_no_close()
 
     @staticmethod
-    def unlock_account(user):
+    def unlock_account(user: User) -> None:
         user.is_disabled = False
         user.failed_login_attempts = 0
         update_db()
 
     @staticmethod
-    def disable_account(user):
+    def disable_account(user: User) -> None:
         user.is_disabled = True
         update_db()
 
     @staticmethod
-    def delete_account(user):
+    def delete_account(user: User) -> None:
         del_db(user)

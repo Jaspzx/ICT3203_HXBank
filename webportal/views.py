@@ -17,12 +17,14 @@ from webportal.controllers.MessageManagementController import MessageManagementC
 from webportal.controllers.AccountManagementController import AccountManagementController
 from webportal.controllers.EmailManagementController import EmailManagementController
 from webportal.controllers.BankAccountManagementController import BankAccountManagementController
+from flask.typing import ResponseReturnValue
+from werkzeug.wrappers import Response
 
 views = Blueprint('views', __name__)
 TWO_PLACES = Decimal(10) ** -2
 
 
-def check_email_verification(func):
+def check_email_verification(func) -> [Response]:
     @wraps(func)
     def decorated_function(*args, **kwargs):
         if current_user.email_verified is False:
@@ -33,12 +35,12 @@ def check_email_verification(func):
 
 
 @login_manager.user_loader
-def load_user(session_token):
+def load_user(session_token: int) -> User:
     return User.query.filter_by(session_token=session_token).first()
 
 
 @views.route('/', methods=['GET'])
-def home():
+def home() -> ResponseReturnValue:
     if current_user.is_authenticated:
         msg_data = load_nav_messages()
         return render_template('home.html', title="Home Page", msg_data=msg_data)
@@ -46,7 +48,7 @@ def home():
 
 
 @views.route('/about', methods=['GET'])
-def about():
+def about() -> ResponseReturnValue:
     if current_user.is_authenticated:
         msg_data = load_nav_messages()
         return render_template('home.html', title="Home Page", msg_data=msg_data)
@@ -54,7 +56,7 @@ def about():
 
 
 @views.route('/timeout', methods=['GET'])
-def timeout():
+def timeout() -> [Response, ResponseReturnValue]:
     if current_user.is_authenticated:
         return redirect(url_for('views.logout'))
     session.clear()
@@ -62,7 +64,7 @@ def timeout():
 
 
 @views.route('/register', methods=['GET', 'POST'])
-def register():
+def register() -> [Response, ResponseReturnValue]:
     ip_source = ipaddress.IPv4Address(request.remote_addr)
 
     if current_user.is_authenticated:
@@ -117,7 +119,7 @@ def register():
 
 
 @views.route('/confirm/<token>')
-def confirm_email(token):
+def confirm_email(token) -> [Response, ResponseReturnValue]:
     emc = EmailManagementController()
     try:
         email = emc.confirm_token(token)
@@ -132,7 +134,7 @@ def confirm_email(token):
 
 
 @views.route('/otp-setup')
-def otp_setup():
+def otp_setup() -> [Response, ResponseReturnValue]:
     if 'username' not in session:
         return redirect(url_for('views.login'))
 
@@ -150,7 +152,7 @@ def otp_setup():
 
 
 @views.route('/qrcode')
-def qrcode():
+def qrcode() -> [Response, ResponseReturnValue]:
     mmc = MessageManagementController()
     emc = EmailManagementController()
     amc = AccountManagementController()
@@ -189,7 +191,7 @@ def qrcode():
 
 
 @views.route('/login', methods=['GET', 'POST'])
-def login():
+def login() -> [Response, ResponseReturnValue]:
     amc = AccountManagementController()
 
     ip_source = ipaddress.IPv4Address(request.remote_addr)
@@ -231,7 +233,7 @@ def login():
 
 @views.route('/logout', methods=['GET', 'POST'])
 @login_required
-def logout():
+def logout() -> ResponseReturnValue:
     ip_source = ipaddress.IPv4Address(request.remote_addr)
     logger = logging.getLogger('auth_log')
     logger.propagate = False
@@ -242,7 +244,7 @@ def logout():
 
 
 @views.route('/otp-input', methods=['GET', 'POST'])
-def otp_input():
+def otp_input() -> [Response, ResponseReturnValue]:
     mmc = MessageManagementController()
     amc = AccountManagementController()
 
@@ -304,7 +306,7 @@ def otp_input():
 
 @views.route('/unverified-email', methods=['GET'])
 @login_required
-def unverified_email():
+def unverified_email() -> [Response, ResponseReturnValue]:
     if current_user.email_verified:
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
@@ -315,7 +317,7 @@ def unverified_email():
 
 @views.route('/resend-verification', methods=['GET'])
 @login_required
-def resend_verification():
+def resend_verification() -> [Response, ResponseReturnValue]:
     if current_user.email_verified:
         if current_user.is_admin:
             return redirect(url_for('views.admin_dashboard'))
@@ -336,7 +338,7 @@ def resend_verification():
 
 
 @views.route('/reset-identify', methods=['GET', 'POST'])
-def reset_identify():
+def reset_identify() -> [Response, ResponseReturnValue]:
     amc = AccountManagementController()
 
     selected = request.args.get('type')
@@ -394,7 +396,7 @@ def reset_identify():
 
 
 @views.route('/reset-email-auth', methods=['GET', 'POST'])
-def reset_email_auth():
+def reset_email_auth() -> Response:
     if 'flag' not in session:
         session.clear()
         return redirect(url_for("views.login"))
@@ -415,7 +417,7 @@ def reset_email_auth():
 
 
 @views.route('/confirm_otp/<token>')
-def confirm_otp(token):
+def confirm_otp(token) -> [Response, ResponseReturnValue]:
     emc = EmailManagementController()
     try:
         username = emc.confirm_token(token)
@@ -431,7 +433,7 @@ def confirm_otp(token):
 
 
 @views.route('/reset-authenticate', methods=['GET', 'POST'])
-def reset_authenticate():
+def reset_authenticate() -> [Response, ResponseReturnValue]:
     if 'flag' not in session:
         session.clear()
         return redirect(url_for("views.login"))
@@ -468,7 +470,7 @@ def reset_authenticate():
 
 
 @views.route('/reset-pwd', methods=['GET', 'POST'])
-def reset_pwd():
+def reset_pwd() -> [Response, ResponseReturnValue]:
     if 'flag' not in session:
         session.clear()
         return redirect(url_for("views.login"))
@@ -504,7 +506,7 @@ def reset_pwd():
 @views.route('/personal-banking/dashboard', methods=['GET'])
 @login_required
 @check_email_verification
-def dashboard():
+def dashboard() -> [Response, ResponseReturnValue]:
     amc = AccountManagementController()
 
     if current_user.is_admin:
@@ -544,7 +546,7 @@ def dashboard():
 @views.route("/admin/admin-dashboard", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def admin_dashboard():
+def admin_dashboard() -> [Response, ResponseReturnValue]:
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
 
@@ -588,7 +590,7 @@ def admin_dashboard():
 @views.route("/personal-banking/transfer", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def transfer():
+def transfer() -> [Response, ResponseReturnValue]:
     basm = BankAccountManagementController()
     amc = AccountManagementController()
 
@@ -667,7 +669,7 @@ def transfer():
 @views.route("/personal-banking/transfer-onetime", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def transfer_onetime():
+def transfer_onetime() -> [Response, ResponseReturnValue]:
     basm = BankAccountManagementController()
 
     if current_user.is_admin:
@@ -739,7 +741,7 @@ def transfer_onetime():
 @views.route("/personal-banking/add-transferee", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def add_transferee():
+def add_transferee() -> [Response, ResponseReturnValue]:
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
 
@@ -783,7 +785,7 @@ def add_transferee():
 @views.route("/personal-banking/transaction-history", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def transaction_history():
+def transaction_history() -> [Response, ResponseReturnValue]:
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
     msg_data = load_nav_messages()
@@ -795,7 +797,7 @@ def transaction_history():
 @views.route("/personal-banking/view-transferee", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def view_transferee():
+def view_transferee() -> [Response, ResponseReturnValue]:
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
 
@@ -816,7 +818,7 @@ def view_transferee():
 @views.route("/personal-banking/set-transfer-limit", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def set_transfer_limit():
+def set_transfer_limit() -> [Response, ResponseReturnValue]:
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
 
@@ -861,7 +863,7 @@ def set_transfer_limit():
 @views.route("/personal-banking/topup-balance", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def topup_balance():
+def topup_balance() -> [Response, ResponseReturnValue]:
     if current_user.is_admin:
         return redirect(url_for('views.admin_dashboard'))
 
@@ -903,7 +905,7 @@ def topup_balance():
 @views.route("/communication/message-center", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def message_center():
+def message_center() -> [Response, ResponseReturnValue]:
     mmc = MessageManagementController()
 
     msg_data = load_nav_messages()
@@ -937,7 +939,7 @@ def message_center():
 @views.route("/admin/transaction-management", methods=["GET", "POST"])
 @login_required
 @check_email_verification
-def transaction_management():
+def transaction_management() -> [Response, ResponseReturnValue]:
     if not current_user.is_admin:
         return redirect(url_for('views.dashboard'))
     form = ApproveTransactionForm()
@@ -972,7 +974,7 @@ def transaction_management():
 @views.route("/account_management/account-settings", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def acc_settings():
+def acc_settings() -> ResponseReturnValue:
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
     msg_data = load_nav_messages()
     if current_user.is_admin:
@@ -983,7 +985,7 @@ def acc_settings():
 @views.route('/account-management/change-pwd', methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def change_pwd():
+def change_pwd() -> [Response, ResponseReturnValue]:
     amc = AccountManagementController()
 
     msg_data = load_nav_messages()
@@ -1025,7 +1027,7 @@ def change_pwd():
 @views.route('/account-management/change-otp', methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def change_otp():
+def change_otp() -> [Response, ResponseReturnValue]:
     msg_data = load_nav_messages()
     form = Token2FAForm()
     ip_source = ipaddress.IPv4Address(request.remote_addr)
@@ -1048,7 +1050,7 @@ def change_otp():
 @views.route('/account-management/otp-setup', methods=['GET'])
 @login_required
 @check_email_verification
-def auth_otp_reset():
+def auth_otp_reset() -> [Response, ResponseReturnValue]:
     if 'flag' not in session:
         return redirect(url_for("views.acc_settings"))
     del session['flag']
@@ -1062,7 +1064,7 @@ def auth_otp_reset():
 @views.route('/account-management/qrcode', methods=['GET'])
 @login_required
 @check_email_verification
-def auth_qrcode():
+def auth_qrcode() -> [Response, ResponseReturnValue]:
     amc = AccountManagementController()
     amc.generate_pyotp(current_user)
     mmc = MessageManagementController()
@@ -1084,14 +1086,14 @@ def auth_qrcode():
 
 
 @views.route("/reset_successful")
-def reset_success():
+def reset_success() -> ResponseReturnValue:
     return render_template('reset-successful.html', title="Reset Successful")
 
 
 @views.route("/success")
 @login_required
 @check_email_verification
-def success():
+def success() -> ResponseReturnValue:
     msg_data = load_nav_messages()
     return render_template('success.html', title="Success", msg_data=msg_data)
 
@@ -1099,14 +1101,14 @@ def success():
 @views.route("/enrolment-successful")
 @login_required
 @check_email_verification
-def enrolment_success():
+def enrolment_success() -> ResponseReturnValue:
     return render_template('/admin/enrolment-successful.html', title="Success")
 
 
 @views.route("/approval-required")
 @login_required
 @check_email_verification
-def approval_required():
+def approval_required() -> ResponseReturnValue:
     msg_data = load_nav_messages()
     return render_template('approval-required.html', title="Approval Required", msg_data=msg_data)
 
@@ -1119,7 +1121,7 @@ def robots():
 @views.route("/api/acc-overview", methods=['GET'])
 @login_required
 @check_email_verification
-def acc_overview():
+def acc_overview() -> ResponseReturnValue:
     if current_user.is_admin:
         abort(403)
     data = db.session.query(Account).join(User).filter(User.id == current_user.id).first()
@@ -1137,7 +1139,7 @@ def acc_overview():
 @views.route("/api/barchart-graph", methods=['GET'])
 @login_required
 @check_email_verification
-def barchart_graph():
+def barchart_graph() -> ResponseReturnValue:
     if current_user.is_admin:
         abort(403)
     current_year = datetime.now().year
@@ -1160,7 +1162,7 @@ def barchart_graph():
 @views.route("/api/recent-transactions", methods=['GET'])
 @login_required
 @check_email_verification
-def recent_transactions():
+def recent_transactions() -> ResponseReturnValue:
     if current_user.is_admin:
         abort(403)
     user_acc_number = Account.query.filter_by(userid=current_user.id).first().acc_number
@@ -1193,7 +1195,7 @@ def recent_transactions():
 @views.route("/personal-banking/profile", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def profile():
+def profile() -> ResponseReturnValue:
     amc = AccountManagementController()
     user = amc.decrypt_by_username(username=current_user.username)
     acc_info = Account.query.filter_by(userid=current_user.id).first()
@@ -1204,7 +1206,7 @@ def profile():
 @views.route("/admin/enrol-admin", methods=['GET', 'POST'])
 @login_required
 @check_email_verification
-def enrol_admin():
+def enrol_admin() -> [ResponseReturnValue, Response]:
     if current_user.is_admin:
         ip_source = ipaddress.IPv4Address(request.remote_addr)
 
@@ -1252,12 +1254,12 @@ def enrol_admin():
 
 
 @views.before_request
-def make_session_permanent():
+def make_session_permanent() -> None:
     session.permanent = True
 
 
 @views.after_request
-def add_header(r):
+def add_header(r) -> ResponseReturnValue:
     r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     r.headers["Pragma"] = "no-cache"
     r.headers["Expires"] = "0"

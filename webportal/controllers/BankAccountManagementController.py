@@ -1,9 +1,9 @@
-import secrets
 from datetime import timedelta
+import secrets
 from decimal import Decimal
-
 from flask_login import current_user
 from random import SystemRandom
+from markupsafe import Markup
 from webportal.models.Transferee import Transferee
 from webportal.models.Transaction import Transaction
 from webportal.models.Account import Account
@@ -16,7 +16,7 @@ TWO_PLACES = Decimal(10) ** -2
 
 class BankAccountManagementController:
     @staticmethod
-    def add_bank_account(user_id):
+    def add_bank_account(user_id: int) -> [int, int]:
         random_gen = SystemRandom()
         welcome_amt = random_gen.randrange(1000, 10000)
         while True:
@@ -29,7 +29,7 @@ class BankAccountManagementController:
         return acc_number, welcome_amt
 
     @staticmethod
-    def transfer_money_checks(amount, transferrer_acc, transferee_acc):
+    def transfer_money_checks(amount: float, transferrer_acc: Account, transferee_acc: Markup) -> [str, Decimal, None]:
         transferee_user = Account.query.filter_by(acc_number=transferee_acc).first()
         if transferee_user is None:
             error = "Invalid account number"
@@ -51,7 +51,7 @@ class BankAccountManagementController:
         return None, transferrer_acc.acc_balance, transferee_user
 
     @staticmethod
-    def create_transaction(amount, transferer_acc, transferee_acc, description):
+    def create_transaction(amount: float, transferer_acc: Account, transferee_acc: Account, description: str) -> [bool, Account, Account]:
         require_approval = False
         status = 0
 
@@ -79,7 +79,7 @@ class BankAccountManagementController:
         return require_approval, transferer_acc.acc_number, transferee_acc.acc_number
 
     @staticmethod
-    def add_transferee_checks(transferer_id, transferee_acc):
+    def add_transferee_checks(transferer_id: int, transferee_acc: Markup) -> [str, None]:
         transferee_acc = Account.query.filter_by(acc_number=transferee_acc).first()
         if transferee_acc:
             validate_if_exist = Transferee.query.filter_by(transferer_id=transferer_id,
@@ -99,14 +99,14 @@ class BankAccountManagementController:
             return add_error
 
     @staticmethod
-    def add_transferee(transferer_id, transferee_acc):
+    def add_transferee(transferer_id: int, transferee_acc: Markup) -> Account:
         transferee_acc = Account.query.filter_by(acc_number=transferee_acc).first()
         new_transferee = Transferee(transferer_id, transferee_acc.userid)
         add_db_no_close(new_transferee)
         return transferee_acc
 
     @staticmethod
-    def transaction_history(user_id):
+    def transaction_history(user_id: int) -> dict.values:
         user_acc_number = Account.query.filter_by(userid=user_id).first().acc_number
         transfer_data = Transaction.query.filter_by(transferrer_acc_number=user_acc_number).all()
         transferee_data = Transaction.query.filter_by(transferee_acc_number=user_acc_number).all()
@@ -131,7 +131,7 @@ class BankAccountManagementController:
         return data
 
     @staticmethod
-    def view_transferee(user_id):
+    def view_transferee(user_id: int) -> [list, list]:
         transferee_data = Transferee.query.filter_by(transferer_id=user_id).all()
         data = []
         form_data_list = []
@@ -149,13 +149,13 @@ class BankAccountManagementController:
         return form_data_list, data
 
     @staticmethod
-    def remove_transferee(transferee_acc):
+    def remove_transferee(transferee_acc: Markup) -> None:
         transferee_id = Account.query.filter_by(acc_number=transferee_acc).first().userid
         Transferee.query.filter_by(transferer_id=current_user.id, transferee_id=transferee_id).delete()
         update_db()
 
     @staticmethod
-    def set_transfer_limit(user_id, amount):
+    def set_transfer_limit(user_id: int, amount: float) -> [str, None]:
         if amount < 0.1:
             error = "Invalid value"
             return error
@@ -169,7 +169,7 @@ class BankAccountManagementController:
         return None
 
     @staticmethod
-    def topup_balance(user_id, user_acc, amount, description):
+    def topup_balance(user_id: int, user_acc: Account, amount: float, description: str) -> [str, None]:
         if amount < 1:
             error = "Invalid amount (Minimum $1)"
             return error
