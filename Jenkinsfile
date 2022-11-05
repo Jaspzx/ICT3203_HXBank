@@ -17,7 +17,8 @@ pipeline {
 		}
 		stage('OWASP DependencyCheck') {
 			steps {
-				dependencyCheck additionalArguments: '--format HTML --format XML', odcInstallation: 'OWASP Dependency Check'
+			    dependencyCheck additionalArguments: '--scan="/var/jenkins_home/workspace/hxbankpipeline" ', odcInstallation: 'OWASP Dependency Check'
+                // dependencyCheck additionalArguments: '--format HTML --format XML', odcInstallation: 'OWASP Dependency Check'
 			}
 		}
 
