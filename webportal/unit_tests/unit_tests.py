@@ -18,7 +18,7 @@ class UnitTests(unittest.TestCase):
     user1_id = ""
     user2_id = ""
 
-    def setUp(self):
+    def setUp(self) -> None:
         password1 = flask_bcrypt.generate_password_hash("Password1_")
         password2 = flask_bcrypt.generate_password_hash("Password2_")
         self.client = app.test_client()
@@ -33,7 +33,7 @@ class UnitTests(unittest.TestCase):
             self.bamc.add_bank_account(self.user1_id)
             self.bamc.add_bank_account(self.user2_id)
 
-    def testInit(self):
+    def testInit(self) -> None:
         with app.app_context():
             user = self.amc.decrypt_by_username(username="test")
             self.assertEqual(user.username, "test")
@@ -45,7 +45,7 @@ class UnitTests(unittest.TestCase):
             self.assertEqual(user.nric, "S1234123Q")
             self.assertEqual(user.dob, "1111-11-11")
 
-    def testApproveTransaction(self):
+    def testApproveTransaction(self) -> None:
         with app.app_context():
             transferer_acc = Account.query.filter_by(userid=self.user1_id).first()
             transferee_acc = Account.query.filter_by(userid=self.user2_id).first()
@@ -55,7 +55,7 @@ class UnitTests(unittest.TestCase):
                                                                                                           "test transaction")
             self.assertEqual(require_approval, True)
 
-    def testCreateTransaction(self):
+    def testCreateTransaction(self) -> None:
         with app.app_context():
             transferer_acc = Account.query.filter_by(userid=self.user1_id).first()
             transferee_acc = Account.query.filter_by(userid=self.user2_id).first()
@@ -69,7 +69,7 @@ class UnitTests(unittest.TestCase):
                 created = True
             self.assertEqual(True, created)
 
-    def testTransactionAccI(self):
+    def testTransactionAccI(self) -> None:
         with app.app_context():
             with self.client:
                 self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
@@ -83,7 +83,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Invalid account number', response.data)
 
-    def testTransactionAmountI(self):
+    def testTransactionAmountI(self) -> None:
         with app.app_context():
             with self.client:
                 self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
@@ -99,7 +99,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Not a valid float value', response.data)
 
-    def testTransactionDescI(self):
+    def testTransactionDescI(self) -> None:
         with app.app_context():
             with self.client:
                 self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
@@ -115,25 +115,25 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Invalid Characters', response.data)
 
-    def testLogin(self):
+    def testLoginC(self) -> None:
         with app.app_context():
             response = app.test_client().post('/login', data={"username": "test", "password": "Password1_"},
                                               follow_redirects=True)
             self.assertIn(b'Enter OTP Code', response.data)
 
-    def testPassword(self):
+    def testPassword(self) -> None:
         with app.app_context():
             response = app.test_client().post('/login', data={"username": "test", "password": "password123"},
                                               follow_redirects=True)
             self.assertIn(b'Login Failed', response.data)
 
-    def testUsername(self):
+    def testUsername(self) -> None:
         with app.app_context():
             response = app.test_client().post('/login', data={"username": "te5t@", "password": "p@ssword123_"},
                                               follow_redirects=True)
             self.assertIn(b'Invalid username', response.data)
 
-    def testOtpX(self):
+    def testOtpX(self) -> None:
         with app.app_context():
             with self.client:
                 self.client.post('/login', data={"username": "test", "password": "Password1_"},
@@ -142,7 +142,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Field must be exactly 6 characters long', response.data)
 
-    def testOtpA(self):
+    def testOtpA(self) -> None:
         with app.app_context():
             with self.client:
                 self.client.post('/login', data={"username": "test", "password": "Password1_"},
@@ -151,7 +151,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Invalid input', response.data)
 
-    def testOtpC(self):
+    def testOtpC(self) -> None:
         with app.app_context():
             with self.client:
                 user = User.query.filter_by(username="test").first()
@@ -163,7 +163,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Something went wrong', response.data)
 
-    def testRegister(self):
+    def testRegister(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/register', data={"username": "test2", "firstname": "Brian",
@@ -174,7 +174,7 @@ class UnitTests(unittest.TestCase):
                                                                "accept_tos": True}, follow_redirects=True)
                 self.assertIn(b'I am done. Take me to Login.', response.data)
 
-    def testRegisterIP(self):
+    def testRegisterIP(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/register', data={"username": "test2", "firstname": "Brian",
@@ -185,7 +185,7 @@ class UnitTests(unittest.TestCase):
                                                                "accept_tos": True}, follow_redirects=True)
                 self.assertIn(b'Password complexity not met', response.data)
 
-    def testRegisterPNM(self):
+    def testRegisterPNM(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/register', data={"username": "test2", "firstname": "Brian",
@@ -196,7 +196,7 @@ class UnitTests(unittest.TestCase):
                                                                "accept_tos": True}, follow_redirects=True)
                 self.assertIn(b'Passwords must match', response.data)
 
-    def testRegisterIE(self):
+    def testRegisterIE(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/register', data={"username": "test2", "firstname": "Brian",
@@ -207,7 +207,7 @@ class UnitTests(unittest.TestCase):
                                                                "accept_tos": True}, follow_redirects=True)
                 self.assertIn(b'Invalid email address.', response.data)
 
-    def testRegisterIID(self):
+    def testRegisterIID(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/register', data={"username": "test2", "firstname": "Brian",
@@ -218,7 +218,7 @@ class UnitTests(unittest.TestCase):
                                                                "accept_tos": True}, follow_redirects=True)
                 self.assertIn(b'Invalid Identification no.', response.data)
 
-    def testRegisterID(self):
+    def testRegisterID(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/register', data={"username": "test2", "firstname": "Brian",
@@ -229,7 +229,7 @@ class UnitTests(unittest.TestCase):
                                                                "accept_tos": True}, follow_redirects=True)
                 self.assertIn(b'Not a valid date value.', response.data)
 
-    def testRegisterIM(self):
+    def testRegisterIM(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/register', data={"username": "test2", "firstname": "Brian",
@@ -240,19 +240,19 @@ class UnitTests(unittest.TestCase):
                                                                "accept_tos": True}, follow_redirects=True)
                 self.assertIn(b'Invalid mobile', response.data)
 
-    def testDuplicateUser(self):
+    def testDuplicateUser(self) -> None:
         password1 = flask_bcrypt.generate_password_hash("password1")
         with app.app_context():
             self.assertEqual(self.amc.add_user("test", "Raymond", "Tan", "10kkj", "raymondtan@gmail.com", "98765433",
                                                "S12341235", "11-11-1111", password1, None, None, 0), None)
 
-    def testLogin(self):
+    def testLogin(self) -> None:
         with app.app_context():
             user = User.query.filter_by(username="test").first()
             authenticate = self.amc.authenticate(user, "Password11_")
             self.assertEqual(authenticate, 3)
 
-    def testIdentify(self):
+    def testIdentify(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/reset-identify?type=pwd', data={"username": "test", "nric": "S1234123Q",
@@ -260,7 +260,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Authenticate Yourself', response.data)
 
-    def testUsernameI(self):
+    def testUsernameI(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/reset-identify?type=pwd', data={"username": "test1", "nric": "S1234123Q",
@@ -268,7 +268,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Identification Failed', response.data)
 
-    def testIDI(self):
+    def testIDI(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/reset-identify?type=pwd', data={"username": "test", "nric": "S1234123R",
@@ -276,7 +276,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Identification Failed', response.data)
 
-    def testDOBI(self):
+    def testDOBI(self) -> None:
         with app.app_context():
             with self.client:
                 response = self.client.post('/reset-identify?type=pwd', data={"username": "test", "nric": "S1234123Q",
@@ -284,7 +284,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Identification Failed', response.data)
 
-    def testTopUpAmountLessThanOne(self):
+    def testTopUpAmountLessThanOne(self) -> None:
         with app.app_context():
             amount = float(Decimal(0).quantize(TWO_PLACES))
             description = f"Self-service top up of ${Decimal(amount).quantize(TWO_PLACES)}"
@@ -292,14 +292,14 @@ class UnitTests(unittest.TestCase):
             user = User.query.filter_by(username="test").first()
             self.assertEqual(self.bamc.topup_balance(self.user1_id, user, amount, description), error_message)
 
-    def testTopUpAmount(self):
+    def testTopUpAmount(self) -> None:
         with app.app_context():
             amount = float(Decimal(1000).quantize(TWO_PLACES))
             description = f"Self-service top up of ${Decimal(amount).quantize(TWO_PLACES)}"
             user = User.query.filter_by(username="test").first()
             self.assertEqual(self.bamc.topup_balance(self.user1_id, user, amount, description), None)
 
-    def testTopUpAmountI(self):
+    def testTopUpAmountI(self) -> None:
         with app.app_context():
             with self.client:
                 self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
@@ -311,7 +311,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Not a valid float value', response.data)
 
-    def testViewTransactionHistory(self):
+    def testViewTransactionHistory(self) -> None:
         with app.app_context():
             transferer_acc = Account.query.filter_by(userid=self.user1_id).first()
             transferee_acc = Account.query.filter_by(userid=self.user2_id).first()
@@ -319,14 +319,14 @@ class UnitTests(unittest.TestCase):
             data = self.bamc.transaction_history(self.user1_id)
             self.assertIsNotNone(data, len(data) != 0)
 
-    def testViewTransferee(self):
+    def testViewTransferee(self) -> None:
         with app.app_context():
             transferee_acc = Account.query.filter_by(userid=self.user2_id).first()
             self.bamc.add_transferee(self.user1_id, transferee_acc.acc_number)
             data = self.bamc.view_transferee(self.user1_id)
             self.assertIsNotNone(data, len(data) != 0)
 
-    def testAddTransfereeI(self):
+    def testAddTransfereeI(self) -> None:
         with app.app_context():
             with self.client:
                 self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
@@ -338,7 +338,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Invalid account number', response.data)
 
-    def testDeleteTransfereeI(self):
+    def testDeleteTransfereeI(self) -> None:
         with app.app_context():
             with self.client:
                 self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
@@ -350,7 +350,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'Invalid account number', response.data)
 
-    def testAddTransferee(self):
+    def testAddTransferee(self) -> None:
         with app.app_context():
             with self.client:
                 self.client.post('/login', data={"username": "test", "password": "Password1_"}, follow_redirects=True)
@@ -364,7 +364,7 @@ class UnitTests(unittest.TestCase):
                                             follow_redirects=True)
                 self.assertIn(b'You have added account number:', response.data)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         with app.app_context():
             db.session.remove()
             db.drop_all()

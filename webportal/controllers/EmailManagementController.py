@@ -10,7 +10,7 @@ class EmailManagementController:
         self.subject = ""
         self.template = ""
 
-    def send_email(self, arg_to, arg_subject, arg_template) -> None:
+    def send_email(self, arg_to: str, arg_subject: str, arg_template: str) -> None:
         self.subject = arg_subject
         self.template = arg_template
         try:
@@ -21,7 +21,7 @@ class EmailManagementController:
             pass
 
     @staticmethod
-    def generate_token(arg_username, user):
+    def generate_token(arg_username: str, user: User) -> str:
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
         token = serializer.dumps(arg_username, salt=app.config['SECURITY_PASSWORD_SALT'])
         user.email_token = token
@@ -29,12 +29,12 @@ class EmailManagementController:
         return token
 
     @staticmethod
-    def nullify_token(user):
+    def nullify_token(user: User) -> None:
         user.email_token = None
         update_db()
 
     @staticmethod
-    def confirm_token(arg_token, expiration=3600):
+    def confirm_token(arg_token: str, expiration: int = 3600) -> [str, bool]:
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
         try:
             username = serializer.loads(arg_token, salt=app.config['SECURITY_PASSWORD_SALT'], max_age=expiration)
@@ -43,7 +43,7 @@ class EmailManagementController:
         return username
 
     @staticmethod
-    def verify_token(username, token):
+    def verify_token(username: str, token: str) -> bool:
         user = User.query.filter_by(username=username).first()
         if user.email_token != token:
             return False
