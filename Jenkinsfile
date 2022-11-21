@@ -1,40 +1,27 @@
 pipeline {
-	agent any
-	stages {
-		stage('Build') {
-			steps {
-					script{
-					    sh 'docker container rm -f flask'
-                        sh 'docker image rm -f flask'
-                        sh 'docker build -t flask .'
-					}
-			}
-		}
-		stage('Test') {
-			steps {
-				sh 'python3 -m xmlrunner discover -s webportal/unit_tests/ -p  unit_tests.py -o webportal/unit_tests/result'
-			}
-		}
-		stage('OWASP DependencyCheck') {
-			steps {
-                dependencyCheck additionalArguments: '--format HTML --format XML', odcInstallation: 'OWASP Dependency Check'
-			}
-		}
-
-		stage ('Deploy') {
-            steps {
-                script{
-                    withCredentials([file(credentialsId: 'env', variable: 'env_file')]) {
-                       sh 'docker container run -d --expose 5000 -v /home/Team-13/webportal/ICT3203_HXBank/db/:/etc/certs/ -w /app --env-file $env_file --network HXBank_bridge --ip 172.30.0.2 --network-alias flask --name flask flask'
-                    }
-                }
-            }
-        }
-	}	
-	post {
-		success {
-		    junit skipOldReports: true , testResults: 'webportal/unit_tests/result/*.xml'
-			dependencyCheckPublisher pattern: 'dependency-check-report.xml'
-		}
-	}
+ agent any
+ stages {
+ stage ('Checkout') {
+ steps {
+ git branch:'master', url: 'https://github.com/OWASP/Vulnerable-WebApplication.git'
+ }
+ }
+ 
+ stage('Code Quality Check via SonarQube') {
+ steps {
+ script {
+ def scannerHome = tool 'SonarQube';
+ withSonarQubeEnv('SonarQube') {
+ sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=03HXBank -
+Dsonar.sources=."
+ }
+ }
+ }
+ }
+ }
+ post {
+ always {
+ recordIssues enabledForFailure: true, tool: sonarQube()
+ }
+ }
 }
